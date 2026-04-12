@@ -1,0 +1,91 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and credentials - NEVER commit these
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+*.env
+
+# API keys and tokens
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+*.pfx
+secrets.yml
+secrets.yaml
+credentials.json
+credentials.yaml
+
+# SSH keys (if stored in project)
+id_rsa
+id_ed25519
+*.pub
+
+# Cloud provider credentials
+.aws/credentials
+.gcloud/
+.azure/
+
+# Database connection strings
+database.yml
+database.ini
+db_config.json
+
+# Service account files
+service-account*.json
+*-credentials.json
+# Curator specific
+.env.example.local
+curator.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerenv
+
+# pgpass (should never be in a repo)
+.pgpass
+
+# Jinja2 compiled templates cache
+__jinja2_cache__/
+
+# mypy
+.mypy_cache/
+
+# Pylint
+.pylint.d/
+
+# ruff
+.ruff_cache/
