@@ -1,3 +1,10 @@
+# app.py
+
+**Path:** src/curator/web/app.py
+**Syntax:** python
+**Generated:** 2026-04-12 14:34:39
+
+```python
 """
 curator.web.app - FastAPI application factory.
 
@@ -57,3 +64,4 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+```

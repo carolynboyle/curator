@@ -1,0 +1,69 @@
+# Doc-Gen Default Configuration
+# This file contains default values for user-configurable settings.
+# Copy to .doc-gen/config.yml and customize as needed.
+#
+# These defaults are shipped with doc-gen and loaded automatically.
+# User settings in .doc-gen/config.yml override these values.
+
+# Project configuration
+project:
+  # Project name - if null, automatically derived from folder name
+  # Example: /home/user/projects/bookstack -> name: "bookstack"
+  name: null
+  
+  # Project root directory (relative to where doc-gen runs)
+  root: "."
+
+# Output configuration
+output:
+  # Where generated documentation files are written
+  # Relative to project root
+  base_dir: ".doc-gen/output"
+  
+  # Output format (currently only markdown supported)
+  format: "markdown"
+
+# Syntax highlighting map
+# Maps file extensions to syntax highlighting language identifiers
+# Used when generating markdown code blocks
+syntax_map:
+  # Python
+  .py: python
+  
+  # Shell scripts
+  .sh: bash
+  .bash: bash
+  
+  # YAML
+  .yml: yaml
+  .yaml: yaml
+  
+  # JSON
+  .json: json
+  
+  # Markdown
+  .md: markdown
+  
+  # Plain text
+  .txt: text
+  
+  # Configuration files
+  .conf: ini
+  .cfg: ini
+  .ini: ini
+  
+  # Web
+  .html: html
+  .css: css
+  .js: javascript
+  .jsx: javascript
+  
+  # Other common formats
+  .xml: xml
+  .sql: sql
+  .toml: toml
+
+# Additional exclusion patterns (beyond ignore-patterns.txt)
+# Use this for project-specific exclusions that don't belong in ignore-patterns.txt
+# These patterns use gitignore syntax
+exclusions: []
