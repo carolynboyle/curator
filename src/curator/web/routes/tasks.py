@@ -41,7 +41,9 @@ async def list_tasks(
         project = await proj_repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     task_repo = TaskRepository(db)
@@ -49,9 +51,9 @@ async def list_tasks(
     view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
-        "tasks/list.html",
-        {
-            "request": request,
+        request=request,
+        name="tasks/list.html",
+        context={
             "project": project,
             "tasks": tasks,
             "view": view,
@@ -72,16 +74,18 @@ async def new_task_form(
         project = await proj_repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     task_repo = TaskRepository(db)
     view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
-        "tasks/form.html",
-        {
-            "request": request,
+        request=request,
+        name="tasks/form.html",
+        context={
             "view": view,
             "task": None,
             "project": project,
@@ -134,7 +138,9 @@ async def edit_task_form(
         task = await task_repo.get_by_id(task_id)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     proj_repo = ProjectRepository(db)
@@ -142,9 +148,9 @@ async def edit_task_form(
     view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
-        "tasks/form.html",
-        {
-            "request": request,
+        request=request,
+        name="tasks/form.html",
+        context={
             "view": view,
             "task": task,
             "project": project,
@@ -195,7 +201,6 @@ async def delete_task(
     try:
         await task_repo.delete(task_id)
     except DeleteBlockedError as exc:
-        # Re-display the project page with a warning
         return RedirectResponse(
             url=f"/projects/{project_slug}?delete_blocked={task_id}&count={exc.count}",
             status_code=303,

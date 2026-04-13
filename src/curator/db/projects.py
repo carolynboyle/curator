@@ -62,16 +62,33 @@ class ProjectRepository(BaseRepository):
             List of project dicts from v_projects, ordered by name.
         """
         if status:
-            sql = """
-                SELECT * FROM v_projects
-                WHERE status = %s
-                ORDER BY name
-            """
-            return await self.fetch_all(sql, (status,))
-
+            return await self.fetch_all(
+                "SELECT * FROM v_projects WHERE status = %s ORDER BY name",
+                (status,),
+            )
         return await self.fetch_all(
             "SELECT * FROM v_projects ORDER BY name"
         )
+
+    async def get_by_id(self, project_id: int) -> dict:
+        """
+        Return a single project by ID.
+
+        Args:
+            project_id: Project ID.
+
+        Returns:
+            Project dict from v_projects.
+
+        Raises:
+            RecordNotFoundError: If no project with that ID exists.
+        """
+        row = await self.fetch_one(
+            "SELECT * FROM v_projects WHERE id = %s", (project_id,)
+        )
+        if row is None:
+            raise RecordNotFoundError(f"Project not found: {project_id}")
+        return row
 
     async def get_by_slug(self, slug: str) -> dict:
         """
@@ -116,7 +133,7 @@ class ProjectRepository(BaseRepository):
         """
         return await self.fetch_all(
             "SELECT * FROM v_projects WHERE parent_id = %s ORDER BY name",
-            (parent_id,)
+            (parent_id,),
         )
 
     async def slug_exists(self, slug: str) -> bool:
@@ -131,7 +148,7 @@ class ProjectRepository(BaseRepository):
         """
         result = await self.fetch_scalar(
             "SELECT EXISTS (SELECT 1 FROM projects WHERE slug = %s)",
-            (slug,)
+            (slug,),
         )
         return bool(result)
 
@@ -253,3 +270,4 @@ class ProjectRepository(BaseRepository):
         return await self.fetch_all(
             "SELECT id, name, slug FROM projects ORDER BY name"
         )
+    

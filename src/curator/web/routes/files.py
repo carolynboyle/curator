@@ -1,11 +1,11 @@
 """
 curator.web.routes.files - File attachment routes.
 
-Files are always attached to a project (or task). There is no
-top-level files list — files are shown on the parent project's
-detail page. Routes here handle create, edit, and delete only.
+Files are always attached to a project (or task). The top-level
+files list shows all file attachments across all projects.
 
 Route map:
+    GET  /files/                       — list all file attachments
     GET  /files/new                    — new file form (project or task context)
     POST /files/new                    — create file attachment
     GET  /files/{id}/edit              — edit form
@@ -27,6 +27,26 @@ from curator.web.deps import get_config, get_db
 router = APIRouter(prefix="/files", tags=["files"])
 
 
+@router.get("/", response_class=HTMLResponse)
+async def list_files(
+    request: Request,
+    db: AsyncDBConnection = Depends(get_db),
+    config=Depends(get_config),
+):
+    repo = FileRepository(db)
+    files = await repo.get_all()
+    view = ViewBuilder(config.views_path).get_view("files")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="files/list.html",
+        context={
+            "files": files,
+            "view": view,
+        },
+    )
+
+
 @router.get("/new", response_class=HTMLResponse)
 async def new_file_form(
     request: Request,
@@ -38,7 +58,6 @@ async def new_file_form(
     repo = FileRepository(db)
     view = ViewBuilder(config.views_path).get_view("files")
 
-    # Resolve project slug for the cancel/back link
     project_slug = None
     if project_id:
         proj_repo = ProjectRepository(db)
@@ -49,9 +68,9 @@ async def new_file_form(
             pass
 
     return templates.TemplateResponse(
-        "files/form.html",
-        {
-            "request": request,
+        request=request,
+        name="files/form.html",
+        context={
             "view": view,
             "file": None,
             "project_id": project_id,
@@ -104,10 +123,11 @@ async def edit_file_form(
         file = await repo.get_by_id(file_id)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
-    # Resolve project slug for cancel/back link
     project_slug = None
     if file.get("project_id"):
         proj_repo = ProjectRepository(db)
@@ -120,9 +140,9 @@ async def edit_file_form(
     view = ViewBuilder(config.views_path).get_view("files")
 
     return templates.TemplateResponse(
-        "files/form.html",
-        {
-            "request": request,
+        request=request,
+        name="files/form.html",
+        context={
             "view": view,
             "file": file,
             "project_id": file.get("project_id"),

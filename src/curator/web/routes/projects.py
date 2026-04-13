@@ -1,16 +1,15 @@
 """
 curator.web.routes.projects - Project CRUD routes.
 
-All routes return Jinja2 template responses. HTMX partial responses
-are returned for requests that include the HX-Request header.
+All routes return Jinja2 template responses.
 
 Route map:
-    GET  /projects              — list all projects
-    GET  /projects/new          — new project form
-    POST /projects/new          — create project
-    GET  /projects/{slug}       — project detail
-    GET  /projects/{slug}/edit  — edit form
-    POST /projects/{slug}/edit  — update project
+    GET  /projects/              — list all projects
+    GET  /projects/new           — new project form
+    POST /projects/new           — create project
+    GET  /projects/{slug}        — project detail
+    GET  /projects/{slug}/edit   — edit form
+    POST /projects/{slug}/edit   — update project
     POST /projects/{slug}/delete — delete project
 """
 
@@ -20,16 +19,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from dbkit.connection import AsyncDBConnection
 from viewkit import ViewBuilder
 
-from curator.db import ProjectRepository
+from curator.db import FileRepository, ProjectRepository, TagRepository, TaskRepository
 from curator.exceptions import RecordNotFoundError
 from curator.web.app import templates
 from curator.web.deps import get_config, get_db
 
 router = APIRouter(prefix="/projects", tags=["projects"])
-
-
-def _get_view_builder(config=Depends(get_config)):
-    return ViewBuilder(config.views_path)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -45,9 +40,9 @@ async def list_projects(
     status_options = await repo.get_status_options()
 
     return templates.TemplateResponse(
-        "projects/list.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/list.html",
+        context={
             "projects": projects,
             "view": view,
             "status_options": status_options,
@@ -66,9 +61,9 @@ async def new_project_form(
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
-        "projects/form.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/form.html",
+        context={
             "view": view,
             "project": None,
             "status_options": await repo.get_status_options(),
@@ -80,7 +75,6 @@ async def new_project_form(
 
 @router.post("/new")
 async def create_project(
-    request: Request,
     name: str = Form(...),
     description: str = Form(""),
     status_id: int = Form(...),
@@ -115,25 +109,25 @@ async def project_detail(
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
-
-    from curator.db import FileRepository, TagRepository, TaskRepository
 
     task_repo = TaskRepository(db)
     tag_repo = TagRepository(db)
     file_repo = FileRepository(db)
 
-    tasks = await task_repo.get_all_for_project(project["id"])
+    tasks = await task_repo.get_tree_for_project(project["id"])
     tags = await tag_repo.get_for_project(project["id"])
     files = await file_repo.get_for_project(project["id"])
     subprojects = await repo.get_subprojects(project["id"])
     task_view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
-        "projects/detail.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/detail.html",
+        context={
             "project": project,
             "tasks": tasks,
             "tags": tags,
@@ -156,15 +150,17 @@ async def edit_project_form(
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
-        "projects/form.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/form.html",
+        context={
             "view": view,
             "project": project,
             "status_options": await repo.get_status_options(),

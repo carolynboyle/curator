@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/app.py
 **Syntax:** python
-**Generated:** 2026-04-12 14:34:39
+**Generated:** 2026-04-13 04:51:40
 
 ```python
 """
@@ -15,10 +15,11 @@ The app instance is imported by route modules to access the templates
 object, and by uvicorn as the ASGI entry point.
 """
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 from curator import plugin
 
@@ -50,18 +51,20 @@ def create_app() -> FastAPI:
     # Static files
     app.mount(
         "/static",
-        StaticFiles(directory=Path(__file__).parent.parent.parent.parent / "static"),
+        StaticFiles(directory=Path(__file__).parents[3] / "static"),
         name="static",
     )
 
     # Routers
-    from curator.web.routes import projects, tags, files
+    from curator.web.routes import files, projects, tags, tasks
     app.include_router(projects.router)
     app.include_router(tags.router)
     app.include_router(files.router)
+    app.include_router(tasks.router)
 
     return app
 
 
 app = create_app()
+
 ```

@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/tags/form.html
 **Syntax:** html
-**Generated:** 2026-04-12 14:34:39
+**Generated:** 2026-04-13 04:51:40
 
 ```html
 {% extends "base.html" %}
