@@ -23,10 +23,11 @@
     </div>
   </div>
 
-  {# ---- Inline-editable fields ---- #}
-  <form method="post" action="/projects/{{ project.slug }}/edit" id="panel-edit-form">
+  {# ---- Project details card ---- #}
+  <div class="panel-card">
 
-    <div class="panel-section">
+    <form method="post" action="/projects/{{ project.slug }}/edit" id="panel-edit-form">
+
       <div class="panel-field">
         <label>Description</label>
         <div class="panel-field-display" onclick="panelEdit(this)">
@@ -78,34 +79,27 @@
 
       {# Hidden required fields so form posts correctly #}
       <input type="hidden" name="name" value="{{ project.name }}">
-    </div>
 
-    <div class="panel-save-bar" id="panel-save-bar" style="display:none;">
-      <button type="submit" class="btn-primary btn-sm">Save</button>
-      <button type="button" class="btn-secondary btn-sm" onclick="panelCancelAll()">Cancel</button>
-    </div>
+      <div class="panel-save-bar" id="panel-save-bar" style="display:none;">
+        <button type="submit" class="btn-primary btn-sm">Save</button>
+        <button type="button" class="btn-secondary btn-sm" onclick="panelCancelAll()">Cancel</button>
+      </div>
 
-  </form>
+    </form>
 
-  {# ---- Tags ---- #}
-  {% if tags %}
-  <div class="panel-section">
-    <div class="panel-section-label">Tags</div>
-    <div class="panel-tags">
+    {# ---- Tags ---- #}
+    {% if tags %}
+    <div class="panel-tags-row">
       {% for tag in tags %}
         <span class="badge badge-tag">{{ tag.name }}</span>
       {% endfor %}
     </div>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  {# ---- Subprojects subform ---- #}
-  {% if subprojects %}
-  <div class="panel-section">
-    <div class="subform-header">
-      <span>Subprojects</span>
-    </div>
-    <div class="subform-body">
+    {# ---- Subprojects ---- #}
+    {% if subprojects %}
+    <div class="panel-subprojects">
+      <div class="panel-section-label">Subprojects</div>
       {% for sp in subprojects %}
       <div class="subform-row">
         <span class="subform-row-name">
@@ -115,12 +109,22 @@
       </div>
       {% endfor %}
     </div>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  {# ---- Tasks subform ---- #}
-  <div class="panel-section">
-   <div class="subform-header">
+  </div>{# end panel-card #}
+
+  {# ---- Task search ---- #}
+  <div class="panel-search-row">
+    <input type="search"
+           id="task-search"
+           placeholder="Search tasks…"
+           oninput="filterTasks(this.value)"
+           class="panel-search-input">
+  </div>
+
+  {# ---- Tasks card ---- #}
+  <div class="panel-card">
+    <div class="subform-header">
       <span>Tasks <span class="subform-footnote-marker">*</span></span>
       <button type="button" class="btn-secondary btn-sm" onclick="openAddTaskDialog()">+ Add</button>
     </div>
@@ -151,8 +155,8 @@
     </div>
   </div>
 
-  {# ---- Files subform ---- #}
-  <div class="panel-section">
+  {# ---- Files card ---- #}
+  <div class="panel-card">
     <div class="subform-header">
       <span>Files</span>
       <a href="/files/new?project_id={{ project.id }}" class="btn-secondary btn-sm">+ Add</a>
@@ -180,8 +184,11 @@
 <div id="add-task-dialog-backdrop" class="task-dialog-backdrop" style="display:none;" onclick="closeAddTaskDialog()">
   <div class="task-dialog" onclick="event.stopPropagation()">
     <div class="task-dialog-title">New Task — {{ project.name }}</div>
-    <form method="post" action="/tasks/new/{{ project.slug }}">
-      <input type="hidden" name="next_page" value="board">
+    <form hx-post="/tasks/new-panel/{{ project.slug }}"
+      hx-target="#board-detail"
+      hx-swap="innerHTML"
+      hx-on::after-request="closeAddTaskDialog()">
+
       <div class="task-dialog-field">
         <label>Description *</label>
         <textarea name="description" rows="3" style="width:100%;" required></textarea>
@@ -214,7 +221,12 @@
 <div id="task-dialog-backdrop" class="task-dialog-backdrop" style="display:none;" onclick="closeTaskDialog()">
   <div class="task-dialog" onclick="event.stopPropagation()">
     <div class="task-dialog-title" id="task-dialog-desc"></div>
-    <form id="task-dialog-form" method="post">
+    <form id="task-dialog-form"
+      hx-post=""
+      hx-target="#board-detail"
+      hx-swap="innerHTML"
+      hx-on::after-request="closeTaskDialog()">
+
       <input type="hidden" name="next_page" value="board">
       <input type="hidden" name="project_slug" value="{{ project.slug }}">
       <input type="hidden" name="description" id="task-dialog-hidden-desc">
@@ -283,6 +295,7 @@ function loadPanel(slug) {
         }
     });
 }
+
 function openTaskDialog(row) {
     var taskId = row.dataset.taskId;
     var description = row.dataset.taskDesc;
@@ -291,7 +304,8 @@ function openTaskDialog(row) {
 
     document.getElementById('task-dialog-desc').textContent = description;
     document.getElementById('task-dialog-hidden-desc').value = description;
-    document.getElementById('task-dialog-form').action = '/tasks/' + taskId + '/edit';
+    document.getElementById('task-dialog-form').setAttribute('hx-post', '/tasks/' + taskId + '/edit-panel');
+    htmx.process(document.getElementById('task-dialog-form'));
 
     var statusSelect = document.getElementById('task-dialog-status');
     for (var i = 0; i < statusSelect.options.length; i++) {
@@ -321,6 +335,16 @@ function updateTerminal(select) {
     var selected = select.options[select.selectedIndex];
     document.getElementById('task-dialog-terminal').value =
         selected.dataset.terminal === 'true' ? 'true' : 'false';
+}
+
+function filterTasks(query) {
+    var rows = document.querySelectorAll('#task-subform .subform-row');
+    var q = query.toLowerCase().trim();
+    rows.forEach(function(row) {
+        var desc = row.dataset.taskDesc ? row.dataset.taskDesc.toLowerCase() : '';
+        var status = row.dataset.taskStatus ? row.dataset.taskStatus.toLowerCase() : '';
+        row.style.display = (q === '' || desc.includes(q) || status.includes(q)) ? '' : 'none';
+    });
 }
 
 document.addEventListener('keydown', function(e) {
