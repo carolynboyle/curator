@@ -106,6 +106,7 @@ async def create_task(
     parent_id: int | None = Form(None),
     links: str = Form(""),
     sort_order: int = Form(0),
+    next_page: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
 ):
     proj_repo = ProjectRepository(db)
@@ -123,6 +124,8 @@ async def create_task(
             "sort_order": sort_order,
         }
     )
+    if next_page == "board":
+        return RedirectResponse(url="/projects/board", status_code=303)
     return RedirectResponse(url=f"/projects/{slug}", status_code=303)
 
 
@@ -173,6 +176,7 @@ async def update_task(
     links: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
+    next_page: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
@@ -188,6 +192,8 @@ async def update_task(
             "sort_order": sort_order,
         },
     )
+    if next_page == "board":
+        return RedirectResponse(url="/projects/board", status_code=303)
     return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
 
 

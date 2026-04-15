@@ -181,6 +181,7 @@
   <div class="task-dialog" onclick="event.stopPropagation()">
     <div class="task-dialog-title">New Task — {{ project.name }}</div>
     <form method="post" action="/tasks/new/{{ project.slug }}">
+      <input type="hidden" name="next_page" value="board">
       <div class="task-dialog-field">
         <label>Description *</label>
         <textarea name="description" rows="3" style="width:100%;" required></textarea>
@@ -214,6 +215,7 @@
   <div class="task-dialog" onclick="event.stopPropagation()">
     <div class="task-dialog-title" id="task-dialog-desc"></div>
     <form id="task-dialog-form" method="post">
+      <input type="hidden" name="next_page" value="board">
       <input type="hidden" name="project_slug" value="{{ project.slug }}">
       <input type="hidden" name="description" id="task-dialog-hidden-desc">
       <input type="hidden" name="sort_order" value="0">
@@ -322,10 +324,10 @@ function updateTerminal(select) {
 }
 
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') 
-      closeTaskDialog();
-      closeAddTaskDialog();
-
+    if (e.key === 'Escape') {
+        closeTaskDialog();
+        closeAddTaskDialog();
+    }
 });
 
 function openAddTaskDialog() {
