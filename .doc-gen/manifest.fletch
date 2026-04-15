@@ -1,13 +1,13 @@
-# Generated: 2026-04-13 04:51:58
+# Generated: 2026-04-13 15:31:31
 # Repo: https://github.com/carolynboyle/curator
 # Branch: master
 # URL type: raw
-# Files: 39
+# Files: 38
 
 repo: https://github.com/carolynboyle/curator
 branch: master
 url_type: raw
-generated: '2026-04-13 04:51:58'
+generated: '2026-04-13 15:31:31'
 files:
 - path: .gitignore
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/.gitignore
@@ -19,8 +19,6 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/docker-compose.yml
 - path: docs/project-structure.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/docs/project-structure.md
-- path: projectstree.txt
-  url: https://raw.githubusercontent.com/carolynboyle/curator/master/projectstree.txt
 - path: pyproject.toml
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/pyproject.toml
 - path: src/curator/__init__.py

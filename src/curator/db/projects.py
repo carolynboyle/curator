@@ -118,7 +118,7 @@ class ProjectRepository(BaseRepository):
             List of project tree dicts ordered by depth then name.
         """
         return await self.fetch_all(
-            "SELECT * FROM v_project_tree ORDER BY depth, name"
+            "SELECT * FROM v_project_tree ORDER BY path"
         )
 
     async def get_subprojects(self, parent_id: int) -> list[dict]:

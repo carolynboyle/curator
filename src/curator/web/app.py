@@ -59,3 +59,9 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")

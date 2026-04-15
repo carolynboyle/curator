@@ -1,0 +1,338 @@
+{#
+  projects/_panel.html
+  HTMX partial — loaded into #board-detail on project double-click.
+  Inline editing: click a field value to edit, Save/Cancel to commit.
+  Task editing: double-click a task row to open status/priority dialog.
+#}
+
+<div class="panel-wrap">
+
+  {# ---- Header ---- #}
+  <div class="panel-header">
+    <div>
+      <div class="panel-title" id="panel-title">{{ project.name }}</div>
+      <div class="panel-meta">{{ project.status }} · {{ project.project_type or '—' }}</div>
+    </div>
+    <div class="panel-header-actions">
+      <a href="/projects/{{ project.slug }}/edit" class="btn-secondary btn-sm">Full edit</a>
+      <form method="post" action="/projects/{{ project.slug }}/delete"
+            onsubmit="return confirm('Delete {{ project.name }}? This cannot be undone.');"
+            style="display:inline;">
+        <button type="submit" class="btn-danger btn-sm">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  {# ---- Inline-editable fields ---- #}
+  <form method="post" action="/projects/{{ project.slug }}/edit" id="panel-edit-form">
+
+    <div class="panel-section">
+      <div class="panel-field">
+        <label>Description</label>
+        <div class="panel-field-display" onclick="panelEdit(this)">
+          {{ project.description or '—' }}
+        </div>
+        <textarea name="description" class="panel-field-input" style="display:none;" rows="3">{{ project.description or '' }}</textarea>
+      </div>
+
+      <div class="panel-fields-row">
+        <div class="panel-field">
+          <label>Status</label>
+          <div class="panel-field-display" onclick="panelEdit(this)">{{ project.status }}</div>
+          <select name="status_id" class="panel-field-input" style="display:none;">
+            {% for s in status_options %}
+              <option value="{{ s.id }}" {% if s.name == project.status %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="panel-field">
+          <label>Type</label>
+          <div class="panel-field-display" onclick="panelEdit(this)">{{ project.project_type or '—' }}</div>
+          <select name="type_id" class="panel-field-input" style="display:none;">
+            <option value="">—</option>
+            {% for t in type_options %}
+              <option value="{{ t.id }}" {% if t.name == project.project_type %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="panel-field">
+          <label>Parent</label>
+          <div class="panel-field-display" onclick="panelEdit(this)">{{ project.parent_name or '—' }}</div>
+          <select name="parent_id" class="panel-field-input" style="display:none;">
+            <option value="">—</option>
+            {% for p in parent_options %}
+              <option value="{{ p.id }}" {% if p.id == project.parent_id %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="panel-field">
+          <label>Target date</label>
+          <div class="panel-field-display" onclick="panelEdit(this)">{{ project.target_date or '—' }}</div>
+          <input type="date" name="target_date" class="panel-field-input" style="display:none;"
+                 value="{{ project.target_date or '' }}">
+        </div>
+      </div>
+
+      {# Hidden required fields so form posts correctly #}
+      <input type="hidden" name="name" value="{{ project.name }}">
+    </div>
+
+    <div class="panel-save-bar" id="panel-save-bar" style="display:none;">
+      <button type="submit" class="btn-primary btn-sm">Save</button>
+      <button type="button" class="btn-secondary btn-sm" onclick="panelCancelAll()">Cancel</button>
+    </div>
+
+  </form>
+
+  {# ---- Tags ---- #}
+  {% if tags %}
+  <div class="panel-section">
+    <div class="panel-section-label">Tags</div>
+    <div class="panel-tags">
+      {% for tag in tags %}
+        <span class="badge badge-tag">{{ tag.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---- Subprojects subform ---- #}
+  {% if subprojects %}
+  <div class="panel-section">
+    <div class="subform-header">
+      <span>Subprojects</span>
+    </div>
+    <div class="subform-body">
+      {% for sp in subprojects %}
+      <div class="subform-row">
+        <span class="subform-row-name">
+          <a href="#" onclick="loadPanel('{{ sp.slug }}'); return false;">{{ sp.name }}</a>
+        </span>
+        <span class="subform-row-meta">{{ sp.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---- Tasks subform ---- #}
+  <div class="panel-section">
+   <div class="subform-header">
+      <span>Tasks <span class="subform-footnote-marker">*</span></span>
+      <button type="button" class="btn-secondary btn-sm" onclick="openAddTaskDialog()">+ Add</button>
+    </div>
+    <div class="subform-footnote">* double-click a task to change status or priority</div>
+    <div class="subform-body" id="task-subform">
+      {% if tasks %}
+        {% for task in tasks %}
+        <div class="subform-row task-depth-{{ task.depth }}"
+             data-task-id="{{ task.id }}"
+             data-task-desc="{{ task.description | e }}"
+             data-task-status="{{ task.status }}"
+             data-task-priority="{{ task.priority }}"
+             ondblclick="openTaskDialog(this)"
+             title="Double-click to edit">
+          <span class="task-status-badge task-status-{{ task.status | replace(' ', '-') }}">
+            {{ task.status }}
+          </span>
+          <span class="subform-row-name {% if task.is_terminal %}task-done{% endif %}">
+            {{ task.description }}
+          </span>
+          <span class="subform-row-meta task-pri-{{ task.priority }}">{{ task.priority }}</span>
+          <a href="/tasks/{{ task.id }}/edit" class="subform-row-edit" title="Full edit">✎</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="subform-empty">No tasks yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ---- Files subform ---- #}
+  <div class="panel-section">
+    <div class="subform-header">
+      <span>Files</span>
+      <a href="/files/new?project_id={{ project.id }}" class="btn-secondary btn-sm">+ Add</a>
+    </div>
+    <div class="subform-body">
+      {% if files %}
+        {% for f in files %}
+        <div class="subform-row">
+          <span class="subform-row-name">
+            <a href="{{ f.location }}" target="_blank" rel="noopener">{{ f.label }}</a>
+          </span>
+          <span class="subform-row-meta">{{ f.location_type }}</span>
+          <a href="/files/{{ f.id }}/edit" class="subform-row-edit">✎</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="subform-empty">No files attached.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{# ---- Add task dialog ---- #}
+<div id="add-task-dialog-backdrop" class="task-dialog-backdrop" style="display:none;" onclick="closeAddTaskDialog()">
+  <div class="task-dialog" onclick="event.stopPropagation()">
+    <div class="task-dialog-title">New Task — {{ project.name }}</div>
+    <form method="post" action="/tasks/new/{{ project.slug }}">
+      <div class="task-dialog-field">
+        <label>Description *</label>
+        <textarea name="description" rows="3" style="width:100%;" required></textarea>
+      </div>
+      <div class="task-dialog-field">
+        <label>Status</label>
+        <select name="status_id">
+          {% for s in status_task_options %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="task-dialog-field">
+        <label>Priority</label>
+        <select name="priority_id">
+          {% for p in priority_options %}
+            <option value="{{ p.id }}" {% if p.name == 'normal' %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="task-dialog-actions">
+        <button type="submit" class="btn-primary btn-sm">Save</button>
+        <button type="button" class="btn-secondary btn-sm" onclick="closeAddTaskDialog()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ---- Task edit dialog ---- #}
+<div id="task-dialog-backdrop" class="task-dialog-backdrop" style="display:none;" onclick="closeTaskDialog()">
+  <div class="task-dialog" onclick="event.stopPropagation()">
+    <div class="task-dialog-title" id="task-dialog-desc"></div>
+    <form id="task-dialog-form" method="post">
+      <input type="hidden" name="project_slug" value="{{ project.slug }}">
+      <input type="hidden" name="description" id="task-dialog-hidden-desc">
+      <input type="hidden" name="sort_order" value="0">
+      <input type="hidden" name="is_terminal" id="task-dialog-terminal">
+
+      <div class="task-dialog-field">
+        <label>Status</label>
+        <select name="status_id" id="task-dialog-status" onchange="updateTerminal(this)">
+          {% for s in status_task_options %}
+            <option value="{{ s.id }}" data-terminal="{{ 'true' if s.is_terminal else 'false' }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="task-dialog-field">
+        <label>Priority</label>
+        <select name="priority_id" id="task-dialog-priority">
+          {% for p in priority_options %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="task-dialog-actions">
+        <button type="submit" class="btn-primary btn-sm">Save</button>
+        <button type="button" class="btn-secondary btn-sm" onclick="closeTaskDialog()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function panelEdit(displayEl) {
+    var input = displayEl.nextElementSibling;
+    displayEl.style.display = 'none';
+    input.style.display = '';
+    input.focus();
+    document.getElementById('panel-save-bar').style.display = 'flex';
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { panelCancelOne(displayEl, input); }
+    }, { once: true });
+}
+
+function panelCancelOne(displayEl, inputEl) {
+    inputEl.style.display = 'none';
+    displayEl.style.display = '';
+}
+
+function panelCancelAll() {
+    document.querySelectorAll('.panel-field-input').forEach(function(input) {
+        var display = input.previousElementSibling;
+        input.style.display = 'none';
+        if (display) display.style.display = '';
+    });
+    document.getElementById('panel-save-bar').style.display = 'none';
+}
+
+function loadPanel(slug) {
+    htmx.ajax('GET', '/projects/' + slug + '/panel', {target: '#board-detail', swap: 'innerHTML'});
+    document.querySelectorAll('.board-list-item').forEach(function(i) {
+        i.classList.remove('board-list-item--active');
+        if (i.getAttribute('hx-get') === '/projects/' + slug + '/panel') {
+            i.classList.add('board-list-item--active');
+        }
+    });
+}
+function openTaskDialog(row) {
+    var taskId = row.dataset.taskId;
+    var description = row.dataset.taskDesc;
+    var statusName = row.dataset.taskStatus;
+    var priority = row.dataset.taskPriority;
+
+    document.getElementById('task-dialog-desc').textContent = description;
+    document.getElementById('task-dialog-hidden-desc').value = description;
+    document.getElementById('task-dialog-form').action = '/tasks/' + taskId + '/edit';
+
+    var statusSelect = document.getElementById('task-dialog-status');
+    for (var i = 0; i < statusSelect.options.length; i++) {
+        if (statusSelect.options[i].text === statusName) {
+            statusSelect.selectedIndex = i;
+            break;
+        }
+    }
+
+    var prioritySelect = document.getElementById('task-dialog-priority');
+    for (var i = 0; i < prioritySelect.options.length; i++) {
+        if (prioritySelect.options[i].text === priority) {
+            prioritySelect.selectedIndex = i;
+            break;
+        }
+    }
+
+    updateTerminal(statusSelect);
+    document.getElementById('task-dialog-backdrop').style.display = 'flex';
+}
+
+function closeTaskDialog() {
+    document.getElementById('task-dialog-backdrop').style.display = 'none';
+}
+
+function updateTerminal(select) {
+    var selected = select.options[select.selectedIndex];
+    document.getElementById('task-dialog-terminal').value =
+        selected.dataset.terminal === 'true' ? 'true' : 'false';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') 
+      closeTaskDialog();
+      closeAddTaskDialog();
+
+});
+
+function openAddTaskDialog() {
+    document.getElementById('add-task-dialog-backdrop').style.display = 'flex';
+}
+
+function closeAddTaskDialog() {
+    document.getElementById('add-task-dialog-backdrop').style.display = 'none';
+}
+</script>

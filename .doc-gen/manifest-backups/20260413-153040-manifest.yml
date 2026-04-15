@@ -1,6 +1,6 @@
-# Generated: 2026-04-13 15:30:40
+# Generated: 2026-04-13 04:51:21
 # Project: /home/carolyn/projects/curator
-# Files: 38
+# Files: 39
 
 version: 1
 documents:
@@ -9,6 +9,7 @@ documents:
 - path: README.md
 - path: docker-compose.yml
 - path: docs/project-structure.md
+- path: projectstree.txt
 - path: pyproject.toml
 - path: src/curator/__init__.py
 - path: src/curator/config.py
