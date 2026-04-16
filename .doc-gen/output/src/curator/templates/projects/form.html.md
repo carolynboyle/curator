@@ -2,8 +2,116 @@
 
 **Path:** src/curator/templates/projects/form.html
 **Syntax:** html
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```html
+{% extends "base.html" %}
+{% block title %}{% if project %}Edit {{ project.name }}{% else %}New Project{% endif %} — The Curator{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if project %}Edit Project{% else %}New Project{% endif %}</h1>
+    <a href="/projects/" class="btn-secondary">Cancel</a>
+</div>
+
+<form method="post"
+      action="{% if project %}/projects/{{ project.slug }}/edit{% else %}/projects/new{% endif %}"
+      class="curator-form">
+
+    {% for field in view.fields %}
+
+    {% if field.name == "name" %}
+    <label for="name">
+        {{ field.label }}{% if field.required %} *{% endif %}
+        <input type="text"
+               id="name"
+               name="name"
+               value="{{ project.name if project else '' }}"
+               {% if field.required %}required{% endif %}
+               placeholder="{{ field.placeholder or '' }}">
+    </label>
+
+    {% elif field.name == "slug" %}
+    {% if project %}
+    <label for="slug">
+        {{ field.label }}
+        <input type="text" id="slug" name="slug" value="{{ project.slug }}" readonly>
+        {% if field.help_text %}
+        <small class="field-help">{{ field.help_text }}</small>
+        {% endif %}
+    </label>
+    {% endif %}
+
+    {% elif field.name == "description" %}
+    <label for="description">
+        {{ field.label }}
+        <textarea id="description"
+                  name="description"
+                  placeholder="{{ field.placeholder or '' }}">{{ project.description if project else '' }}</textarea>
+    </label>
+
+    {% elif field.name == "status_id" %}
+    <label for="status_id">
+        {{ field.label }}{% if field.required %} *{% endif %}
+        <select id="status_id" name="status_id" {% if field.required %}required{% endif %}>
+            <option value="">— select —</option>
+            {% for opt in status_options %}
+            <option value="{{ opt.id }}"
+                {% if project and project.status == opt.name %}selected{% endif %}>
+                {{ opt.name | capitalize }}
+            </option>
+            {% endfor %}
+        </select>
+    </label>
+
+    {% elif field.name == "type_id" %}
+    <label for="type_id">
+        {{ field.label }}
+        <select id="type_id" name="type_id">
+            <option value="">— none —</option>
+            {% for opt in type_options %}
+            <option value="{{ opt.id }}"
+                {% if project and project.project_type == opt.name %}selected{% endif %}>
+                {{ opt.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </label>
+
+    {% elif field.name == "parent_id" %}
+    <label for="parent_id">
+        {{ field.label }}
+        <select id="parent_id" name="parent_id">
+            <option value="">— none —</option>
+            {% for opt in parent_options %}
+            <option value="{{ opt.id }}"
+                {% if project and project.parent_id == opt.id %}selected{% endif %}>
+                {{ opt.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </label>
+
+    {% elif field.name == "target_date" %}
+    <label for="target_date">
+        {{ field.label }}
+        <input type="date"
+               id="target_date"
+               name="target_date"
+               value="{{ project.target_date if project else '' }}">
+    </label>
+
+    {% endif %}
+    {% endfor %}
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">
+            {% if project %}Save Changes{% else %}Create Project{% endif %}
+        </button>
+        <a href="/projects/" class="btn-secondary">Cancel</a>
+    </div>
+
+</form>
+{% endblock %}
 
 ```

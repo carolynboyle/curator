@@ -1,3 +1,10 @@
+# _panel.html
+
+**Path:** src/curator/templates/projects/_panel.html
+**Syntax:** html
+**Generated:** 2026-04-16 11:00:26
+
+```html
 {#
   projects/_panel.html
   HTMX partial — loaded into #board-detail on project double-click.
@@ -363,3 +370,5 @@ function closeAddTaskDialog() {
     document.getElementById('add-task-dialog-backdrop').style.display = 'none';
 }
 </script>
+
+```

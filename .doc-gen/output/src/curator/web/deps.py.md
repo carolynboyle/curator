@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/deps.py
 **Syntax:** python
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```python
 """
@@ -10,6 +10,10 @@ curator.web.deps - FastAPI dependency injection.
 
 Provides database connection and config manager as FastAPI
 dependencies for use in route handlers.
+
+The database connection is managed by dbkit, which reads connection
+parameters from ~/.config/dev-utils/config.yaml under the 'dbkit:' key.
+Passwords are handled by ~/.pgpass — no credentials in code or config.
 
 Usage:
     from curator.web.deps import get_db, get_config
@@ -49,7 +53,7 @@ def get_config() -> ConfigManager:
 # ---------------------------------------------------------------------------
 
 async def get_db(
-    config: ConfigManager = Depends(get_config),
+    config: ConfigManager = Depends(get_config),  # pylint: disable=unused-argument
 ) -> AsyncGenerator[AsyncDBConnection, None]:
     """
     Yield an open AsyncDBConnection for the duration of a request.
@@ -57,16 +61,18 @@ async def get_db(
     Opens a connection on entry, yields it to the route handler,
     then closes it on exit regardless of whether an exception occurred.
 
-    Args:
-        config: ConfigManager instance from get_config().
+    dbkit reads connection parameters from:
+        ~/.config/dev-utils/config.yaml  (host, port, dbname, user)
+        ~/.pgpass                         (password)
 
     Yields:
         An open AsyncDBConnection.
     """
-    db = AsyncDBConnection(config.get_section("database"))
+    db = AsyncDBConnection()
     try:
-        await db.open()
+        await db.__aenter__()
         yield db
     finally:
-        await db.close()
+        await db.__aexit__(None, None, None)
+
 ```

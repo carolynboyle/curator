@@ -1,13 +1,15 @@
-# Generated: 2026-04-13 15:31:31
+# Generated: 2026-04-16 11:00:45
 # Repo: https://github.com/carolynboyle/curator
 # Branch: master
 # URL type: raw
-# Files: 38
+# Version: v0.1.0
+# Files: 44
 
 repo: https://github.com/carolynboyle/curator
 branch: master
 url_type: raw
-generated: '2026-04-13 15:31:31'
+generated: '2026-04-16 11:00:45'
+version: 0.1.0
 files:
 - path: .gitignore
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/.gitignore
@@ -15,10 +17,16 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/Dockerfile
 - path: README.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/README.md
+- path: cur_tree.txt
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/cur_tree.txt
+- path: curatortree.txt
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/curatortree.txt
 - path: docker-compose.yml
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/docker-compose.yml
 - path: docs/project-structure.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/docs/project-structure.md
+- path: h.txt
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/h.txt
 - path: pyproject.toml
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/pyproject.toml
 - path: src/curator/__init__.py
@@ -51,8 +59,14 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/files/form.html
 - path: src/curator/templates/files/list.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/files/list.html
+- path: src/curator/templates/index.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/index.html
 - path: src/curator/templates/partials/confirm_delete.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/partials/confirm_delete.html
+- path: src/curator/templates/projects/_panel.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/projects/_panel.html
+- path: src/curator/templates/projects/board.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/projects/board.html
 - path: src/curator/templates/projects/detail.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/master/src/curator/templates/projects/detail.html
 - path: src/curator/templates/projects/form.html

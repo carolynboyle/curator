@@ -2,22 +2,21 @@
 
 **Path:** src/curator/web/routes/projects.py
 **Syntax:** python
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```python
 """
 curator.web.routes.projects - Project CRUD routes.
 
-All routes return Jinja2 template responses. HTMX partial responses
-are returned for requests that include the HX-Request header.
+All routes return Jinja2 template responses.
 
 Route map:
-    GET  /projects              — list all projects
-    GET  /projects/new          — new project form
-    POST /projects/new          — create project
-    GET  /projects/{slug}       — project detail
-    GET  /projects/{slug}/edit  — edit form
-    POST /projects/{slug}/edit  — update project
+    GET  /projects/              — list all projects
+    GET  /projects/new           — new project form
+    POST /projects/new           — create project
+    GET  /projects/{slug}        — project detail
+    GET  /projects/{slug}/edit   — edit form
+    POST /projects/{slug}/edit   — update project
     POST /projects/{slug}/delete — delete project
 """
 
@@ -27,16 +26,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from dbkit.connection import AsyncDBConnection
 from viewkit import ViewBuilder
 
-from curator.db import ProjectRepository
+from curator.db import FileRepository, ProjectRepository, TagRepository, TaskRepository
 from curator.exceptions import RecordNotFoundError
 from curator.web.app import templates
 from curator.web.deps import get_config, get_db
 
 router = APIRouter(prefix="/projects", tags=["projects"])
-
-
-def _get_view_builder(config=Depends(get_config)):
-    return ViewBuilder(config.views_path)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -52,9 +47,9 @@ async def list_projects(
     status_options = await repo.get_status_options()
 
     return templates.TemplateResponse(
-        "projects/list.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/list.html",
+        context={
             "projects": projects,
             "view": view,
             "status_options": status_options,
@@ -73,9 +68,9 @@ async def new_project_form(
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
-        "projects/form.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/form.html",
+        context={
             "view": view,
             "project": None,
             "status_options": await repo.get_status_options(),
@@ -87,7 +82,6 @@ async def new_project_form(
 
 @router.post("/new")
 async def create_project(
-    request: Request,
     name: str = Form(...),
     description: str = Form(""),
     status_id: int = Form(...),
@@ -109,6 +103,67 @@ async def create_project(
     )
     return RedirectResponse(url=f"/projects/{slug}", status_code=303)
 
+# ---------------------------------------------------------------------------
+# Add these two routes to projects_routes.py
+# ---------------------------------------------------------------------------
+
+@router.get("/board", response_class=HTMLResponse)
+async def project_board(
+    request: Request,
+    db: AsyncDBConnection = Depends(get_db),
+):
+    repo = ProjectRepository(db)
+    tree = await repo.get_tree()
+    return templates.TemplateResponse(
+        request=request,
+        name="projects/board.html",
+        context={"tree": tree},
+    )
+
+
+@router.get("/{slug}/panel", response_class=HTMLResponse)
+async def project_panel(
+    slug: str,
+    request: Request,
+    db: AsyncDBConnection = Depends(get_db),
+    config=Depends(get_config),
+):
+    repo = ProjectRepository(db)
+    try:
+        project = await repo.get_by_slug(slug)
+    except RecordNotFoundError:
+        return HTMLResponse("<p class='board-empty'>Project not found.</p>", status_code=404)
+
+    task_repo = TaskRepository(db)
+    tag_repo = TagRepository(db)
+    file_repo = FileRepository(db)
+
+    tasks = await task_repo.get_tree_for_project(project["id"])
+    tags = await tag_repo.get_for_project(project["id"])
+    files = await file_repo.get_for_project(project["id"])
+    subprojects = await repo.get_subprojects(project["id"])
+    status_options = await repo.get_status_options()
+    type_options = await repo.get_type_options()
+    parent_options = await repo.get_parent_options()
+    status_task_options = await task_repo.get_status_options()
+    priority_options = await task_repo.get_priority_options()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="projects/_panel.html",
+        context={
+            "project": project,
+            "tasks": tasks,
+            "tags": tags,
+            "files": files,
+            "subprojects": subprojects,
+            "status_options": status_options,
+            "type_options": type_options,
+            "parent_options": parent_options,
+            "status_task_options": status_task_options,
+            "priority_options": priority_options,
+        },
+    )
 
 @router.get("/{slug}", response_class=HTMLResponse)
 async def project_detail(
@@ -122,25 +177,25 @@ async def project_detail(
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
-
-    from curator.db import FileRepository, TagRepository, TaskRepository
 
     task_repo = TaskRepository(db)
     tag_repo = TagRepository(db)
     file_repo = FileRepository(db)
 
-    tasks = await task_repo.get_all_for_project(project["id"])
+    tasks = await task_repo.get_tree_for_project(project["id"])
     tags = await tag_repo.get_for_project(project["id"])
     files = await file_repo.get_for_project(project["id"])
     subprojects = await repo.get_subprojects(project["id"])
     task_view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
-        "projects/detail.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/detail.html",
+        context={
             "project": project,
             "tasks": tasks,
             "tags": tags,
@@ -163,15 +218,17 @@ async def edit_project_form(
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
-        "projects/form.html",
-        {
-            "request": request,
+        request=request,
+        name="projects/form.html",
+        context={
             "view": view,
             "project": project,
             "status_options": await repo.get_status_options(),
@@ -215,4 +272,5 @@ async def delete_project(
     repo = ProjectRepository(db)
     await repo.delete(slug)
     return RedirectResponse(url="/projects/", status_code=303)
+
 ```

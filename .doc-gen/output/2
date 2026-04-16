@@ -9,15 +9,19 @@
 │   │   ├── 20260412-143026-manifest.yml
 │   │   ├── 20260412-143431-manifest.yml
 │   │   ├── 20260413-045121-manifest.yml
-│   │   └── 20260413-153040-manifest.yml
+│   │   ├── 20260413-153040-manifest.yml
+│   │   └── 20260416-104440-manifest.yml
 │   ├── manifest.fletch
 │   ├── manifest.yml
 │   └── output/
+│       ├── curatortree.txt.md
+│       ├── cur_tree.txt.md
 │       ├── docker-compose.yml.md
 │       ├── Dockerfile.md
 │       ├── docs/
 │       │   └── project-structure.md.md
 │       ├── .gitignore.md
+│       ├── h.txt.md
 │       ├── project-tree.txt
 │       ├── pyproject.toml.md
 │       ├── README.md.md
@@ -42,12 +46,15 @@
 │       │       │   ├── files/
 │       │       │   │   ├── form.html.md
 │       │       │   │   └── list.html.md
+│       │       │   ├── index.html.md
 │       │       │   ├── partials/
 │       │       │   │   └── confirm_delete.html.md
 │       │       │   ├── projects/
+│       │       │   │   ├── board.html.md
 │       │       │   │   ├── detail.html.md
 │       │       │   │   ├── form.html.md
-│       │       │   │   └── list.html.md
+│       │       │   │   ├── list.html.md
+│       │       │   │   └── _panel.html.md
 │       │       │   ├── tags/
 │       │       │   │   ├── form.html.md
 │       │       │   │   └── list.html.md
@@ -3847,4 +3854,4 @@
     ├── lib64 -> lib/
     └── pyvenv.cfg
 
-587 directories, 3261 files
+587 directories, 3268 files

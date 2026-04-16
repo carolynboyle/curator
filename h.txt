@@ -1,0 +1,494 @@
+    1  mkdir -p ~/.config/dev-utils
+    2  cat > ~/.config/dev-utils/config.yaml << 'EOF'
+    3  dbkit:
+    4    host: steward
+    5    port: 5432
+    6    dbname: projects
+    7    user: carolyn
+    8  EOF
+    9  fletcher
+   10  cd ..
+   11  fletcher
+   12  exit
+   13  python3 -m venv .venv
+   14  source .venv/bin/activate
+   15  pip install -e .
+   16  cd ~/projects/dev-utils/python/dbkit
+   17  python3 << 'EOF'
+   18  from dbkit.connection import _load_config
+   19  config = _load_config()
+   20  print(f"Config loaded: {config}")
+   21  from dbkit import DBConnection
+   22  try:
+   23      with DBConnection() as db:
+   24          result = db.fetch_scalar("SELECT COUNT(*) FROM projects")
+   25          print(f"✓ Connected! Projects table has {result} rows")
+   26  except Exception as e:
+   27      print(f"✗ Connection failed: {e}")
+   28  EOF
+   29  (.venv) carolyn@wcyjv10:~/projects/dev-utils/python/dbkit
+   30  $ cd ~/projects/dev-utils/python/dbkit
+   31  python3 << 'EOF'
+   32  from dbkit.connection import _load_config
+   33  config = _load_config()
+   34  print(f"Config loaded: {config}")
+   35  from dbkit import DBConnection
+   36  try:
+   37      with DBConnection() as db:
+   38          result = db.fetch_scalar("SELECT COUNT(*) FROM projects")
+   39          print(f"✓ Connected! Projects table has {result} rows")
+   40  except Exception as e:
+   41      print(f"✗ Connection failed: {e}")
+   42  EOF
+   43  Traceback (most recent call last):
+   44  ModuleNotFoundError: No module named 'dbkit'
+   45  (.venv) carolyn@wcyjv10:~/projects/dev-utils/python/dbkit
+   46  $ 
+   47  which python
+   48  /home/carolyn/projects/dev-utils/python/.venv/bin/python /home/carolyn/projects/dev-utils/python/dbkit/tests/test_insert.py
+   49  ssh carolyn@steward
+   50  projs
+   51  cd projects/dev-utils/python/db
+   52  cd projects/dev-utils/python/dbkit/
+   53  source .venv/bin/activate
+   54  pip show dbkit
+   55  pip list
+   56  which python
+   57  python tests/test_dbkit_connection.py
+   58  pip uninstall dbkit
+   59  pip install -e .
+   60  python tests/test_dbkit_connection.py
+   61  ls -la
+   62  ls -la dbkit/ 2>/dev/null || echo "no dbkit/ subdir"
+   63  cat pyproject.toml
+   64  mkdir dbkit
+   65  mv connection.py exceptions.py resolver.py __init__.py dbkit/
+   66  pip install -e .
+   67  python tests/test_dbkit_connection.py
+   68  nano ~/.pgpass
+   69  chmod 600 ~/.pgpass
+   70  python tests/test_dbkit_connection.py
+   71  cd ..
+   72  cd dbkit/
+   73  ls -la
+   74  python tests/test_dbkit_connection.py
+   75  cat ~.pgpass
+   76  nano ~/.pgpass
+   77  python tests/test_dbkit_connection.py
+   78  sudo nano /etc/postgresql/*/main/pg_hba.conf
+   79  python tests/test_dbkit_connection.py
+   80  ip a
+   81  python tests/test_dbkit_connection.py
+   82  exit
+   83  todo
+   84  sudo apt install devtodo
+   85  todo
+   86  todo --help
+   87  man dev-todo
+   88  todo
+   89  apt remove dev-todo
+   90  sudo apt remove devtodo
+   91  todo
+   92  source /opt/venvs/tools/bin/activate
+   93  pip install -e ~/projects/dev-utils/python/dbkit
+   94  sudo pip install -e ~/projects/dev-utils/python/dbkit
+   95  exit
+   96  ssh steward
+   97  source /opt/venvs/tools/bin/activate
+   98  pip install -e ~/projects/dev-utils/python/dbkit
+   99  sudo pip install -e ~/projects/dev-utils/python/dbkit
+  100  exit
+  101  /home/carolyn/projects/dev-utils/python/.venv/bin/python /home/carolyn/projects/steward/test_task_insert.py
+  102  /home/carolyn/projects/dev-utils/python/.venv/bin/python /home/carolyn/projects/steward/test_insert_interactive.py
+  103  ssh carolyn @192.168.10.70
+  104  ssh boylecf@yahoo.com @192.168.10.70
+  105  ssh 192.168.10.70
+  106  exit
+  107  find . -type f -name "menu*.[y]ml"
+  108  sudo find . -type f -name "menu*.[y]ml"
+  109  sudo find . -type f -name "*.[y]ml"
+  110  ssh 192.168.10.70
+  111  cd .ssh
+  112  ls -la
+  113  cat config
+  114  nano config
+  115  ssh macbook
+  116  cd
+  117  cat .bashrc
+  118  codium .
+  119  sudo apt install keychain
+  120  cat .profile
+  121  CAT .BASH_PROFILE
+  122  cat .bash_profile
+  123  cat .bash_login
+  124  cat .profile
+  125  nano .profile
+  126  ping google.com
+  127  ssh 192.168.10.70
+  128  ssh-add -l
+  129  cd .ssh
+  130  cat ~.bashrc
+  131  cd
+  132  cat .bashrc
+  133  if [ -z "$SSH_AUTH_SOCK" ]; then   eval "$(ssh-agent -s)";   ssh-add ~/.ssh/id_ed25519; fi
+  134  cat .bash_profile
+  135  cd
+  136  ls -la
+  137  cat profile
+  138  cat .profile
+  139  ssh-add -l
+  140  cd .ssh
+  141  ls -la
+  142  cat known_hosts
+  143  cat id_ed25519.pub
+  144  cat id_ed25519
+  145  sudo apt remove codium
+  146  sudo apt autoremove
+  147  which python
+  148  python --version
+  149  which python3
+  150  python3 --version
+  151  tree
+  152  ls
+  153  tree
+  154  cd src
+  155  ls
+  156  tree
+  157  cd handlers
+  158  ls
+  159  cd mcpkit/handlers
+  160  touch __init__.py
+  161  tree
+  162  cd ..
+  163  tree
+  164  cd ..
+  165  tree
+  166  ssh-agent -l
+  167  man ssh-agent 
+  168  cd python/mcpkit/
+  169  tree >mcpkit.tree
+  170  cat mcpkit.tree
+  171  cd
+  172  ;s
+  173  ls
+  174  cd projects/dev
+  175  cd projects/dev-utils/
+  176  cd mcpkit
+  177  tree >mcpkit.tree
+  178  cd mcpkit
+  179  cd python/mcpkit
+  180  python3 -m venv .venv
+  181  source .venv/bin/activate
+  182  which python
+  183  ssh-agent
+  184  ssh-agent -l
+  185  ssh 192.168.10.70
+  186  ssh 192.168.10.70
+  187  ssh jump.whycantyoujust.tech
+  188  ssh 192.168.10.70
+  189  exit
+  190  ssh carolyn@steward
+  191  exit
+  192  tmux steward
+  193  tmux
+  194  exit
+  195  ssh 192.168.10.51
+  196  sudo dnf install cockpit cockpit-podman (
+  197  ssh 192.168.10.51
+  198  ssh TC
+  199  ssh 192.168.10.5
+  200  ssh jump.whycantyoujust.tech
+  201  ssh  100.64.0.2
+  202  tmux
+  203  ssh 192.168.10.51
+  204  ssh carolyn@steward
+  205  sudo systemctl status tailscaled
+  206  sudo tailscale up   --login-server https://jump.whycantyoujust.tech   --authkey hskey-auth-ElTdhVaadzb3-ZhO4nheTBG5HzthDt25CvyefUr_8W7VGvGKtcvIrV5PD3G4OKr9hK_wDZBtktEVS 
+  207  ip addr show tailscale0
+  208  ping 100.64.0000.4
+  209  sudo systemctl status rustdesk
+  210  nc -zv 100.64.0.1 21115
+  211  nc -zv 100.64.0.2 21115
+  212  ssh jump.whycantyoujust.tech
+  213  ssh 192.168.10.2
+  214  curl -fsSL https://tailscale.com/install.sh | sh
+  215  sudo tailscale up   --login-server https://jump.whycantyoujust.tech   --authkey hskey-auth-ElTdhVaadzb3-ZhO4nheTBG5HzthDt25CvyefUr_8W7VGvGKtcvIrV5PD3G4OKr9hK_wDZBtktEV
+  216  ssh jump.whycantyoujust.tech
+  217  ssh 100.64.0.1
+  218  ssh 100.64.0.2
+  219  ssh jump.whycantyoujust.tech
+  220  ip a
+  221  ssh 100.64.0.1
+  222  ssh meet.whycantyoujust.tech
+  223  ssh jump.whycantyoujust.tech
+  224  ping jump.whycantyoujust.tech
+  225  ssh jump.whycantyoujust.tech
+  226  nc -zv 100.64.0.2 21118
+  227  ssh 192.168.10.71
+  228  ssh 192.168.10.70
+  229  ping 100.0.4.04
+  230  sudo lsof -i :21118
+  231  sudo systemctl status rustdesk
+  232  sudo systemctl enable --now rustdesk
+  233  rustdesk --version
+  234  cat ~/.config/rustdesk/RustDesk.toml
+  235  cat ~/.config/rustdesk/RustDesk2.toml
+  236  ss -tulnp | grep 21118
+  237  ssh 100.64.0.4
+  238  sudo apt install remmima
+  239  # From your MX Linux VM, try hitting it
+  240  curl -s -o /dev/null -w "%{http_code}" http://100.64.0.9:8055/server/health
+  241  curl -v http://100.64.0.9:8055/server/health
+  242  docker logs directus
+  243  curl http://100.64.0.9:8055
+  244  docker inspect directus | grep ReadonlyRootfs
+  245  ssh 100.64.0.9
+  246  ss -tlnp | grep 8055
+  247  # Check all listeners, not just TCP
+  248  ss -tlnp
+  249  ss -ulnp | grep 8055
+  250  # Check if there's a proxy or iptables rule redirecting the traffic
+  251  sudo iptables -t nat -L -n | grep 8055
+  252  # Check if anything is intercepting at the network level
+  253  sudo iptables -L -n | grep 8055
+  254  cd projects/st
+  255  cd projects/
+  256  cd steward/
+  257  ls
+  258  cd data
+  259  ls
+  260  psql -h 100.64.0.10 -U steward -d projects -f schema.sql
+  261  psql -h 100.64.0.10 -U steward -d projects -f seed.sql
+  262  history > h.txt
+  263  tmux steward
+  264  ping steward
+  265  ssh steward
+  266  ssh 100.64.0.10
+  267  ssh 100.64.0.9
+  268  tailscale status
+  269  ssh 100.64.0.9
+  270  tailscale status
+  271  ssh wcyjs2
+  272  ssh 100.64.0.9
+  273  ssh mulder
+  274  ssh wcyjs2
+  275  ssh wcyjvs2
+  276  tailscale status
+  277  ssh jump.whycantyoujust.tech
+  278  exit
+  279  pg_dump -h 192.168.10.115 -U steward -d projects --schema-only -f ~/projects/steward/data/schema.sql
+  280  ssh carolyn@192.168.10.51
+  281  tailscale status
+  282  ssh 100.64.0.10
+  283  exit
+  284  git status
+  285  doc-gen
+  286  fletcher
+  287  cd .doc-gen
+  288  git status
+  289  fletcher
+  290  source /home/carolyn/projects/projs/.venv/bin/activate
+  291  fletcher
+  292  doc-gen
+  293  cd ..
+  294  ls
+  295  cd 
+  296  cd projects/projs
+  297  doc-gen
+  298  fletcher
+  299  /home/carolyn/projects/dev-utils/python/.venv/bin/python /home/carolyn/projects/dev-utils/python/fletcher/fletcher/fletcher.py
+  300  source .venv/bin/activate
+  301  cd fletcher
+  302  pwd
+  303  fletcher
+  304  cd Obsidian
+  305  git config --global user.name
+  306  git config --global user.email
+  307  git init
+  308  git add .
+  309  git commit -m "Initial commit"
+  310  git remote add origin git@github.com:carolynboyle/obs_vault.git
+  311  git branch -M main
+  312  git push -u origin main
+  313  doc-gen
+  314  cd 
+  315  cd projects/dev-utils/
+  316  doc-gen
+  317  fletcher
+  318  cd python/fletcher/
+  319  sudo /opt/venvs/tools/bin/pip install -e /home/carolyn/projects/dev-utils/python/fletcher
+  320  fletcher
+  321  cd
+  322  cd projects/doc-gen
+  323  fletcher
+  324  /usr/bin/python3 /home/carolyn/projects/dev-utils/python/viewkit/tests/test_view_builder.py
+  325  python3 -m venv .venv
+  326  source .venv/bin/activate
+  327  which python
+  328  pip install . -e
+  329  pip install -e .
+  330  /usr/bin/python3 /home/carolyn/projects/dev-utils/python/viewkit/tests/test_view_builder.py
+  331  cd ~/projects/dev-utils/python/viewkit
+  332  python3 -c "
+  333  from pathlib import Path
+  334  from viewkit import ViewBuilder
+  335  b = ViewBuilder(Path('tests/fixtures/views.yaml'))
+  336  v = b.get_view('projects')
+  337  print(v.title)
+  338  print(len(v.fields), 'fields')
+  339  print(len(v.columns), 'columns')
+  340  "
+  341  pytho3 -c "[200~"
+  342  from pathlib import Path
+  343  from viewkit import ViewBuilder
+  344  b = ViewBuilder(Path('tests/fixtures/views.yaml'))
+  345  v = b.get_view('projects')
+  346  print(v.title)
+  347  print(len(v.fields), 'fields')
+  348  print(len(v.columns), 'columns')
+  349  "cd tests
+  350  cd tests
+  351  ls
+  352  chmod +x temp.sh
+  353  temp.sh
+  354  /usr/bin/python3 /home/carolyn/projects/dev-utils/python/viewkit/tests/test_view_builder.py
+  355  pip install pytest
+  356  /usr/bin/python3 /home/carolyn/projects/dev-utils/python/viewkit/tests/test_view_builder.py
+  357  pip list
+  358  pytest
+  359  ssh jump.whycantyoujust.tech
+  360  ping 100.0.4.04
+  361  ping jump.whycantyoujust.tech
+  362  ssh carolyn@jump.whycantyoujust.tech
+  363  sudo tailscale status
+  364  ssh boyle@100.64.0.6
+  365  exit
+  366  source ./venv/bin/activate
+  367  pip install . -e
+  368  ssh wcyjs1
+  369  ssh mulder
+  370  ssh scully
+  371  ssh mulder
+  372  ip a
+  373  cd projects/curator/
+  374  tree
+  375  cd ..
+  376  tree
+  377  tree > projects.tree
+  378  cd curator
+  379  mkdir src
+  380  mv curator src/
+  381  source ./.venv/bin/activae
+  382  source ./.venv/bin/activate
+  383  ls -la
+  384  python3 -m venv .venv
+  385  source ./.venv/bin/activate
+  386  code .
+  387  tree > projects.tree
+  388  ls -la src/curator/
+  389  cd src/curator/templates/files/list.html
+  390  cd src/curator/templates/files/
+  391  tailscale status
+  392  sudo ss -tunp | grep tailscale
+  393  ssh wcyjs1
+  394  ssh steward
+  395  ssh wcyjs2
+  396  ssh jump.whycantyoujust.tech
+  397  ssh carolyn@jump.whycantyoujust.tech
+  398  ssh carolyn@100.64.0.2
+  399  ssh wcyjl2
+  400  tailscale status
+  401  ssh boyle@100.64.0.6
+  402  tailscale status
+  403  ssh 100.64.0.2
+  404  ssh 100.64.0.9
+  405  ssh 192.168.10.15
+  406  ssh 100.64.0.9
+  407  ssh carolyn@wcyjs1
+  408  exit
+  409  pip install -e .
+  410  doc-gen
+  411  fletcher
+  412  doc-gen
+  413  fletcher
+  414  pip install -e .
+  415  exit
+  416  ssh steward
+  417  curl http://localhost:8080/projects/
+  418  file src/curator/templates/projects/list.html
+  419  hexdump -C src/curator/templates/projects/list.html | head -5
+  420  wc -l src/curator/templates/base.html
+  421  cat src/curator/templates/base.html
+  422  python -c "
+  423  import asyncio
+  424  from dbkit.connection import AsyncDBConnection
+  425  async def test():
+  426      async with AsyncDBConnection() as db:
+  427          row = await db.fetch_one('SELECT * FROM v_projects LIMIT 1')
+  428          print(row)
+  429  asyncio.run(test())
+  430  "
+  431  source ./.venv/bin/activate
+  432  python -c "
+  433  import asyncio
+  434  from dbkit.connection import AsyncDBConnection
+  435  async def test():
+  436      async with AsyncDBConnection() as db:
+  437          row = await db.fetch_one('SELECT * FROM v_projects LIMIT 1')
+  438          print(row)
+  439  asyncio.run(test())
+  440  "
+  441  psql -h 100.64.0.10 -U steward -d projects -c "SHOW client_encoding;"
+  442  psql -h 100.64.0.10 -U steward -d projects -c "SHOW server_encoding;"
+  443  cd
+  444  cd projects/steward/
+  445  pg_dump -h 100.64.0.10 -U steward -d projects --schema-only > ~/projects_current_schema.sql
+  446  ssh steward
+  447  pg_dump -h 100.64.0.10 -U steward -d projects --schema-only   -t public.contacts   -t public.contact_phones   -t public.contact_urls   -t public.project_contacts > ~/contacts_schema.sql
+  448  cat ~/contacts_schema.sql
+  449  systemctl status adminer
+  450  docker ps
+  451  sudo docker ps
+  452  docker ps -a
+  453  sudo systemctl status nginx
+  454  ssh steward
+  455  ssh wcyjvs1
+  456  pwd
+  457  ssh steward
+  458  cd
+  459  find Dockerfile
+  460  ssh wcyjvs1
+  461  uvicorn curator.web.app:app --host 127.0.0.1 --port 8080 --reload
+  462  doc-gen
+  463  flectcher
+  464  fletcher
+  465  tree > curatortree.txt
+  466  history > h
+  467  docker compose up 
+  468  cd data/projects/
+  469  make init
+  470  cd ..
+  471  source ./.venv/bin/activate
+  472  /home/carolyn/projects/curator/.venv/bin/python /home/carolyn/projects/steward/data/projects/__init__.py
+  473  pip list
+  474  which python
+  475  /home/carolyn/projects/steward/.venv/bin/python /home/carolyn/projects/steward/data/projects/__init__.py
+  476  pip install -e .
+  477  python -c "from curator.db.projects import ProjectRepository; print([m for m in dir(ProjectRepository) if 'by_id' in m])"
+  478  cd ~/projects/curator
+  479  uvicorn curator.web.app:app --host 127.0.0.1 --port 8080 --reload
+  480  wc -l src/curator/templates/projects/list.html
+  481  cat src/curator/templates/projects/list.html | head -5
+  482  python -c "
+  483  from pathlib import Path
+  484  p = Path('/home/carolyn/projects/curator/src/curator/web/app.py')
+  485  print(p.parent.parent / 'templates')
+  486  "
+  487  cat src/curator/templates/projects/list.html
+  488  wc -l src/curator/templates/projects/*.html src/curator/templates/tasks/*.html src/curator/templates/files/*.html src/curator/templates/tags/*.html
+  489  doc-gen
+  490  fletcher
+  491  pip install -e .
+  492  p = Path('/home/carolyn/projects/curator/src/curator/web/app.py') source /home/carolyn/projects/curator/.venv/bin/activate
+  493  source .venv/bin/activate
+  494  history > h.txt

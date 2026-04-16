@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/app.py
 **Syntax:** python
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```python
 """
@@ -66,5 +66,10 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")
 ```

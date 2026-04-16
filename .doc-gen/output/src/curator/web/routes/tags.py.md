@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/routes/tags.py
 **Syntax:** python
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```python
 """
@@ -42,9 +42,9 @@ async def list_tags(
     view = ViewBuilder(config.views_path).get_view("tags")
 
     return templates.TemplateResponse(
-        "tags/list.html",
-        {
-            "request": request,
+        request=request,
+        name="tags/list.html",
+        context={
             "tags": tags,
             "view": view,
         },
@@ -61,9 +61,9 @@ async def new_tag_form(
     view = ViewBuilder(config.views_path).get_view("tags")
 
     return templates.TemplateResponse(
-        "tags/form.html",
-        {
-            "request": request,
+        request=request,
+        name="tags/form.html",
+        context={
             "view": view,
             "tag": None,
             "category_options": await repo.get_category_options(),
@@ -94,15 +94,17 @@ async def edit_tag_form(
         tag = await repo.get_by_id(tag_id)
     except RecordNotFoundError:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request=request,
+            name="404.html",
+            status_code=404,
         )
 
     view = ViewBuilder(config.views_path).get_view("tags")
 
     return templates.TemplateResponse(
-        "tags/form.html",
-        {
-            "request": request,
+        request=request,
+        name="tags/form.html",
+        context={
             "view": view,
             "tag": tag,
             "category_options": await repo.get_category_options(),
@@ -130,4 +132,5 @@ async def delete_tag(
     repo = TagRepository(db)
     await repo.delete(tag_id)
     return RedirectResponse(url="/tags/", status_code=303)
+
 ```

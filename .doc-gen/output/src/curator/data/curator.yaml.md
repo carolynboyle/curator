@@ -2,7 +2,7 @@
 
 **Path:** src/curator/data/curator.yaml
 **Syntax:** yaml
-**Generated:** 2026-04-13 04:51:40
+**Generated:** 2026-04-16 11:00:26
 
 ```yaml
 # curator.yaml - Curator default configuration
