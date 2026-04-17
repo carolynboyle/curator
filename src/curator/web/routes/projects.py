@@ -192,7 +192,7 @@ async def delete_project(
 ):
     repo = ProjectRepository(db)
     await repo.delete(slug)
-    return RedirectResponse(url=next, status_code=303)
+    return RedirectResponse(url=next_url, status_code=303)
 
 
 @router.get("/{slug}/panel", response_class=HTMLResponse)
