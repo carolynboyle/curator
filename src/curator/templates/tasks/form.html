@@ -4,15 +4,15 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if task %}Edit Task{% else %}New Task{% endif %}</h1>
-    <a href="/projects/{{ project.slug }}" class="btn-secondary">Cancel</a>
+    <a href="{{ next }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
       action="{% if task %}/tasks/{{ task.id }}/edit{% else %}/tasks/new/{{ project.slug }}{% endif %}"
       class="curator-form">
 
-    {# Pass project slug back so we can redirect correctly after edit #}
     <input type="hidden" name="project_slug" value="{{ project.slug }}">
+    <input type="hidden" name="next" value="{{ next }}">
 
     {% for field in view.fields %}
 
@@ -88,7 +88,7 @@
         <button type="submit" class="btn-primary">
             {% if task %}Save Changes{% else %}Create Task{% endif %}
         </button>
-        <a href="/projects/{{ project.slug }}" class="btn-secondary">Cancel</a>
+        <a href="{{ next }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>
@@ -100,6 +100,7 @@
     Deleting it will also delete all subtasks.</p>
     <form method="post" action="/tasks/{{ task.id }}/force-delete">
         <input type="hidden" name="project_slug" value="{{ project.slug }}">
+        <input type="hidden" name="next" value="{{ next }}">
         <button type="submit" class="btn-danger">Delete Task and All Subtasks</button>
     </form>
 </div>

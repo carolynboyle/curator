@@ -2,8 +2,7 @@
 curator.web.routes.tasks - Task CRUD routes.
 
 Tasks always belong to a project. The project slug is carried through
-all routes so we can redirect back to the project detail page after
-create, edit, or delete.
+all routes so we can redirect back correctly after create, edit, or delete.
 
 Route map:
     GET  /tasks/project/{slug}          — list tasks for a project
@@ -27,6 +26,12 @@ from curator.web.app import templates
 from curator.web.deps import get_config, get_db
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+_BOARD = "/projects/board"
+
+
+def _next(request: Request, fallback: str = _BOARD) -> str:
+    return request.headers.get("referer") or fallback
 
 
 @router.get("/project/{slug}", response_class=HTMLResponse)
@@ -90,6 +95,7 @@ async def new_task_form(
             "task": None,
             "project": project,
             "parent_id": parent_id,
+            "next": _next(request),
             "status_options": await task_repo.get_status_options(),
             "priority_options": await task_repo.get_priority_options(),
             "parent_options": await task_repo.get_parent_options(project["id"]),
@@ -99,50 +105,17 @@ async def new_task_form(
 
 @router.post("/new/{slug}")
 async def create_task(
-    slug: str,
-    description: str = Form(...),
-    status_id: int = Form(...),
-    priority_id: int = Form(...),
-    parent_id: int | None = Form(None),
-    links: str = Form(""),
-    sort_order: int = Form(0),
-    next_page: str | None = Form(None),
-    db: AsyncDBConnection = Depends(get_db),
-):
-    proj_repo = ProjectRepository(db)
-    project = await proj_repo.get_by_slug(slug)
-
-    task_repo = TaskRepository(db)
-    await task_repo.create(
-        {
-            "project_id": project["id"],
-            "description": description,
-            "status_id": status_id,
-            "priority_id": priority_id,
-            "parent_id": parent_id,
-            "links": links,
-            "sort_order": sort_order,
-        }
-    )
-    if next_page == "board":
-        return RedirectResponse(url="/projects/board", status_code=303)
-    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
-
-@router.post("/new-panel/{slug}")
-async def create_task_panel(
-    slug: str,
     request: Request,
+    slug: str,
     description: str = Form(...),
     status_id: int = Form(...),
     priority_id: int = Form(...),
     parent_id: int | None = Form(None),
     links: str = Form(""),
     sort_order: int = Form(0),
+    next: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
 ):
-    from curator.db import FileRepository, TagRepository
-
     proj_repo = ProjectRepository(db)
     project = await proj_repo.get_by_slug(slug)
 
@@ -158,36 +131,9 @@ async def create_task_panel(
             "sort_order": sort_order,
         }
     )
+    return RedirectResponse(url=next, status_code=303)
 
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
 
-    tasks = await task_repo.get_tree_for_project(project["id"])
-    tags = await tag_repo.get_for_project(project["id"])
-    files = await file_repo.get_for_project(project["id"])
-    subprojects = await proj_repo.get_subprojects(project["id"])
-    status_options = await proj_repo.get_status_options()
-    type_options = await proj_repo.get_type_options()
-    parent_options = await proj_repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/_panel.html",
-        context={
-            "project": project,
-            "tasks": tasks,
-            "tags": tags,
-            "files": files,
-            "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
-        },
-    )
 @router.get("/{task_id}/edit", response_class=HTMLResponse)
 async def edit_task_form(
     task_id: int,
@@ -217,6 +163,7 @@ async def edit_task_form(
             "task": task,
             "project": project,
             "parent_id": task.get("parent_id"),
+            "next": _next(request),
             "status_options": await task_repo.get_status_options(),
             "priority_options": await task_repo.get_priority_options(),
             "parent_options": await task_repo.get_parent_options(task["project_id"]),
@@ -226,38 +173,8 @@ async def edit_task_form(
 
 @router.post("/{task_id}/edit")
 async def update_task(
-    task_id: int,
-    description: str = Form(...),
-    status_id: int = Form(...),
-    priority_id: int = Form(...),
-    is_terminal: bool = Form(False),
-    parent_id: int | None = Form(None),
-    links: str = Form(""),
-    sort_order: int = Form(0),
-    project_slug: str = Form(...),
-    next_page: str | None = Form(None),
-    db: AsyncDBConnection = Depends(get_db),
-):
-    task_repo = TaskRepository(db)
-    await task_repo.update(
-        task_id,
-        {
-            "description": description,
-            "status_id": status_id,
-            "priority_id": priority_id,
-            "is_terminal": is_terminal,
-            "parent_id": parent_id,
-            "links": links,
-            "sort_order": sort_order,
-        },
-    )
-    if next_page == "board":
-        return RedirectResponse(url="/projects/board", status_code=303)
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
-@router.post("/{task_id}/edit-panel")
-async def update_task_panel(
-    task_id: int,
     request: Request,
+    task_id: int,
     description: str = Form(...),
     status_id: int = Form(...),
     priority_id: int = Form(...),
@@ -266,8 +183,8 @@ async def update_task_panel(
     links: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
+    next: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
 ):
     task_repo = TaskRepository(db)
     await task_repo.update(
@@ -282,45 +199,15 @@ async def update_task_panel(
             "sort_order": sort_order,
         },
     )
-
-    from curator.db import FileRepository, TagRepository
-    proj_repo = ProjectRepository(db)
-    project = await proj_repo.get_by_slug(project_slug)
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
-
-    tasks = await task_repo.get_tree_for_project(project["id"])
-    tags = await tag_repo.get_for_project(project["id"])
-    files = await file_repo.get_for_project(project["id"])
-    subprojects = await proj_repo.get_subprojects(project["id"])
-    status_options = await proj_repo.get_status_options()
-    type_options = await proj_repo.get_type_options()
-    parent_options = await proj_repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/_panel.html",
-        context={
-            "project": project,
-            "tasks": tasks,
-            "tags": tags,
-            "files": files,
-            "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
-        },
-    )
+    return RedirectResponse(url=next, status_code=303)
 
 
 @router.post("/{task_id}/delete")
 async def delete_task(
+    request: Request,
     task_id: int,
     project_slug: str = Form(...),
+    next: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
@@ -328,18 +215,20 @@ async def delete_task(
         await task_repo.delete(task_id)
     except DeleteBlockedError as exc:
         return RedirectResponse(
-            url=f"/projects/{project_slug}?delete_blocked={task_id}&count={exc.count}",
+            url=f"{next}?delete_blocked={task_id}&count={exc.count}",
             status_code=303,
         )
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url=next, status_code=303)
 
 
 @router.post("/{task_id}/force-delete")
 async def force_delete_task(
+    request: Request,
     task_id: int,
     project_slug: str = Form(...),
+    next: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
     await task_repo.force_delete(task_id)
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url=next, status_code=303)
