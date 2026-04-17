@@ -91,7 +91,7 @@ async def create_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
-    next: str = Form(_BOARD),
+    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = ProjectRepository(db)
@@ -105,7 +105,7 @@ async def create_project(
             "target_date": target_date or None,
         }
     )
-    return RedirectResponse(url=next, status_code=303)
+    return RedirectResponse(url=next_url, status_code=303)
 
 
 @router.get("/board", response_class=HTMLResponse)
@@ -165,7 +165,7 @@ async def update_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
-    next: str = Form(_BOARD),
+    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = ProjectRepository(db)
@@ -180,20 +180,18 @@ async def update_project(
             "target_date": target_date or None,
         },
     )
-    return RedirectResponse(url=next, status_code=303)
+    return RedirectResponse(url=next_url, status_code=303)
 
 
 @router.post("/{slug}/delete")
 async def delete_project(
     request: Request,
     slug: str,
-    next: str = Form("/projects/"),
+    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = ProjectRepository(db)
     await repo.delete(slug)
-    if f"/projects/{slug}" in next:
-        next = "/projects/"
     return RedirectResponse(url=next, status_code=303)
 
 
