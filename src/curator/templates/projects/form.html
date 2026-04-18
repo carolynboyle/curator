@@ -11,7 +11,7 @@
       action="{% if project %}/projects/{{ project.slug }}/edit{% else %}/projects/new{% endif %}"
       class="curator-form">
 
-    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="next_url" value="{{ next }}">
 
     {% for field in view.fields %}
 
@@ -94,6 +94,17 @@
                id="target_date"
                name="target_date"
                value="{{ project.target_date if project else '' }}">
+    </label>
+
+    {% elif field.name == "notes" %}
+    <label for="notes">
+        {{ field.label }}
+        <textarea id="notes"
+                  name="notes"
+                  placeholder="{{ field.placeholder or '' }}">{{ project.notes if project else '' }}</textarea>
+        {% if field.help_text %}
+        <small class="field-help">{{ field.help_text }}</small>
+        {% endif %}
     </label>
 
     {% endif %}

@@ -62,6 +62,10 @@ projects:
     - name: target_date
       label: "Target Date"
       type: date
+    - name: notes
+      label: "Notes"
+      type: textarea
+      placeholder: "Internal notes, links to conversations, decisions made..."
 
 tasks:
   title: "Tasks"
@@ -100,6 +104,10 @@ tasks:
       type: text
       placeholder: "Comma-separated URLs"
       help_text: "Optional links related to this task."
+    - name: notes
+      label: "Notes"
+      type: textarea
+      placeholder: "Additional context, decisions, references..."
 
 tags:
   title: "Tags"

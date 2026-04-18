@@ -114,6 +114,7 @@ async def create_task(
     priority_id: int = Form(...),
     parent_id: int | None = Form(None),
     links: str = Form(""),
+    notes: str = Form(""),
     sort_order: int = Form(0),
     next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
@@ -130,6 +131,7 @@ async def create_task(
             "priority_id": priority_id,
             "parent_id": parent_id,
             "links": links,
+            "notes": notes or None,
             "sort_order": sort_order,
         }
     )
@@ -145,6 +147,7 @@ async def create_task_panel(
     priority_id: int = Form(...),
     parent_id: int | None = Form(None),
     links: str = Form(""),
+    notes: str = Form(""),
     sort_order: int = Form(0),
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
@@ -161,11 +164,11 @@ async def create_task_panel(
             "priority_id": priority_id,
             "parent_id": parent_id,
             "links": links,
+            "notes": notes or None,
             "sort_order": sort_order,
         }
     )
 
-    # Return refreshed panel partial for HTMX
     tag_repo = TagRepository(db)
     file_repo = FileRepository(db)
 
@@ -239,6 +242,7 @@ async def update_task(
     is_terminal: bool = Form(False),
     parent_id: int | None = Form(None),
     links: str = Form(""),
+    notes: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
     next_url: str = Form(_BOARD),
@@ -254,6 +258,7 @@ async def update_task(
             "is_terminal": is_terminal,
             "parent_id": parent_id,
             "links": links,
+            "notes": notes or None,
             "sort_order": sort_order,
         },
     )
@@ -270,6 +275,7 @@ async def update_task_panel(
     is_terminal: bool = Form(False),
     parent_id: int | None = Form(None),
     links: str = Form(""),
+    notes: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
     db: AsyncDBConnection = Depends(get_db),
@@ -285,11 +291,11 @@ async def update_task_panel(
             "is_terminal": is_terminal,
             "parent_id": parent_id,
             "links": links,
+            "notes": notes or None,
             "sort_order": sort_order,
         },
     )
 
-    # Return refreshed panel partial for HTMX
     proj_repo = ProjectRepository(db)
     project = await proj_repo.get_by_slug(project_slug)
     tag_repo = TagRepository(db)

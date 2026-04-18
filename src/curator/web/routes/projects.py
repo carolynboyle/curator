@@ -91,6 +91,7 @@ async def create_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
+    notes: str = Form(""),
     next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
@@ -103,6 +104,7 @@ async def create_project(
             "type_id": type_id,
             "parent_id": parent_id,
             "target_date": target_date or None,
+            "notes": notes or None,
         }
     )
     return RedirectResponse(url=next_url, status_code=303)
@@ -165,6 +167,7 @@ async def update_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
+    notes: str = Form(""),
     next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
@@ -178,6 +181,7 @@ async def update_project(
             "type_id": type_id,
             "parent_id": parent_id,
             "target_date": target_date or None,
+            "notes": notes or None,
         },
     )
     return RedirectResponse(url=next_url, status_code=303)
@@ -216,11 +220,6 @@ async def project_panel(
     tags = await tag_repo.get_for_project(project["id"])
     files = await file_repo.get_for_project(project["id"])
     subprojects = await repo.get_subprojects(project["id"])
-    status_options = await repo.get_status_options()
-    type_options = await repo.get_type_options()
-    parent_options = await repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
 
     return templates.TemplateResponse(
         request=request,
@@ -231,11 +230,11 @@ async def project_panel(
             "tags": tags,
             "files": files,
             "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
+            "status_options": await repo.get_status_options(),
+            "type_options": await repo.get_type_options(),
+            "parent_options": await repo.get_parent_options(),
+            "status_task_options": await task_repo.get_status_options(),
+            "priority_options": await task_repo.get_priority_options(),
         },
     )
 
