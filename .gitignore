@@ -33,6 +33,7 @@ Thumbs.db
 .env.production
 .env.development
 *.env
+.env.test
 
 # API keys and tokens
 *.key

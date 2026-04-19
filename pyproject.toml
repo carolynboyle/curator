@@ -30,3 +30,13 @@ include = ["curator*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["integration: requires steward test_curator database (run with -m integration)"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "python-dotenv",
+    "httpx",
+]

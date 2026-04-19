@@ -2,8 +2,9 @@
 curator.db.base - Generic async base repository.
 
 Provides shared query helpers for all repository classes. Each
-repository receives an AsyncDBConnection from the FastAPI dependency
-layer — BaseRepository does not open or close connections.
+repository receives an AsyncDBConnection and a QueryLoader from
+the FastAPI dependency layer — BaseRepository does not open or
+close connections, and does not load YAML.
 
 All query methods delegate directly to the connection's methods,
 providing a consistent interface and a single place to add
@@ -12,10 +13,15 @@ cross-cutting concerns (logging, metrics) in future.
 Usage:
     class ProjectRepository(BaseRepository):
         async def get_all(self) -> list[dict]:
-            return await self.fetch_all("SELECT * FROM v_projects")
+            return await self.fetch_all(self._q.sql("projects", "get_all"))
 """
 
+from typing import Optional
+
 from dbkit.connection import AsyncDBConnection
+from dbkit.resolver import SlugResolver
+
+from viewkit import QueryLoader
 
 
 class BaseRepository:
@@ -23,15 +29,17 @@ class BaseRepository:
     Base class for all Curator repositories.
 
     Wraps an AsyncDBConnection and exposes query helpers.
-    Instantiate with an open connection from the FastAPI
-    dependency layer.
+    Optionally receives a QueryLoader for externalised SQL lookups.
 
     Args:
-        db: An open AsyncDBConnection instance.
+        db:     An open AsyncDBConnection instance.
+        loader: Optional QueryLoader for YAML-driven SQL lookups.
     """
 
-    def __init__(self, db: AsyncDBConnection):
+    def __init__(self, db: AsyncDBConnection, loader: Optional[QueryLoader] = None):
         self._db = db
+        self._resolver = SlugResolver(db)
+        self._q = loader
 
     # -- Query helpers --------------------------------------------------------
 
@@ -66,7 +74,4 @@ class BaseRepository:
         Returns:
             List of dicts, one per row.
         """
-        return await self.fetch_all(
-            f"SELECT * FROM {table} ORDER BY {order_by}"
-        )
-    
+        return self._resolver.get_all(table, order_by)

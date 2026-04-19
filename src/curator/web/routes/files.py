@@ -26,12 +26,6 @@ from curator.web.deps import get_config, get_db
 
 router = APIRouter(prefix="/files", tags=["files"])
 
-_BOARD = "/projects/board"
-
-
-def _next(request: Request, fallback: str = _BOARD) -> str:
-    return request.headers.get("referer") or fallback
-
 
 @router.get("/", response_class=HTMLResponse)
 async def list_files(
@@ -82,7 +76,6 @@ async def new_file_form(
             "project_id": project_id,
             "task_id": task_id,
             "project_slug": project_slug,
-            "next": _next(request),
             "file_type_options": await repo.get_file_type_options(),
             "location_type_options": await repo.get_location_type_options(),
         },
@@ -91,7 +84,6 @@ async def new_file_form(
 
 @router.post("/new")
 async def create_file(
-    request: Request,
     project_id: int | None = Form(None),
     task_id: int | None = Form(None),
     label: str = Form(...),
@@ -100,7 +92,6 @@ async def create_file(
     location_type_id: int = Form(...),
     notes: str = Form(""),
     project_slug: str = Form(""),
-    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
@@ -115,7 +106,9 @@ async def create_file(
             "notes": notes or None,
         }
     )
-    return RedirectResponse(url=next_url, status_code=303)
+    if project_slug:
+        return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url="/projects/", status_code=303)
 
 
 @router.get("/{file_id}/edit", response_class=HTMLResponse)
@@ -155,7 +148,6 @@ async def edit_file_form(
             "project_id": file.get("project_id"),
             "task_id": file.get("task_id"),
             "project_slug": project_slug,
-            "next": _next(request),
             "file_type_options": await repo.get_file_type_options(),
             "location_type_options": await repo.get_location_type_options(),
         },
@@ -164,7 +156,6 @@ async def edit_file_form(
 
 @router.post("/{file_id}/edit")
 async def update_file(
-    request: Request,
     file_id: int,
     label: str = Form(...),
     file_type_id: int = Form(...),
@@ -172,7 +163,6 @@ async def update_file(
     location_type_id: int = Form(...),
     notes: str = Form(""),
     project_slug: str = Form(""),
-    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
@@ -186,17 +176,19 @@ async def update_file(
             "notes": notes or None,
         },
     )
-    return RedirectResponse(url=next_url, status_code=303)
+    if project_slug:
+        return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url="/projects/", status_code=303)
 
 
 @router.post("/{file_id}/delete")
 async def delete_file(
-    request: Request,
     file_id: int,
     project_slug: str = Form(""),
-    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
     await repo.delete(file_id)
-    return RedirectResponse(url=next_url, status_code=303)
+    if project_slug:
+        return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url="/projects/", status_code=303)

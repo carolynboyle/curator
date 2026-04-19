@@ -1,0 +1,37 @@
+
+graph TD
+    A["🌐 Browser UI<br/>Jinja2 templates<br/>Forms, lists, details"]
+    
+    B["FastAPI app<br/>Route handlers"]
+    C["ViewBuilder<br/>Parses views.yaml"]
+    
+    D["ConfigManager<br/>curator.yaml, views.yaml"]
+    E["Dependency injection<br/>get_db, get_config"]
+    
+    F["Repositories<br/>BaseRepository subclasses"]
+    G["Models<br/>FieldDef, ColumnDef, ViewDef"]
+    
+    H["dbkit: AsyncDBConnection<br/>Async PostgreSQL management"]
+    
+    I["PostgreSQL - Steward<br/>Tables: projects, tasks, tags, files<br/>Lookups: status, priority, type<br/>Views: v_projects, v_tasks, etc."]
+    
+    A -->|HTTP| B
+    B --> D
+    B --> C
+    B --> E
+    D --> F
+    E --> F
+    E --> G
+    F --> H
+    G --> H
+    H --> I
+    
+    style A fill:#e6f1fb,stroke:#185fa5,color:#042c53
+    style B fill:#e1f5ee,stroke:#0f6e56,color:#04342c
+    style C fill:#eeedfe,stroke:#534ab7,color:#26215c
+    style D fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+    style E fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+    style F fill:#faece7,stroke:#993c1d,color:#4a1b0c
+    style G fill:#fbeaf0,stroke:#993556,color:#4b1528
+    style H fill:#eaf3de,stroke:#3b6d11,color:#173404
+    style I fill:#faeeda,stroke:#854f0b,color:#412402
