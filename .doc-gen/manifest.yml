@@ -1,21 +1,21 @@
-# Generated: 2026-04-16 11:00:19
+# Generated: 2026-04-19 14:57:56
 # Project: /home/carolyn/projects/curator
-# Files: 44
+# Files: 60
 
 version: 1
 documents:
 - path: .gitignore
 - path: Dockerfile
 - path: README.md
-- path: cur_tree.txt
-- path: curatortree.txt
 - path: docker-compose.yml
+- path: docs/curator_architecture.mmd
 - path: docs/project-structure.md
-- path: h.txt
+- path: go.sh
 - path: pyproject.toml
 - path: src/curator/__init__.py
 - path: src/curator/config.py
 - path: src/curator/data/curator.yaml
+- path: src/curator/data/queries.yaml
 - path: src/curator/data/views.yaml
 - path: src/curator/db/__init__.py
 - path: src/curator/db/base.py
@@ -48,3 +48,19 @@ documents:
 - path: src/curator/web/routes/tags.py
 - path: src/curator/web/routes/tasks.py
 - path: static/curator.css
+- path: tests/__init__.py
+- path: tests/conftest.py
+- path: tests/integration/__init__.py
+- path: tests/integration/conftest.py
+- path: tests/integration/test_files_repo.py
+- path: tests/integration/test_projects_repo.py
+- path: tests/integration/test_tags_repo.py
+- path: tests/integration/test_tasks_repo.py
+- path: tests/test_tree.md
+- path: tests/unit/__init__.py
+- path: tests/unit/conftest.py
+- path: tests/unit/test_config.py
+- path: tests/unit/test_routes_files.py
+- path: tests/unit/test_routes_projects.py
+- path: tests/unit/test_routes_tags.py
+- path: tests/unit/test_routes_tasks.py

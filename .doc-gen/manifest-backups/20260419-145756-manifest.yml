@@ -1,0 +1,50 @@
+# Generated: 2026-04-16 11:00:19
+# Project: /home/carolyn/projects/curator
+# Files: 44
+
+version: 1
+documents:
+- path: .gitignore
+- path: Dockerfile
+- path: README.md
+- path: cur_tree.txt
+- path: curatortree.txt
+- path: docker-compose.yml
+- path: docs/project-structure.md
+- path: h.txt
+- path: pyproject.toml
+- path: src/curator/__init__.py
+- path: src/curator/config.py
+- path: src/curator/data/curator.yaml
+- path: src/curator/data/views.yaml
+- path: src/curator/db/__init__.py
+- path: src/curator/db/base.py
+- path: src/curator/db/files.py
+- path: src/curator/db/projects.py
+- path: src/curator/db/tags.py
+- path: src/curator/db/tasks.py
+- path: src/curator/exceptions.py
+- path: src/curator/templates/404.html
+- path: src/curator/templates/base.html
+- path: src/curator/templates/files/form.html
+- path: src/curator/templates/files/list.html
+- path: src/curator/templates/index.html
+- path: src/curator/templates/partials/confirm_delete.html
+- path: src/curator/templates/projects/_panel.html
+- path: src/curator/templates/projects/board.html
+- path: src/curator/templates/projects/detail.html
+- path: src/curator/templates/projects/form.html
+- path: src/curator/templates/projects/list.html
+- path: src/curator/templates/tags/form.html
+- path: src/curator/templates/tags/list.html
+- path: src/curator/templates/tasks/form.html
+- path: src/curator/templates/tasks/list.html
+- path: src/curator/web/__init__.py
+- path: src/curator/web/app.py
+- path: src/curator/web/deps.py
+- path: src/curator/web/routes/__init__.py
+- path: src/curator/web/routes/files.py
+- path: src/curator/web/routes/projects.py
+- path: src/curator/web/routes/tags.py
+- path: src/curator/web/routes/tasks.py
+- path: static/curator.css

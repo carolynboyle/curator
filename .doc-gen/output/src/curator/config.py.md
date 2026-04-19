@@ -2,7 +2,7 @@
 
 **Path:** src/curator/config.py
 **Syntax:** python
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```python
 """
@@ -36,11 +36,13 @@ from curator.exceptions import ConfigError
 _DATA_DIR = Path(__file__).parent / "data"
 _DEFAULT_CONFIG = _DATA_DIR / "curator.yaml"
 _DEFAULT_VIEWS = _DATA_DIR / "views.yaml"
+_DEFAULT_QUERIES = _DATA_DIR / "queries.yaml"
 
 # User config lives in ~/.config/curator/
 _USER_CONFIG_DIR = Path.home() / ".config" / "curator"
 _USER_CONFIG = _USER_CONFIG_DIR / "curator.yaml"
 _USER_VIEWS = _USER_CONFIG_DIR / "views.yaml"
+_USER_QUERIES = _USER_CONFIG_DIR / "queries.yaml"
 
 
 class ConfigManager:
@@ -52,13 +54,15 @@ class ConfigManager:
     Only keys present in the user file override defaults — the full
     default config does not need to be repeated.
 
-    The path to views.yaml is resolved here and passed to ViewBuilder
-    by the caller. ConfigManager does not import viewkit.
+    The paths to views.yaml and queries.yaml are resolved here and
+    passed to ViewBuilder / QueryBuilder by the caller. ConfigManager
+    does not import viewkit.
 
     Usage:
         config = ConfigManager()
         host = config.get("server", "host")
         views_path = config.views_path
+        queries_path = config.queries_path
     """
 
     def __init__(self, config_path: Optional[Path] = None):
@@ -72,6 +76,7 @@ class ConfigManager:
         """
         self._config = self._load(config_path)
         self.views_path = self._resolve_views_path()
+        self.queries_path = self._resolve_queries_path()
 
     # -- Public interface -----------------------------------------------------
 
@@ -125,6 +130,17 @@ class ConfigManager:
         if _USER_VIEWS.exists():
             return _USER_VIEWS
         return _DEFAULT_VIEWS
+
+    def _resolve_queries_path(self) -> Path:
+        """
+        Return the path to queries.yaml, preferring user override.
+
+        Returns:
+            Path to the queries.yaml file to load.
+        """
+        if _USER_QUERIES.exists():
+            return _USER_QUERIES
+        return _DEFAULT_QUERIES
 
     @staticmethod
     def _load(config_path: Optional[Path]) -> dict:
@@ -203,4 +219,5 @@ class ConfigManager:
             else:
                 result[key] = value
         return result
+
 ```

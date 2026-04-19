@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/routes/projects.py
 **Syntax:** python
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```python
 """
@@ -24,12 +24,12 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from dbkit.connection import AsyncDBConnection
-from viewkit import ViewBuilder
+from viewkit import QueryLoader, ViewBuilder
 
 from curator.db import FileRepository, ProjectRepository, TagRepository, TaskRepository
 from curator.exceptions import RecordNotFoundError
 from curator.web.app import templates
-from curator.web.deps import get_config, get_db
+from curator.web.deps import get_config, get_db, get_query_loader
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -40,8 +40,9 @@ async def list_projects(
     status: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     projects = await repo.get_all(status=status)
     view = ViewBuilder(config.views_path).get_view("projects")
     status_options = await repo.get_status_options()
@@ -63,8 +64,9 @@ async def new_project_form(
     request: Request,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
@@ -89,8 +91,9 @@ async def create_project(
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     slug = await repo.create(
         {
             "name": name,
@@ -103,67 +106,6 @@ async def create_project(
     )
     return RedirectResponse(url=f"/projects/{slug}", status_code=303)
 
-# ---------------------------------------------------------------------------
-# Add these two routes to projects_routes.py
-# ---------------------------------------------------------------------------
-
-@router.get("/board", response_class=HTMLResponse)
-async def project_board(
-    request: Request,
-    db: AsyncDBConnection = Depends(get_db),
-):
-    repo = ProjectRepository(db)
-    tree = await repo.get_tree()
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/board.html",
-        context={"tree": tree},
-    )
-
-
-@router.get("/{slug}/panel", response_class=HTMLResponse)
-async def project_panel(
-    slug: str,
-    request: Request,
-    db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
-):
-    repo = ProjectRepository(db)
-    try:
-        project = await repo.get_by_slug(slug)
-    except RecordNotFoundError:
-        return HTMLResponse("<p class='board-empty'>Project not found.</p>", status_code=404)
-
-    task_repo = TaskRepository(db)
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
-
-    tasks = await task_repo.get_tree_for_project(project["id"])
-    tags = await tag_repo.get_for_project(project["id"])
-    files = await file_repo.get_for_project(project["id"])
-    subprojects = await repo.get_subprojects(project["id"])
-    status_options = await repo.get_status_options()
-    type_options = await repo.get_type_options()
-    parent_options = await repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/_panel.html",
-        context={
-            "project": project,
-            "tasks": tasks,
-            "tags": tags,
-            "files": files,
-            "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
-        },
-    )
 
 @router.get("/{slug}", response_class=HTMLResponse)
 async def project_detail(
@@ -171,8 +113,9 @@ async def project_detail(
     request: Request,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     try:
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
@@ -182,9 +125,9 @@ async def project_detail(
             status_code=404,
         )
 
-    task_repo = TaskRepository(db)
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
+    task_repo = TaskRepository(db, loader)
+    tag_repo = TagRepository(db, loader)
+    file_repo = FileRepository(db, loader)
 
     tasks = await task_repo.get_tree_for_project(project["id"])
     tags = await tag_repo.get_for_project(project["id"])
@@ -212,8 +155,9 @@ async def edit_project_form(
     request: Request,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     try:
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
@@ -248,8 +192,9 @@ async def update_project(
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     await repo.update(
         slug,
         {
@@ -268,8 +213,9 @@ async def update_project(
 async def delete_project(
     slug: str,
     db: AsyncDBConnection = Depends(get_db),
+    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db)
+    repo = ProjectRepository(db, loader)
     await repo.delete(slug)
     return RedirectResponse(url="/projects/", status_code=303)
 

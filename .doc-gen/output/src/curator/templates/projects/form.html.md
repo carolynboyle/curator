@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/projects/form.html
 **Syntax:** html
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```html
 {% extends "base.html" %}
@@ -11,12 +11,14 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if project %}Edit Project{% else %}New Project{% endif %}</h1>
-    <a href="/projects/" class="btn-secondary">Cancel</a>
+    <a href="{{ next }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
       action="{% if project %}/projects/{{ project.slug }}/edit{% else %}/projects/new{% endif %}"
       class="curator-form">
+
+    <input type="hidden" name="next_url" value="{{ next }}">
 
     {% for field in view.fields %}
 
@@ -101,6 +103,17 @@
                value="{{ project.target_date if project else '' }}">
     </label>
 
+    {% elif field.name == "notes" %}
+    <label for="notes">
+        {{ field.label }}
+        <textarea id="notes"
+                  name="notes"
+                  placeholder="{{ field.placeholder or '' }}">{{ project.notes if project else '' }}</textarea>
+        {% if field.help_text %}
+        <small class="field-help">{{ field.help_text }}</small>
+        {% endif %}
+    </label>
+
     {% endif %}
     {% endfor %}
 
@@ -108,7 +121,7 @@
         <button type="submit" class="btn-primary">
             {% if project %}Save Changes{% else %}Create Project{% endif %}
         </button>
-        <a href="/projects/" class="btn-secondary">Cancel</a>
+        <a href="{{ next }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>

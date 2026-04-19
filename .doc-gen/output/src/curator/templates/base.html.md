@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/base.html
 **Syntax:** html
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```html
 <!DOCTYPE html>

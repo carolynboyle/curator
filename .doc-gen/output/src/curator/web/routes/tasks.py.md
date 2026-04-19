@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/routes/tasks.py
 **Syntax:** python
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```python
 """
@@ -113,7 +113,6 @@ async def create_task(
     parent_id: int | None = Form(None),
     links: str = Form(""),
     sort_order: int = Form(0),
-    next_page: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
 ):
     proj_repo = ProjectRepository(db)
@@ -131,70 +130,9 @@ async def create_task(
             "sort_order": sort_order,
         }
     )
-    if next_page == "board":
-        return RedirectResponse(url="/projects/board", status_code=303)
     return RedirectResponse(url=f"/projects/{slug}", status_code=303)
 
-@router.post("/new-panel/{slug}")
-async def create_task_panel(
-    slug: str,
-    request: Request,
-    description: str = Form(...),
-    status_id: int = Form(...),
-    priority_id: int = Form(...),
-    parent_id: int | None = Form(None),
-    links: str = Form(""),
-    sort_order: int = Form(0),
-    db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
-):
-    from curator.db import FileRepository, TagRepository
 
-    proj_repo = ProjectRepository(db)
-    project = await proj_repo.get_by_slug(slug)
-
-    task_repo = TaskRepository(db)
-    await task_repo.create(
-        {
-            "project_id": project["id"],
-            "description": description,
-            "status_id": status_id,
-            "priority_id": priority_id,
-            "parent_id": parent_id,
-            "links": links,
-            "sort_order": sort_order,
-        }
-    )
-
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
-
-    tasks = await task_repo.get_tree_for_project(project["id"])
-    tags = await tag_repo.get_for_project(project["id"])
-    files = await file_repo.get_for_project(project["id"])
-    subprojects = await proj_repo.get_subprojects(project["id"])
-    status_options = await proj_repo.get_status_options()
-    type_options = await proj_repo.get_type_options()
-    parent_options = await proj_repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/_panel.html",
-        context={
-            "project": project,
-            "tasks": tasks,
-            "tags": tags,
-            "files": files,
-            "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
-        },
-    )
 @router.get("/{task_id}/edit", response_class=HTMLResponse)
 async def edit_task_form(
     task_id: int,
@@ -242,7 +180,6 @@ async def update_task(
     links: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
-    next_page: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
@@ -258,70 +195,7 @@ async def update_task(
             "sort_order": sort_order,
         },
     )
-    if next_page == "board":
-        return RedirectResponse(url="/projects/board", status_code=303)
     return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
-@router.post("/{task_id}/edit-panel")
-async def update_task_panel(
-    task_id: int,
-    request: Request,
-    description: str = Form(...),
-    status_id: int = Form(...),
-    priority_id: int = Form(...),
-    is_terminal: bool = Form(False),
-    parent_id: int | None = Form(None),
-    links: str = Form(""),
-    sort_order: int = Form(0),
-    project_slug: str = Form(...),
-    db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
-):
-    task_repo = TaskRepository(db)
-    await task_repo.update(
-        task_id,
-        {
-            "description": description,
-            "status_id": status_id,
-            "priority_id": priority_id,
-            "is_terminal": is_terminal,
-            "parent_id": parent_id,
-            "links": links,
-            "sort_order": sort_order,
-        },
-    )
-
-    from curator.db import FileRepository, TagRepository
-    proj_repo = ProjectRepository(db)
-    project = await proj_repo.get_by_slug(project_slug)
-    tag_repo = TagRepository(db)
-    file_repo = FileRepository(db)
-
-    tasks = await task_repo.get_tree_for_project(project["id"])
-    tags = await tag_repo.get_for_project(project["id"])
-    files = await file_repo.get_for_project(project["id"])
-    subprojects = await proj_repo.get_subprojects(project["id"])
-    status_options = await proj_repo.get_status_options()
-    type_options = await proj_repo.get_type_options()
-    parent_options = await proj_repo.get_parent_options()
-    status_task_options = await task_repo.get_status_options()
-    priority_options = await task_repo.get_priority_options()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="projects/_panel.html",
-        context={
-            "project": project,
-            "tasks": tasks,
-            "tags": tags,
-            "files": files,
-            "subprojects": subprojects,
-            "status_options": status_options,
-            "type_options": type_options,
-            "parent_options": parent_options,
-            "status_task_options": status_task_options,
-            "priority_options": priority_options,
-        },
-    )
 
 
 @router.post("/{task_id}/delete")

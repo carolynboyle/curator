@@ -2,7 +2,7 @@
 
 **Path:** src/curator/web/app.py
 **Syntax:** python
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```python
 """

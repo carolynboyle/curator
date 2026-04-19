@@ -2,7 +2,7 @@
 
 **Path:** src/curator/data/views.yaml
 **Syntax:** yaml
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```yaml
 # curator views.yaml - View definitions for the projects database.
@@ -69,6 +69,10 @@ projects:
     - name: target_date
       label: "Target Date"
       type: date
+    - name: notes
+      label: "Notes"
+      type: textarea
+      placeholder: "Internal notes, links to conversations, decisions made..."
 
 tasks:
   title: "Tasks"
@@ -107,6 +111,10 @@ tasks:
       type: text
       placeholder: "Comma-separated URLs"
       help_text: "Optional links related to this task."
+    - name: notes
+      label: "Notes"
+      type: textarea
+      placeholder: "Additional context, decisions, references..."
 
 tags:
   title: "Tags"
@@ -165,4 +173,5 @@ files:
     - name: notes
       label: "Notes"
       type: textarea
+
 ```

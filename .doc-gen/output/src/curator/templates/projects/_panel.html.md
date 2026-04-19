@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/projects/_panel.html
 **Syntax:** html
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```html
 {#
@@ -84,6 +84,14 @@
         </div>
       </div>
 
+      <div class="panel-field">
+        <label>Notes</label>
+        <div class="panel-field-display" onclick="panelEdit(this)">
+          {{ project.notes or '—' }}
+        </div>
+        <textarea name="notes" class="panel-field-input" style="display:none;" rows="3">{{ project.notes or '' }}</textarea>
+      </div>
+
       {# Hidden required fields so form posts correctly #}
       <input type="hidden" name="name" value="{{ project.name }}">
 
@@ -144,6 +152,8 @@
              data-task-desc="{{ task.description | e }}"
              data-task-status="{{ task.status }}"
              data-task-priority="{{ task.priority }}"
+             data-task-links="{{ task.links or '' }}"
+             data-task-notes="{{ task.notes or '' | e }}"
              ondblclick="openTaskDialog(this)"
              title="Double-click to edit">
           <span class="task-status-badge task-status-{{ task.status | replace(' ', '-') }}">
@@ -216,6 +226,14 @@
           {% endfor %}
         </select>
       </div>
+      <div class="task-dialog-field">
+        <label>Links</label>
+        <input type="text" name="links" style="width:100%;" placeholder="Comma-separated URLs">
+      </div>
+      <div class="task-dialog-field">
+        <label>Notes</label>
+        <textarea name="notes" rows="2" style="width:100%;" placeholder="Additional context..."></textarea>
+      </div>
       <div class="task-dialog-actions">
         <button type="submit" class="btn-primary btn-sm">Save</button>
         <button type="button" class="btn-secondary btn-sm" onclick="closeAddTaskDialog()">Cancel</button>
@@ -256,6 +274,16 @@
             <option value="{{ p.id }}">{{ p.name }}</option>
           {% endfor %}
         </select>
+      </div>
+
+      <div class="task-dialog-field">
+        <label>Links</label>
+        <input type="text" name="links" id="task-dialog-links" style="width:100%;" placeholder="Comma-separated URLs">
+      </div>
+
+      <div class="task-dialog-field">
+        <label>Notes</label>
+        <textarea name="notes" id="task-dialog-notes" rows="2" style="width:100%;" placeholder="Additional context..."></textarea>
       </div>
 
       <div class="task-dialog-actions">
@@ -308,9 +336,13 @@ function openTaskDialog(row) {
     var description = row.dataset.taskDesc;
     var statusName = row.dataset.taskStatus;
     var priority = row.dataset.taskPriority;
+    var links = row.dataset.taskLinks || '';
+    var notes = row.dataset.taskNotes || '';
 
     document.getElementById('task-dialog-desc').textContent = description;
     document.getElementById('task-dialog-hidden-desc').value = description;
+    document.getElementById('task-dialog-links').value = links;
+    document.getElementById('task-dialog-notes').value = notes;
     document.getElementById('task-dialog-form').setAttribute('hx-post', '/tasks/' + taskId + '/edit-panel');
     htmx.process(document.getElementById('task-dialog-form'));
 
@@ -348,10 +380,10 @@ function filterTasks(query) {
     var rows = document.querySelectorAll('#task-subform .subform-row');
     var q = query.toLowerCase().trim();
     rows.forEach(function(row) {
-     var desc = row.dataset.taskDesc ? row.dataset.taskDesc.toLowerCase() : '';
-var status = row.dataset.taskStatus ? row.dataset.taskStatus.toLowerCase() : '';
-var priority = row.dataset.taskPriority ? row.dataset.taskPriority.toLowerCase() : '';
-row.style.display = (q === '' || desc.includes(q) || status.includes(q) || priority.includes(q)) ? '' : 'none';
+        var desc = row.dataset.taskDesc ? row.dataset.taskDesc.toLowerCase() : '';
+        var status = row.dataset.taskStatus ? row.dataset.taskStatus.toLowerCase() : '';
+        var priority = row.dataset.taskPriority ? row.dataset.taskPriority.toLowerCase() : '';
+        row.style.display = (q === '' || desc.includes(q) || status.includes(q) || priority.includes(q)) ? '' : 'none';
     });
 }
 

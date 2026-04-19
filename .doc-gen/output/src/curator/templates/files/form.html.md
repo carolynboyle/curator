@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/files/form.html
 **Syntax:** html
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```html
 {% extends "base.html" %}
@@ -11,8 +11,7 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if file %}Edit File{% else %}New File{% endif %}</h1>
-    <a href="{% if project_slug %}/projects/{{ project_slug }}{% else %}/projects/{% endif %}"
-       class="btn-secondary">Cancel</a>
+    <a href="{{ next }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
@@ -23,6 +22,7 @@
     <input type="hidden" name="project_id" value="{{ project_id or '' }}">
     <input type="hidden" name="task_id" value="{{ task_id or '' }}">
     <input type="hidden" name="project_slug" value="{{ project_slug or '' }}">
+    <input type="hidden" name="next_url" value="{{ next }}">
 
     {% for field in view.fields %}
 
@@ -94,10 +94,10 @@
         <button type="submit" class="btn-primary">
             {% if file %}Save Changes{% else %}Add File{% endif %}
         </button>
-        <a href="{% if project_slug %}/projects/{{ project_slug }}{% else %}/projects/{% endif %}"
-           class="btn-secondary">Cancel</a>
+        <a href="{{ next }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>
 {% endblock %}
+
 ```

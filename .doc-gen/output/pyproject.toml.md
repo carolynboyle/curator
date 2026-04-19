@@ -2,7 +2,7 @@
 
 **Path:** pyproject.toml
 **Syntax:** toml
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```toml
 [build-system]
@@ -37,4 +37,15 @@ include = ["curator*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["integration: requires steward test_curator database (run with -m integration)"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "python-dotenv",
+    "httpx",
+]
+
 ```

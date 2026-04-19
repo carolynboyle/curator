@@ -2,7 +2,7 @@
 
 **Path:** src/curator/templates/tasks/form.html
 **Syntax:** html
-**Generated:** 2026-04-16 11:00:26
+**Generated:** 2026-04-19 14:58:02
 
 ```html
 {% extends "base.html" %}
@@ -11,15 +11,15 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if task %}Edit Task{% else %}New Task{% endif %}</h1>
-    <a href="/projects/{{ project.slug }}" class="btn-secondary">Cancel</a>
+    <a href="{{ next }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
       action="{% if task %}/tasks/{{ task.id }}/edit{% else %}/tasks/new/{{ project.slug }}{% endif %}"
       class="curator-form">
 
-    {# Pass project slug back so we can redirect correctly after edit #}
     <input type="hidden" name="project_slug" value="{{ project.slug }}">
+    <input type="hidden" name="next_url" value="{{ next }}">
 
     {% for field in view.fields %}
 
@@ -88,6 +88,17 @@
         {% endif %}
     </label>
 
+    {% elif field.name == "notes" %}
+    <label for="notes">
+        {{ field.label }}
+        <textarea id="notes"
+                  name="notes"
+                  placeholder="{{ field.placeholder or '' }}">{{ task.notes if task else '' }}</textarea>
+        {% if field.help_text %}
+        <small class="field-help">{{ field.help_text }}</small>
+        {% endif %}
+    </label>
+
     {% endif %}
     {% endfor %}
 
@@ -95,7 +106,7 @@
         <button type="submit" class="btn-primary">
             {% if task %}Save Changes{% else %}Create Task{% endif %}
         </button>
-        <a href="/projects/{{ project.slug }}" class="btn-secondary">Cancel</a>
+        <a href="{{ next }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>
@@ -107,10 +118,12 @@
     Deleting it will also delete all subtasks.</p>
     <form method="post" action="/tasks/{{ task.id }}/force-delete">
         <input type="hidden" name="project_slug" value="{{ project.slug }}">
+        <input type="hidden" name="next_url" value="{{ next }}">
         <button type="submit" class="btn-danger">Delete Task and All Subtasks</button>
     </form>
 </div>
 {% endif %}
 
 {% endblock %}
+
 ```
