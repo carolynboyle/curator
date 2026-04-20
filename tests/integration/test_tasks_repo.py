@@ -8,7 +8,6 @@ Covers every method in curator.db.tasks.TaskRepository.
 """
 
 import pytest
-import pytest_asyncio
 
 from curator.db.projects import ProjectRepository
 from curator.db.tasks import TaskRepository
@@ -26,12 +25,15 @@ def task_repo(fake_db):
     return TaskRepository(fake_db)
 
 
-@pytest_asyncio.fixture()
-async def project_id(fake_db, lookup):
-    """Create a minimal project and return its ID for task tests."""
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+async def _make_project(fake_db, lookup, name="Task Test Project") -> int:
+    """Create a minimal project and return its ID."""
     repo = ProjectRepository(fake_db)
     slug = await repo.create({
-        "name": "Task Test Project",
+        "name": name,
         "description": None,
         "status_id": await lookup("project_status", "active"),
         "type_id": await lookup("project_type", "coding"),
@@ -41,10 +43,6 @@ async def project_id(fake_db, lookup):
     project = await repo.get_by_slug(slug)
     return project["id"]
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 async def _create_task(repo, project_id, lookup, **kwargs) -> int:
     """Insert a minimal task and return its ID."""
@@ -66,7 +64,8 @@ async def _create_task(repo, project_id, lookup, **kwargs) -> int:
 
 class TestGetById:
 
-    async def test_returns_task_dict(self, task_repo, project_id, lookup):
+    async def test_returns_task_dict(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup)
         task = await task_repo.get_by_id(task_id)
         assert task["id"] == task_id
@@ -82,7 +81,8 @@ class TestGetById:
 
 class TestGetAllForProject:
 
-    async def test_returns_top_level_tasks_only(self, task_repo, project_id, lookup):
+    async def test_returns_top_level_tasks_only(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="Parent")
         await _create_task(
             task_repo, project_id, lookup,
@@ -91,7 +91,8 @@ class TestGetAllForProject:
         top_level = await task_repo.get_all_for_project(project_id)
         assert all(t["parent_id"] is None for t in top_level)
 
-    async def test_empty_project_returns_empty_list(self, task_repo, project_id):
+    async def test_empty_project_returns_empty_list(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         result = await task_repo.get_all_for_project(project_id)
         assert result == []
 
@@ -103,8 +104,9 @@ class TestGetAllForProject:
 class TestGetTreeForProject:
 
     async def test_returns_all_tasks_including_subtasks(
-        self, task_repo, project_id, lookup
+        self, task_repo, fake_db, lookup
     ):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="Root")
         await _create_task(
             task_repo, project_id, lookup,
@@ -120,7 +122,8 @@ class TestGetTreeForProject:
 
 class TestGetSubtasks:
 
-    async def test_returns_direct_children_only(self, task_repo, project_id, lookup):
+    async def test_returns_direct_children_only(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="Parent")
         child_id = await _create_task(
             task_repo, project_id, lookup,
@@ -141,12 +144,14 @@ class TestGetSubtasks:
 
 class TestGetChildCount:
 
-    async def test_zero_for_leaf_task(self, task_repo, project_id, lookup):
+    async def test_zero_for_leaf_task(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup)
         count = await task_repo.get_child_count(task_id)
         assert count == 0
 
-    async def test_correct_count_for_parent(self, task_repo, project_id, lookup):
+    async def test_correct_count_for_parent(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="P")
         await _create_task(task_repo, project_id, lookup, parent_id=parent_id)
         await _create_task(task_repo, project_id, lookup, parent_id=parent_id)
@@ -160,11 +165,13 @@ class TestGetChildCount:
 
 class TestCreate:
 
-    async def test_returns_integer_id(self, task_repo, project_id, lookup):
+    async def test_returns_integer_id(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup)
         assert isinstance(task_id, int)
 
-    async def test_created_task_is_retrievable(self, task_repo, project_id, lookup):
+    async def test_created_task_is_retrievable(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(
             task_repo, project_id, lookup, description="Unique description"
         )
@@ -178,7 +185,8 @@ class TestCreate:
 
 class TestUpdate:
 
-    async def test_update_changes_description(self, task_repo, project_id, lookup):
+    async def test_update_changes_description(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup, description="Before")
         await task_repo.update(task_id, {
             "description": "After",
@@ -192,7 +200,8 @@ class TestUpdate:
         task = await task_repo.get_by_id(task_id)
         assert task["description"] == "After"
 
-    async def test_complete_status_sets_completed_at(self, task_repo, project_id, lookup):
+    async def test_complete_status_sets_completed_at(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup)
         await task_repo.update(task_id, {
             "description": "Done",
@@ -225,13 +234,15 @@ class TestUpdate:
 
 class TestDelete:
 
-    async def test_delete_leaf_task(self, task_repo, project_id, lookup):
+    async def test_delete_leaf_task(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         task_id = await _create_task(task_repo, project_id, lookup)
         await task_repo.delete(task_id)
         with pytest.raises(RecordNotFoundError):
             await task_repo.get_by_id(task_id)
 
-    async def test_delete_with_children_raises(self, task_repo, project_id, lookup):
+    async def test_delete_with_children_raises(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="Parent")
         await _create_task(task_repo, project_id, lookup, parent_id=parent_id)
         with pytest.raises(DeleteBlockedError) as exc_info:
@@ -239,8 +250,9 @@ class TestDelete:
         assert exc_info.value.count == 1
 
     async def test_force_delete_removes_parent_and_children(
-        self, task_repo, project_id, lookup
+        self, task_repo, fake_db, lookup
     ):
+        project_id = await _make_project(fake_db, lookup)
         parent_id = await _create_task(task_repo, project_id, lookup, description="Root")
         child_id = await _create_task(
             task_repo, project_id, lookup, parent_id=parent_id
@@ -270,7 +282,8 @@ class TestSelectOptions:
         options = await task_repo.get_priority_options()
         assert len(options) > 0
 
-    async def test_parent_options_for_project(self, task_repo, project_id, lookup):
+    async def test_parent_options_for_project(self, task_repo, fake_db, lookup):
+        project_id = await _make_project(fake_db, lookup)
         await _create_task(task_repo, project_id, lookup, description="Top level")
         options = await task_repo.get_parent_options(project_id)
         assert len(options) >= 1

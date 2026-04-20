@@ -52,9 +52,23 @@ curator/
 ├── static/
 │   └── curator.css                    # Pico base + WCYJ theme variables
 │
-└── tests/
-    ├── conftest.py                    # Shared fixtures
-    ├── test_config.py
-    ├── test_db_projects.py
-    ├── test_db_tasks.py
-    └── test_routes_projects.py
+
+|── tests/
+├── .env.test
+├── __init__.py
+├── conftest.py
+├── unit/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_config.py
+│   ├── test_routes_files.py
+│   ├── test_routes_projects.py
+│   ├── test_routes_tags.py
+│   └── test_routes_tasks.py
+└── integration/
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_files_repo.py
+    ├── test_projects_repo.py
+    ├── test_tags_repo.py
+    └── test_tasks_repo.py

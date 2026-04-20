@@ -1,14 +1,14 @@
-# Generated: 2026-04-19 14:57:05
+# Generated: 2026-04-19 18:46:39
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
 # Version: v0.1.0
-# Files: 44
+# Files: 60
 
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-04-19 14:57:05'
+generated: '2026-04-19 18:46:39'
 version: 0.1.0
 files:
 - path: .gitignore
@@ -17,16 +17,14 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/Dockerfile
 - path: README.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/README.md
-- path: cur_tree.txt
-  url: https://raw.githubusercontent.com/carolynboyle/curator/main/cur_tree.txt
-- path: curatortree.txt
-  url: https://raw.githubusercontent.com/carolynboyle/curator/main/curatortree.txt
 - path: docker-compose.yml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docker-compose.yml
+- path: docs/curator_architecture.mmd
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/curator_architecture.mmd
 - path: docs/project-structure.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/project-structure.md
-- path: h.txt
-  url: https://raw.githubusercontent.com/carolynboyle/curator/main/h.txt
+- path: go.sh
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/go.sh
 - path: pyproject.toml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/pyproject.toml
 - path: src/curator/__init__.py
@@ -35,6 +33,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/config.py
 - path: src/curator/data/curator.yaml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/curator.yaml
+- path: src/curator/data/queries.yaml
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/queries.yaml
 - path: src/curator/data/views.yaml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/views.yaml
 - path: src/curator/db/__init__.py
@@ -99,3 +99,35 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/routes/tasks.py
 - path: static/curator.css
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/static/curator.css
+- path: tests/__init__.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/__init__.py
+- path: tests/conftest.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/conftest.py
+- path: tests/integration/__init__.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/__init__.py
+- path: tests/integration/conftest.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/conftest.py
+- path: tests/integration/test_files_repo.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_files_repo.py
+- path: tests/integration/test_projects_repo.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_projects_repo.py
+- path: tests/integration/test_tags_repo.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_tags_repo.py
+- path: tests/integration/test_tasks_repo.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_tasks_repo.py
+- path: tests/test_tree.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/test_tree.md
+- path: tests/unit/__init__.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/__init__.py
+- path: tests/unit/conftest.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/conftest.py
+- path: tests/unit/test_config.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_config.py
+- path: tests/unit/test_routes_files.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_files.py
+- path: tests/unit/test_routes_projects.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_projects.py
+- path: tests/unit/test_routes_tags.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_tags.py
+- path: tests/unit/test_routes_tasks.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_tasks.py

@@ -90,3 +90,7 @@ __jinja2_cache__/
 
 # ruff
 .ruff_cache/
+
+
+# misc notes
+scratchpad.md

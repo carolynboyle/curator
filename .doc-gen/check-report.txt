@@ -1,0 +1,262 @@
+======================================================================
+CHECK MODE - Dry Run Report
+======================================================================
+
+Manifest:     /home/carolyn/projects/curator/.doc-gen/manifest.yml
+Project Root: /home/carolyn/projects/curator
+Output Dir:   /home/carolyn/projects/curator/.doc-gen/output
+Total Files:  60
+
+======================================================================
+Files that would be generated:
+======================================================================
+
+✓ EXISTS
+  Source: .gitignore
+  Output: output/.gitignore.md
+
+✓ EXISTS
+  Source: Dockerfile
+  Output: output/Dockerfile.md
+
+✓ EXISTS
+  Source: README.md
+  Output: output/README.md.md
+
+✓ EXISTS
+  Source: docker-compose.yml
+  Output: output/docker-compose.yml.md
+
+✓ EXISTS
+  Source: docs/curator_architecture.mmd
+  Output: output/docs/curator_architecture.mmd.md
+
+✓ EXISTS
+  Source: docs/project-structure.md
+  Output: output/docs/project-structure.md.md
+
+✓ EXISTS
+  Source: go.sh
+  Output: output/go.sh.md
+
+✓ EXISTS
+  Source: pyproject.toml
+  Output: output/pyproject.toml.md
+
+✓ EXISTS
+  Source: src/curator/__init__.py
+  Output: output/src/curator/__init__.py.md
+
+✓ EXISTS
+  Source: src/curator/config.py
+  Output: output/src/curator/config.py.md
+
+✓ EXISTS
+  Source: src/curator/data/curator.yaml
+  Output: output/src/curator/data/curator.yaml.md
+
+✓ EXISTS
+  Source: src/curator/data/queries.yaml
+  Output: output/src/curator/data/queries.yaml.md
+
+✓ EXISTS
+  Source: src/curator/data/views.yaml
+  Output: output/src/curator/data/views.yaml.md
+
+✓ EXISTS
+  Source: src/curator/db/__init__.py
+  Output: output/src/curator/db/__init__.py.md
+
+✓ EXISTS
+  Source: src/curator/db/base.py
+  Output: output/src/curator/db/base.py.md
+
+✓ EXISTS
+  Source: src/curator/db/files.py
+  Output: output/src/curator/db/files.py.md
+
+✓ EXISTS
+  Source: src/curator/db/projects.py
+  Output: output/src/curator/db/projects.py.md
+
+✓ EXISTS
+  Source: src/curator/db/tags.py
+  Output: output/src/curator/db/tags.py.md
+
+✓ EXISTS
+  Source: src/curator/db/tasks.py
+  Output: output/src/curator/db/tasks.py.md
+
+✓ EXISTS
+  Source: src/curator/exceptions.py
+  Output: output/src/curator/exceptions.py.md
+
+✓ EXISTS
+  Source: src/curator/templates/404.html
+  Output: output/src/curator/templates/404.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/base.html
+  Output: output/src/curator/templates/base.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/files/form.html
+  Output: output/src/curator/templates/files/form.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/files/list.html
+  Output: output/src/curator/templates/files/list.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/index.html
+  Output: output/src/curator/templates/index.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/partials/confirm_delete.html
+  Output: output/src/curator/templates/partials/confirm_delete.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/projects/_panel.html
+  Output: output/src/curator/templates/projects/_panel.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/projects/board.html
+  Output: output/src/curator/templates/projects/board.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/projects/detail.html
+  Output: output/src/curator/templates/projects/detail.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/projects/form.html
+  Output: output/src/curator/templates/projects/form.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/projects/list.html
+  Output: output/src/curator/templates/projects/list.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/tags/form.html
+  Output: output/src/curator/templates/tags/form.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/tags/list.html
+  Output: output/src/curator/templates/tags/list.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/tasks/form.html
+  Output: output/src/curator/templates/tasks/form.html.md
+
+✓ EXISTS
+  Source: src/curator/templates/tasks/list.html
+  Output: output/src/curator/templates/tasks/list.html.md
+
+✓ EXISTS
+  Source: src/curator/web/__init__.py
+  Output: output/src/curator/web/__init__.py.md
+
+✓ EXISTS
+  Source: src/curator/web/app.py
+  Output: output/src/curator/web/app.py.md
+
+✓ EXISTS
+  Source: src/curator/web/deps.py
+  Output: output/src/curator/web/deps.py.md
+
+✓ EXISTS
+  Source: src/curator/web/routes/__init__.py
+  Output: output/src/curator/web/routes/__init__.py.md
+
+✓ EXISTS
+  Source: src/curator/web/routes/files.py
+  Output: output/src/curator/web/routes/files.py.md
+
+✓ EXISTS
+  Source: src/curator/web/routes/projects.py
+  Output: output/src/curator/web/routes/projects.py.md
+
+✓ EXISTS
+  Source: src/curator/web/routes/tags.py
+  Output: output/src/curator/web/routes/tags.py.md
+
+✓ EXISTS
+  Source: src/curator/web/routes/tasks.py
+  Output: output/src/curator/web/routes/tasks.py.md
+
+✓ EXISTS
+  Source: static/curator.css
+  Output: output/static/curator.css.md
+
+✓ EXISTS
+  Source: tests/__init__.py
+  Output: output/tests/__init__.py.md
+
+✓ EXISTS
+  Source: tests/conftest.py
+  Output: output/tests/conftest.py.md
+
+✓ EXISTS
+  Source: tests/integration/__init__.py
+  Output: output/tests/integration/__init__.py.md
+
+✓ EXISTS
+  Source: tests/integration/conftest.py
+  Output: output/tests/integration/conftest.py.md
+
+✓ EXISTS
+  Source: tests/integration/test_files_repo.py
+  Output: output/tests/integration/test_files_repo.py.md
+
+✓ EXISTS
+  Source: tests/integration/test_projects_repo.py
+  Output: output/tests/integration/test_projects_repo.py.md
+
+✓ EXISTS
+  Source: tests/integration/test_tags_repo.py
+  Output: output/tests/integration/test_tags_repo.py.md
+
+✓ EXISTS
+  Source: tests/integration/test_tasks_repo.py
+  Output: output/tests/integration/test_tasks_repo.py.md
+
+✓ EXISTS
+  Source: tests/test_tree.md
+  Output: output/tests/test_tree.md.md
+
+✓ EXISTS
+  Source: tests/unit/__init__.py
+  Output: output/tests/unit/__init__.py.md
+
+✓ EXISTS
+  Source: tests/unit/conftest.py
+  Output: output/tests/unit/conftest.py.md
+
+✓ EXISTS
+  Source: tests/unit/test_config.py
+  Output: output/tests/unit/test_config.py.md
+
+✓ EXISTS
+  Source: tests/unit/test_routes_files.py
+  Output: output/tests/unit/test_routes_files.py.md
+
+✓ EXISTS
+  Source: tests/unit/test_routes_projects.py
+  Output: output/tests/unit/test_routes_projects.py.md
+
+✓ EXISTS
+  Source: tests/unit/test_routes_tags.py
+  Output: output/tests/unit/test_routes_tags.py.md
+
+✓ EXISTS
+  Source: tests/unit/test_routes_tasks.py
+  Output: output/tests/unit/test_routes_tasks.py.md
+
+======================================================================
+Summary:
+======================================================================
+Total files in manifest: 60
+Source files exist:      60
+Source files missing:    0
+
+No files were written (dry-run mode)
+======================================================================
