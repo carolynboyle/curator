@@ -116,6 +116,12 @@ cursors in `fetch_all` and `fetch_one`. For `fetch_scalar`, use
 value rather than the column name key.
 
 ---
+**Final fix:**  The dict_row factory was being passed to the cursor constructor 
+but psycopg was still returning bytes for text columns in certain cases. The reliable 
+fix was to explicitly decode bytes values after fetching, using a
+dict comprehension: {k: v.decode() if isinstance(v, bytes) else v for k, v in row.items()}. 
+This is applied in both fetch_all and fetch_one as a defensive measure regardless of what 
+the cursor's row factory returns.
 
 ## File Structure
 
