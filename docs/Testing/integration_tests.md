@@ -150,5 +150,22 @@ tests/
 ```
 
 ---
+## Smoke Test
+After deploying updated code to wcyjvs2, a manual smoke test confirms the application is working end-to-end against the live projects database on steward. The smoke test is not automated — it is a quick visual check that the board loads, the project tree renders, and basic CRUD operations work as expected.
+Checklist:
 
+Board loads at /projects/board with project tree visible
+Project panel opens and displays tasks, tags, and files
+New project form renders and submits correctly
+New task form renders and submits correctly
+No 500 errors in the uvicorn log
+
+Deployment steps:
+
+On wcyjvs2: git pull
+Restart Curator: ./go.sh
+Navigate to http://100.64.0.3:8080/projects/board
+
+Known gotcha: FastAPI route registration order matters. Fixed routes (e.g. /board) must be registered before wildcard routes (e.g. /{slug}) or FastAPI will match the fixed path as a slug and return 404. A unit test in test_routes_projects.py guards against this regression.
 *Last updated: 2026-04-19*
+

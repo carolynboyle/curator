@@ -191,3 +191,13 @@ class TestDeleteProject:
             )
         assert response.status_code == 303
         assert "/projects/" in response.headers["location"]
+
+
+class TestRouteOrder:
+
+    def test_board_route_registered_before_slug_catch_all(self):
+        from curator.web.app import app
+        routes = [r.path for r in app.routes]
+        board_index = routes.index("/projects/board")
+        slug_index = routes.index("/projects/{slug}")
+        assert board_index < slug_index

@@ -8,8 +8,10 @@ Covers:
   - GET  /tasks/project/{slug}      — list tasks, project not found
   - GET  /tasks/new/{slug}          — form renders, project not found
   - POST /tasks/new/{slug}          — create redirects
+  - POST /tasks/new-panel/{slug}    — create returns panel HTML
   - GET  /tasks/{id}/edit           — edit form found and not found
   - POST /tasks/{id}/edit           — update redirects
+  - POST /tasks/{id}/edit-panel     — update returns panel HTML
   - POST /tasks/{id}/delete         — delete redirects; DeleteBlockedError redirects with query params
   - POST /tasks/{id}/force-delete   — force delete redirects
 """
@@ -163,6 +165,140 @@ class TestUpdateTask:
                 follow_redirects=False,
             )
         assert response.status_code == 303
+
+def _panel_mocks(MockProj, MockTask):
+    """Wire up all repository methods required by _panel_response."""
+    MockProj.return_value.get_by_slug = AsyncMock(return_value=_project())
+    MockProj.return_value.get_subprojects = AsyncMock(return_value=[])
+    MockProj.return_value.get_status_options = AsyncMock(return_value=[])
+    MockProj.return_value.get_type_options = AsyncMock(return_value=[])
+    MockProj.return_value.get_parent_options = AsyncMock(return_value=[])
+    MockTask.return_value.get_tree_for_project = AsyncMock(return_value=[])
+    MockTask.return_value.get_status_options = AsyncMock(return_value=[])
+    MockTask.return_value.get_priority_options = AsyncMock(return_value=[])
+    MockTask.return_value.create = AsyncMock(return_value=42)
+    MockTask.return_value.update = AsyncMock(return_value=None)
+
+# ---------------------------------------------------------------------------
+# POST /tasks/new-panel/{slug}
+# ---------------------------------------------------------------------------
+
+class TestCreateTaskPanel:
+
+    def test_returns_200_with_panel_html(self, client):
+        with patch("curator.web.routes.tasks.ProjectRepository") as MockProj, \
+             patch("curator.web.routes.tasks.TaskRepository") as MockTask, \
+             patch("curator.web.routes.tasks.TagRepository") as MockTag, \
+             patch("curator.web.routes.tasks.FileRepository") as MockFile:
+            _panel_mocks(MockProj, MockTask)
+            MockProj.return_value.get_by_id = AsyncMock(return_value=_project())
+            MockTask.return_value.create = AsyncMock(return_value=42)
+            MockTag.return_value.get_for_project = AsyncMock(return_value=[])
+            MockFile.return_value.get_for_project = AsyncMock(return_value=[])
+            response = client.post(
+                "/tasks/new-panel/test-project",
+                data={
+                    "description": "Panel task",
+                    "status_id": "1",
+                    "priority_id": "2",
+                },
+            )
+        assert response.status_code == 200
+
+    def test_calls_create_with_correct_data(self, client):
+        with patch("curator.web.routes.tasks.ProjectRepository") as MockProj, \
+             patch("curator.web.routes.tasks.TaskRepository") as MockTask, \
+             patch("curator.web.routes.tasks.TagRepository") as MockTag, \
+             patch("curator.web.routes.tasks.FileRepository") as MockFile:
+            _panel_mocks(MockProj, MockTask)         
+            MockProj.return_value.get_by_id = AsyncMock(return_value=_project())
+            MockTag.return_value.get_for_project = AsyncMock(return_value=[])
+            MockFile.return_value.get_for_project = AsyncMock(return_value=[])
+            client.post(
+                "/tasks/new-panel/test-project",
+                data={
+                    "description": "Panel task",
+                    "status_id": "1",
+                    "priority_id": "2",
+                },
+            )
+        MockTask.return_value.create.assert_awaited_once()
+        call_data = MockTask.return_value.create.call_args[0][0]
+        assert call_data["description"] == "Panel task"
+        assert call_data["project_id"] == 1
+
+
+# ---------------------------------------------------------------------------
+# POST /tasks/{id}/edit-panel
+# ---------------------------------------------------------------------------
+
+class TestUpdateTaskPanel:
+
+    def test_returns_200_with_panel_html(self, client):
+        with patch("curator.web.routes.tasks.ProjectRepository") as MockProj, \
+             patch("curator.web.routes.tasks.TaskRepository") as MockTask, \
+             patch("curator.web.routes.tasks.TagRepository") as MockTag, \
+             patch("curator.web.routes.tasks.FileRepository") as MockFile:
+            _panel_mocks(MockProj, MockTask)
+            MockTask.return_value.update = AsyncMock(return_value=None)
+            MockTag.return_value.get_for_project = AsyncMock(return_value=[])
+            MockFile.return_value.get_for_project = AsyncMock(return_value=[])
+            response = client.post(
+                "/tasks/1/edit-panel",
+                data={
+                    "description": "Updated via panel",
+                    "status_id": "2",
+                    "priority_id": "1",
+                    "is_terminal": "true",
+                    "project_slug": "test-project",
+                },
+            )
+        assert response.status_code == 200
+
+    def test_calls_update_with_is_terminal_true(self, client):
+        with patch("curator.web.routes.tasks.ProjectRepository") as MockProj, \
+             patch("curator.web.routes.tasks.TaskRepository") as MockTask, \
+             patch("curator.web.routes.tasks.TagRepository") as MockTag, \
+             patch("curator.web.routes.tasks.FileRepository") as MockFile:
+            _panel_mocks(MockProj, MockTask)
+            MockTag.return_value.get_for_project = AsyncMock(return_value=[])
+            MockTask.return_value.update = AsyncMock(return_value=None)
+            MockFile.return_value.get_for_project = AsyncMock(return_value=[])
+            client.post(
+                "/tasks/1/edit-panel",
+                data={
+                    "description": "Done",
+                    "status_id": "2",
+                    "priority_id": "1",
+                    "is_terminal": "true",
+                    "project_slug": "test-project",
+                },
+            )
+        MockTask.return_value.update.assert_awaited_once()
+        call_data = MockTask.return_value.update.call_args[0][1]
+        assert call_data["is_terminal"] is True
+
+    def test_calls_update_with_is_terminal_false(self, client):
+        with patch("curator.web.routes.tasks.ProjectRepository") as MockProj, \
+             patch("curator.web.routes.tasks.TaskRepository") as MockTask, \
+             patch("curator.web.routes.tasks.TagRepository") as MockTag, \
+             patch("curator.web.routes.tasks.FileRepository") as MockFile:
+            _panel_mocks(MockProj, MockTask)
+            MockTask.return_value.update = AsyncMock(return_value=None)
+            MockTag.return_value.get_for_project = AsyncMock(return_value=[])
+            MockFile.return_value.get_for_project = AsyncMock(return_value=[])
+            client.post(
+                "/tasks/1/edit-panel",
+                data={
+                    "description": "Still open",
+                    "status_id": "1",
+                    "priority_id": "1",
+                    "is_terminal": "false",
+                    "project_slug": "test-project",
+                },
+            )
+        call_data = MockTask.return_value.update.call_args[0][1]
+        assert call_data["is_terminal"] is False
 
 
 # ---------------------------------------------------------------------------

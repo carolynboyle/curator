@@ -9,8 +9,10 @@ Route map:
     GET  /tasks/project/{slug}          — list tasks for a project
     GET  /tasks/new/{slug}              — new task form
     POST /tasks/new/{slug}              — create task
+    POST /tasks/new-panel/{slug}        — create task, return panel fragment
     GET  /tasks/{id}/edit               — edit form
     POST /tasks/{id}/edit               — update task
+    POST /tasks/{id}/edit-panel         — update task, return panel fragment
     POST /tasks/{id}/delete             — delete task (raises if children)
     POST /tasks/{id}/force-delete       — delete task and all descendants
 """
@@ -21,12 +23,62 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from dbkit.connection import AsyncDBConnection
 from viewkit import ViewBuilder
 
-from curator.db import ProjectRepository, TaskRepository
+from curator.db import FileRepository, ProjectRepository, TagRepository, TaskRepository
 from curator.exceptions import DeleteBlockedError, RecordNotFoundError
 from curator.web.app import templates
 from curator.web.deps import get_config, get_db
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+# ---------------------------------------------------------------------------
+# Shared panel helper
+# ---------------------------------------------------------------------------
+
+async def _panel_response(
+    request: Request,
+    slug: str,
+    proj_repo: ProjectRepository,
+    task_repo: TaskRepository,
+    db: AsyncDBConnection,
+) -> templates.TemplateResponse:
+    """
+    Fetch all data needed to render projects/_panel.html and return the response.
+
+    Used by panel-targeted POST routes (create and update) so both return a
+    fresh panel fragment for htmx to swap into #board-detail.
+
+    Args:
+        request:   The current request (required by TemplateResponse).
+        slug:      Project slug — used to reload the project after a write.
+        proj_repo: An already-constructed ProjectRepository.
+        task_repo: An already-constructed TaskRepository.
+        db:        The current DB connection (used to construct tag/file repos).
+
+    Returns:
+        TemplateResponse rendering projects/_panel.html.
+    """
+    tag_repo = TagRepository(db)
+    file_repo = FileRepository(db)
+
+    project = await proj_repo.get_by_slug(slug)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="projects/_panel.html",
+        context={
+            "project": project,
+            "tasks": await task_repo.get_tree_for_project(project["id"]),
+            "tags": await tag_repo.get_for_project(project["id"]),
+            "files": await file_repo.get_for_project(project["id"]),
+            "subprojects": await proj_repo.get_subprojects(project["id"]),
+            "status_options": await proj_repo.get_status_options(),
+            "type_options": await proj_repo.get_type_options(),
+            "parent_options": await proj_repo.get_parent_options(),
+            "status_task_options": await task_repo.get_status_options(),
+            "priority_options": await task_repo.get_priority_options(),
+        },
+    )
 
 
 @router.get("/project/{slug}", response_class=HTMLResponse)
@@ -189,6 +241,67 @@ async def update_task(
         },
     )
     return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+
+
+@router.post("/new-panel/{slug}", response_class=HTMLResponse)
+async def create_task_panel(
+    slug: str,
+    request: Request,
+    description: str = Form(...),
+    status_id: int = Form(...),
+    priority_id: int = Form(...),
+    parent_id: int | None = Form(None),
+    links: str = Form(""),
+    sort_order: int = Form(0),
+    db: AsyncDBConnection = Depends(get_db),
+):
+    proj_repo = ProjectRepository(db)
+    project = await proj_repo.get_by_slug(slug)
+
+    task_repo = TaskRepository(db)
+    await task_repo.create(
+        {
+            "project_id": project["id"],
+            "description": description,
+            "status_id": status_id,
+            "priority_id": priority_id,
+            "parent_id": parent_id,
+            "links": links,
+            "sort_order": sort_order,
+        }
+    )
+    return await _panel_response(request, slug, proj_repo, task_repo, db)
+
+
+@router.post("/{task_id}/edit-panel", response_class=HTMLResponse)
+async def update_task_panel(
+    task_id: int,
+    request: Request,
+    description: str = Form(...),
+    status_id: int = Form(...),
+    priority_id: int = Form(...),
+    is_terminal: bool = Form(False),
+    parent_id: int | None = Form(None),
+    links: str = Form(""),
+    sort_order: int = Form(0),
+    project_slug: str = Form(...),
+    db: AsyncDBConnection = Depends(get_db),
+):
+    task_repo = TaskRepository(db)
+    await task_repo.update(
+        task_id,
+        {
+            "description": description,
+            "status_id": status_id,
+            "priority_id": priority_id,
+            "is_terminal": is_terminal,
+            "parent_id": parent_id,
+            "links": links,
+            "sort_order": sort_order,
+        },
+    )
+    proj_repo = ProjectRepository(db)
+    return await _panel_response(request, project_slug, proj_repo, task_repo, db)
 
 
 @router.post("/{task_id}/delete")
