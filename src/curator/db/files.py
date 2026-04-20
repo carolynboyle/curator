@@ -16,8 +16,8 @@ class FileRepository(BaseRepository):
     CRUD operations for the project_files table.
     """
 
-    def __init__(self, db: AsyncDBConnection):
-        super().__init__(db)
+    def __init__(self, db: AsyncDBConnection, loader=None):
+        super().__init__(db, loader)
 
     # -- Reads ----------------------------------------------------------------
 

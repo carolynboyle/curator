@@ -46,8 +46,8 @@ class ProjectRepository(BaseRepository):
     directly.
     """
 
-    def __init__(self, db: AsyncDBConnection):
-        super().__init__(db)
+    def __init__(self, db: AsyncDBConnection, loader=None):
+        super().__init__(db, loader)
 
     # -- Reads ----------------------------------------------------------------
 
