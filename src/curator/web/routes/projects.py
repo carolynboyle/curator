@@ -236,6 +236,7 @@ async def edit_project_form(
 @router.post("/{slug}/edit")
 async def update_project(
     slug: str,
+    request: Request,
     name: str = Form(...),
     description: str = Form(""),
     status_id: int = Form(...),
@@ -243,9 +244,9 @@ async def update_project(
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
     db: AsyncDBConnection = Depends(get_db),
-    loader: QueryLoader = Depends(get_query_loader),
+    config=Depends(get_config),
 ):
-    repo = ProjectRepository(db, loader)
+    repo = ProjectRepository(db)
     await repo.update(
         slug,
         {
@@ -257,8 +258,43 @@ async def update_project(
             "target_date": target_date or None,
         },
     )
-    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
+    
+    # If HTMX request (from board panel), return updated panel
+    if request.headers.get("hx-request") == "true":
+        project = await repo.get_by_slug(slug)
+        task_repo = TaskRepository(db)
+        tag_repo = TagRepository(db)
+        file_repo = FileRepository(db)
 
+        tasks = await task_repo.get_tree_for_project(project["id"])
+        tags = await tag_repo.get_for_project(project["id"])
+        files = await file_repo.get_for_project(project["id"])
+        subprojects = await repo.get_subprojects(project["id"])
+        status_options = await repo.get_status_options()
+        type_options = await repo.get_type_options()
+        parent_options = await repo.get_parent_options()
+        status_task_options = await task_repo.get_status_options()
+        priority_options = await task_repo.get_priority_options()
+
+        return templates.TemplateResponse(
+            request=request,
+            name="projects/_panel.html",
+            context={
+                "project": project,
+                "tasks": tasks,
+                "tags": tags,
+                "files": files,
+                "subprojects": subprojects,
+                "status_options": status_options,
+                "type_options": type_options,
+                "parent_options": parent_options,
+                "status_task_options": status_task_options,
+                "priority_options": priority_options,
+            },
+        )
+    
+    # Regular form submission (from standalone edit page)
+    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
 
 @router.post("/{slug}/delete")
 async def delete_project(
@@ -269,4 +305,3 @@ async def delete_project(
     repo = ProjectRepository(db, loader)
     await repo.delete(slug)
     return RedirectResponse(url="/projects/", status_code=303)
-

@@ -9,12 +9,12 @@ Route map:
     GET  /tasks/project/{slug}          — list tasks for a project
     GET  /tasks/new/{slug}              — new task form
     POST /tasks/new/{slug}              — create task
-    POST /tasks/new-panel/{slug}        — create task, return panel fragment
     GET  /tasks/{id}/edit               — edit form
     POST /tasks/{id}/edit               — update task
-    POST /tasks/{id}/edit-panel         — update task, return panel fragment
     POST /tasks/{id}/delete             — delete task (raises if children)
     POST /tasks/{id}/force-delete       — delete task and all descendants
+    POST /tasks/new-panel/{slug}        — create task from panel (HTMX)
+    POST /tasks/{id}/edit-panel         — update task from panel (HTMX)
 """
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -41,7 +41,7 @@ async def _panel_response(
     proj_repo: ProjectRepository,
     task_repo: TaskRepository,
     db: AsyncDBConnection,
-) -> templates.TemplateResponse:
+):
     """
     Fetch all data needed to render projects/_panel.html and return the response.
 

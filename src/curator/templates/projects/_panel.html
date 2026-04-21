@@ -26,7 +26,11 @@
   {# ---- Project details card ---- #}
   <div class="panel-card">
 
-    <form method="post" action="/projects/{{ project.slug }}/edit" id="panel-edit-form">
+    <form method="post" action="/projects/{{ project.slug }}/edit" id="panel-edit-form"
+          hx-post="/projects/{{ project.slug }}/edit"
+          hx-target="#board-detail"
+          hx-swap="innerHTML"
+          hx-on::after-request="panelCancelAll()">
 
       <div class="panel-field">
         <label>Description</label>
