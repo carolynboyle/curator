@@ -25,7 +25,11 @@ from curator.web.app import templates
 from curator.web.deps import get_config, get_db, get_query_loader
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+_BOARD = "/projects/board"
 
+
+def _next(request: Request) -> str:
+    return request.headers.get("referer", _BOARD)
 
 @router.get("/", response_class=HTMLResponse)
 async def list_projects(
@@ -51,7 +55,6 @@ async def list_projects(
         },
     )
 
-
 @router.get("/new", response_class=HTMLResponse)
 async def new_project_form(
     request: Request,
@@ -68,6 +71,7 @@ async def new_project_form(
         context={
             "view": view,
             "project": None,
+            "next_url": _next(request),
             "status_options": await repo.get_status_options(),
             "type_options": await repo.get_type_options(),
             "parent_options": await repo.get_parent_options(),
@@ -83,6 +87,7 @@ async def create_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
+    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
     loader: QueryLoader = Depends(get_query_loader),
 ):
@@ -97,7 +102,7 @@ async def create_project(
             "target_date": target_date or None,
         }
     )
-    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
+    return RedirectResponse(url=next_url, status_code=303)
 
 
 
@@ -226,6 +231,7 @@ async def edit_project_form(
         context={
             "view": view,
             "project": project,
+            "next_url": _next(request),
             "status_options": await repo.get_status_options(),
             "type_options": await repo.get_type_options(),
             "parent_options": await repo.get_parent_options(),
@@ -243,6 +249,7 @@ async def update_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
+    next_url: str = Form(_BOARD),
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
@@ -258,7 +265,7 @@ async def update_project(
             "target_date": target_date or None,
         },
     )
-    
+
     # If HTMX request (from board panel), return updated panel
     if request.headers.get("hx-request") == "true":
         project = await repo.get_by_slug(slug)
@@ -292,9 +299,9 @@ async def update_project(
                 "priority_options": priority_options,
             },
         )
-    
+
     # Regular form submission (from standalone edit page)
-    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
+    return RedirectResponse(url=next_url, status_code=303)
 
 @router.post("/{slug}/delete")
 async def delete_project(

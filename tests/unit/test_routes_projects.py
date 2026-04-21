@@ -33,8 +33,8 @@ def _project(**kwargs):
     return {**base, **kwargs}
 
 
-def _option(id: int, name: str):
-    return {"id": id, "name": name, "sort_order": id}
+def _option(opt_id: int, name: str):
+    return {"id": opt_id, "name": name, "sort_order": opt_id}
 
 
 # ---------------------------------------------------------------------------
@@ -90,18 +90,17 @@ class TestNewProjectForm:
 
 class TestCreateProject:
 
-    def test_redirects_to_detail_on_success(self, client):
+    def test_redirects_on_success(self, client):
         with patch("curator.web.routes.projects.ProjectRepository") as MockRepo:
             instance = MockRepo.return_value
             instance.create = AsyncMock(return_value="new-project")
             response = client.post(
                 "/projects/new",
-                data={"name": "New Project", "status_id": "1"},
+                data={"name": "New Project", "status_id": "1", "next_url": "/projects/board"},
                 follow_redirects=False,
             )
         assert response.status_code == 303
-        assert response.headers["location"] == "/projects/new-project"
-
+        assert response.headers["location"] == "/projects/board"
 
 # ---------------------------------------------------------------------------
 # GET /projects/{slug}
@@ -164,16 +163,16 @@ class TestEditProjectForm:
 
 class TestUpdateProject:
 
-    def test_redirects_to_detail_on_success(self, client):
+    def test_redirects_on_success(self, client):
         with patch("curator.web.routes.projects.ProjectRepository") as MockRepo:
             MockRepo.return_value.update = AsyncMock(return_value=None)
             response = client.post(
                 "/projects/test-project/edit",
-                data={"name": "Updated", "status_id": "1"},
+                data={"name": "Updated", "status_id": "1", "next_url": "/projects/board"},
                 follow_redirects=False,
             )
         assert response.status_code == 303
-        assert response.headers["location"] == "/projects/test-project"
+        assert response.headers["location"] == "/projects/board"
 
 
 # ---------------------------------------------------------------------------
@@ -201,3 +200,4 @@ class TestRouteOrder:
         board_index = routes.index("/projects/board")
         slug_index = routes.index("/projects/{slug}")
         assert board_index < slug_index
+        

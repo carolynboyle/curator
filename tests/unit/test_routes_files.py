@@ -33,8 +33,8 @@ def _file(**kwargs):
     return {**base, **kwargs}
 
 
-def _option(id: int, name: str):
-    return {"id": id, "name": name, "sort_order": id}
+def _option(opt_id: int, name: str):
+    return {"id": opt_id, "name": name, "sort_order": opt_id}
 
 
 # ---------------------------------------------------------------------------
