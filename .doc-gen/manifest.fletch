@@ -1,14 +1,14 @@
-# Generated: 2026-04-19 18:46:39
+# Generated: 2026-04-21 09:08:37
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
 # Version: v0.1.0
-# Files: 60
+# Files: 66
 
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-04-19 18:46:39'
+generated: '2026-04-21 09:08:37'
 version: 0.1.0
 files:
 - path: .gitignore
@@ -19,14 +19,22 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/README.md
 - path: docker-compose.yml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docker-compose.yml
+- path: docs/Testing/integration_tests.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/Testing/integration_tests.md
 - path: docs/curator_architecture.mmd
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/curator_architecture.mmd
 - path: docs/project-structure.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/project-structure.md
+- path: docs/refactors/2026apr20/CHANGES_SUMMARY.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/refactors/2026apr20/CHANGES_SUMMARY.md
+- path: docs/refactors/2026apr20/EXACT_CODE_CHANGES.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/refactors/2026apr20/EXACT_CODE_CHANGES.md
 - path: go.sh
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/go.sh
 - path: pyproject.toml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/pyproject.toml
+- path: scratchpad.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/scratchpad.md
 - path: src/curator/__init__.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/__init__.py
 - path: src/curator/config.py
@@ -107,6 +115,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/__init__.py
 - path: tests/integration/conftest.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/conftest.py
+- path: tests/integration/test_bare_minimum.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_bare_minimum.py
 - path: tests/integration/test_files_repo.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/integration/test_files_repo.py
 - path: tests/integration/test_projects_repo.py
@@ -131,3 +141,5 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_tags.py
 - path: tests/unit/test_routes_tasks.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/tests/unit/test_routes_tasks.py
+- path: ~curator-test.txt
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/~curator-test.txt

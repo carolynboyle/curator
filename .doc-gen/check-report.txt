@@ -5,7 +5,7 @@ CHECK MODE - Dry Run Report
 Manifest:     /home/carolyn/projects/curator/.doc-gen/manifest.yml
 Project Root: /home/carolyn/projects/curator
 Output Dir:   /home/carolyn/projects/curator/.doc-gen/output
-Total Files:  60
+Total Files:  66
 
 ======================================================================
 Files that would be generated:
@@ -28,6 +28,10 @@ Files that would be generated:
   Output: output/docker-compose.yml.md
 
 ✓ EXISTS
+  Source: docs/Testing/integration_tests.md
+  Output: output/docs/Testing/integration_tests.md.md
+
+✓ EXISTS
   Source: docs/curator_architecture.mmd
   Output: output/docs/curator_architecture.mmd.md
 
@@ -36,12 +40,24 @@ Files that would be generated:
   Output: output/docs/project-structure.md.md
 
 ✓ EXISTS
+  Source: docs/refactors/2026apr20/CHANGES_SUMMARY.md
+  Output: output/docs/refactors/2026apr20/CHANGES_SUMMARY.md.md
+
+✓ EXISTS
+  Source: docs/refactors/2026apr20/EXACT_CODE_CHANGES.md
+  Output: output/docs/refactors/2026apr20/EXACT_CODE_CHANGES.md.md
+
+✓ EXISTS
   Source: go.sh
   Output: output/go.sh.md
 
 ✓ EXISTS
   Source: pyproject.toml
   Output: output/pyproject.toml.md
+
+✓ EXISTS
+  Source: scratchpad.md
+  Output: output/scratchpad.md.md
 
 ✓ EXISTS
   Source: src/curator/__init__.py
@@ -204,6 +220,10 @@ Files that would be generated:
   Output: output/tests/integration/conftest.py.md
 
 ✓ EXISTS
+  Source: tests/integration/test_bare_minimum.py
+  Output: output/tests/integration/test_bare_minimum.py.md
+
+✓ EXISTS
   Source: tests/integration/test_files_repo.py
   Output: output/tests/integration/test_files_repo.py.md
 
@@ -251,11 +271,15 @@ Files that would be generated:
   Source: tests/unit/test_routes_tasks.py
   Output: output/tests/unit/test_routes_tasks.py.md
 
+✓ EXISTS
+  Source: ~curator-test.txt
+  Output: output/~curator-test.txt.md
+
 ======================================================================
 Summary:
 ======================================================================
-Total files in manifest: 60
-Source files exist:      60
+Total files in manifest: 66
+Source files exist:      66
 Source files missing:    0
 
 No files were written (dry-run mode)
