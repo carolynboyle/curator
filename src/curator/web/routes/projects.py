@@ -58,12 +58,16 @@ async def list_projects(
 @router.get("/new", response_class=HTMLResponse)
 async def new_project_form(
     request: Request,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
-    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db, loader)
+    repo = ProjectRepository(db)
     view = ViewBuilder(config.views_path).get_view("projects")
+
+    # Compute next_url from query param, referer, or default
+    if not next_url:
+        next_url = request.headers.get("referer", "/projects/board")
 
     return templates.TemplateResponse(
         request=request,
@@ -71,13 +75,12 @@ async def new_project_form(
         context={
             "view": view,
             "project": None,
-            "next_url": _next(request),
+            "next_url": next_url,
             "status_options": await repo.get_status_options(),
             "type_options": await repo.get_type_options(),
             "parent_options": await repo.get_parent_options(),
         },
     )
-
 
 @router.post("/new")
 async def create_project(
@@ -87,11 +90,10 @@ async def create_project(
     type_id: int | None = Form(None),
     parent_id: int | None = Form(None),
     target_date: str | None = Form(None),
-    next_url: str = Form(_BOARD),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
-    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db, loader)
+    repo = ProjectRepository(db)
     slug = await repo.create(
         {
             "name": name,
@@ -102,8 +104,9 @@ async def create_project(
             "target_date": target_date or None,
         }
     )
-    return RedirectResponse(url=next_url, status_code=303)
-
+    # Use next_url if provided, otherwise default to the new project detail page
+    redirect_url = next_url or f"/projects/{slug}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.get("/board", response_class=HTMLResponse)
@@ -209,11 +212,11 @@ async def project_detail(
 async def edit_project_form(
     slug: str,
     request: Request,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
-    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db, loader)
+    repo = ProjectRepository(db)
     try:
         project = await repo.get_by_slug(slug)
     except RecordNotFoundError:
@@ -223,6 +226,10 @@ async def edit_project_form(
             status_code=404,
         )
 
+    # Compute next_url from query param, referer, or default
+    if not next_url:
+        next_url = request.headers.get("referer", f"/projects/{slug}")
+
     view = ViewBuilder(config.views_path).get_view("projects")
 
     return templates.TemplateResponse(
@@ -231,84 +238,21 @@ async def edit_project_form(
         context={
             "view": view,
             "project": project,
-            "next_url": _next(request),
+            "next_url": next_url,
             "status_options": await repo.get_status_options(),
             "type_options": await repo.get_type_options(),
             "parent_options": await repo.get_parent_options(),
         },
     )
 
-
-@router.post("/{slug}/edit")
-async def update_project(
-    slug: str,
-    request: Request,
-    name: str = Form(...),
-    description: str = Form(""),
-    status_id: int = Form(...),
-    type_id: int | None = Form(None),
-    parent_id: int | None = Form(None),
-    target_date: str | None = Form(None),
-    next_url: str = Form(_BOARD),
-    db: AsyncDBConnection = Depends(get_db),
-    config=Depends(get_config),
-):
-    repo = ProjectRepository(db)
-    await repo.update(
-        slug,
-        {
-            "name": name,
-            "description": description or None,
-            "status_id": status_id,
-            "type_id": type_id,
-            "parent_id": parent_id,
-            "target_date": target_date or None,
-        },
-    )
-
-    # If HTMX request (from board panel), return updated panel
-    if request.headers.get("hx-request") == "true":
-        project = await repo.get_by_slug(slug)
-        task_repo = TaskRepository(db)
-        tag_repo = TagRepository(db)
-        file_repo = FileRepository(db)
-
-        tasks = await task_repo.get_tree_for_project(project["id"])
-        tags = await tag_repo.get_for_project(project["id"])
-        files = await file_repo.get_for_project(project["id"])
-        subprojects = await repo.get_subprojects(project["id"])
-        status_options = await repo.get_status_options()
-        type_options = await repo.get_type_options()
-        parent_options = await repo.get_parent_options()
-        status_task_options = await task_repo.get_status_options()
-        priority_options = await task_repo.get_priority_options()
-
-        return templates.TemplateResponse(
-            request=request,
-            name="projects/_panel.html",
-            context={
-                "project": project,
-                "tasks": tasks,
-                "tags": tags,
-                "files": files,
-                "subprojects": subprojects,
-                "status_options": status_options,
-                "type_options": type_options,
-                "parent_options": parent_options,
-                "status_task_options": status_task_options,
-                "priority_options": priority_options,
-            },
-        )
-
-    # Regular form submission (from standalone edit page)
-    return RedirectResponse(url=next_url, status_code=303)
-
 @router.post("/{slug}/delete")
 async def delete_project(
     slug: str,
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
-    loader: QueryLoader = Depends(get_query_loader),
 ):
-    repo = ProjectRepository(db, loader)
+    repo = ProjectRepository(db)
     await repo.delete(slug)
-    return RedirectResponse(url="/projects/", status_code=303)
+    # Use next_url if provided, otherwise default to projects list
+    redirect_url = next_url or "/projects/"
+    return RedirectResponse(url=redirect_url, status_code=303)

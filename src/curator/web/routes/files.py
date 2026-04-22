@@ -46,12 +46,12 @@ async def list_files(
         },
     )
 
-
 @router.get("/new", response_class=HTMLResponse)
 async def new_file_form(
     request: Request,
     project_id: int | None = None,
     task_id: int | None = None,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
@@ -67,6 +67,10 @@ async def new_file_form(
         except RecordNotFoundError:
             pass
 
+    # Compute next_url from query param, referer, or default
+    if not next_url:
+        next_url = request.headers.get("referer", "/projects/board")
+
     return templates.TemplateResponse(
         request=request,
         name="files/form.html",
@@ -76,11 +80,11 @@ async def new_file_form(
             "project_id": project_id,
             "task_id": task_id,
             "project_slug": project_slug,
+            "next_url": next_url,
             "file_type_options": await repo.get_file_type_options(),
             "location_type_options": await repo.get_location_type_options(),
         },
     )
-
 
 @router.post("/new")
 async def create_file(
@@ -92,6 +96,7 @@ async def create_file(
     location_type_id: int = Form(...),
     notes: str = Form(""),
     project_slug: str = Form(""),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
@@ -106,7 +111,10 @@ async def create_file(
             "notes": notes or None,
         }
     )
-    if project_slug:
+    # Use next_url if provided, otherwise fallback to project detail or list
+    if next_url:
+        return RedirectResponse(url=next_url, status_code=303)
+    elif project_slug:
         return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
     return RedirectResponse(url="/projects/", status_code=303)
 
@@ -115,6 +123,7 @@ async def create_file(
 async def edit_file_form(
     file_id: int,
     request: Request,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
@@ -137,6 +146,10 @@ async def edit_file_form(
         except RecordNotFoundError:
             pass
 
+    # Compute next_url from query param, referer, or default
+    if not next_url:
+        next_url = request.headers.get("referer", "/projects/board")
+
     view = ViewBuilder(config.views_path).get_view("files")
 
     return templates.TemplateResponse(
@@ -148,6 +161,7 @@ async def edit_file_form(
             "project_id": file.get("project_id"),
             "task_id": file.get("task_id"),
             "project_slug": project_slug,
+            "next_url": next_url,
             "file_type_options": await repo.get_file_type_options(),
             "location_type_options": await repo.get_location_type_options(),
         },
@@ -163,6 +177,7 @@ async def update_file(
     location_type_id: int = Form(...),
     notes: str = Form(""),
     project_slug: str = Form(""),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
@@ -176,7 +191,10 @@ async def update_file(
             "notes": notes or None,
         },
     )
-    if project_slug:
+    # Use next_url if provided, otherwise fallback to project detail or list
+    if next_url:
+        return RedirectResponse(url=next_url, status_code=303)
+    elif project_slug:
         return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
     return RedirectResponse(url="/projects/", status_code=303)
 
@@ -185,10 +203,14 @@ async def update_file(
 async def delete_file(
     file_id: int,
     project_slug: str = Form(""),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     repo = FileRepository(db)
     await repo.delete(file_id)
-    if project_slug:
+    # Use next_url if provided, otherwise fallback to project detail or list
+    if next_url:
+        return RedirectResponse(url=next_url, status_code=303)
+    elif project_slug:
         return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
     return RedirectResponse(url="/projects/", status_code=303)

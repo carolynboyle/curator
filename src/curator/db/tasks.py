@@ -127,23 +127,12 @@ class TaskRepository(BaseRepository):
     # -- Writes ---------------------------------------------------------------
 
     async def create(self, data: dict) -> int:
-        """
-        Insert a new task and return its ID.
-
-        Args:
-            data: Dict with keys: project_id, description, status_id,
-                  priority_id. Optional: parent_id, links, source_file,
-                  sort_order.
-
-        Returns:
-            ID of the newly created task.
-        """
         result = await self.fetch_scalar(
             """
             INSERT INTO tasks
                 (project_id, parent_id, description, status_id, priority_id,
-                 links, source_file, sort_order)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 notes, links, source_file, sort_order)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -152,6 +141,7 @@ class TaskRepository(BaseRepository):
                 data["description"],
                 data["status_id"],
                 data["priority_id"],
+                data.get("notes", ""),
                 data.get("links", ""),
                 data.get("source_file", ""),
                 data.get("sort_order", 0),
@@ -179,7 +169,7 @@ class TaskRepository(BaseRepository):
 
         is_terminal = bool(data.get("is_terminal", False))
         completed_at = datetime.now(timezone.utc) if is_terminal else None
-
+        
         await self.execute(
             """
             UPDATE tasks SET
@@ -187,6 +177,7 @@ class TaskRepository(BaseRepository):
                 status_id    = %s,
                 priority_id  = %s,
                 parent_id    = %s,
+                notes        = %s,
                 links        = %s,
                 sort_order   = %s,
                 completed_at = %s
@@ -197,6 +188,7 @@ class TaskRepository(BaseRepository):
                 data["status_id"],
                 data["priority_id"],
                 data.get("parent_id"),
+                data.get("notes", ""),
                 data.get("links", ""),
                 data.get("sort_order", 0),
                 completed_at,

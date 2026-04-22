@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if task %}Edit Task{% else %}New Task{% endif %}</h1>
-    <a href="{{ next }}" class="btn-secondary">Cancel</a>
+    <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
@@ -12,7 +12,7 @@
       class="curator-form">
 
     <input type="hidden" name="project_slug" value="{{ project.slug }}">
-    <input type="hidden" name="next_url" value="{{ next }}">
+    <input type="hidden" name="next_url" value="{{ next_url }}">
 
     {% for field in view.fields %}
 
@@ -32,7 +32,7 @@
             <option value="">— select —</option>
             {% for opt in status_options %}
             <option value="{{ opt.id }}"
-                {% if task and task.status_id == opt.id %}selected{% endif %}>
+                {% if task and task.status == opt.name %}selected{% endif %}>
                 {{ opt.display }} {{ opt.name }}
             </option>
             {% endfor %}
@@ -46,7 +46,7 @@
             <option value="">— select —</option>
             {% for opt in priority_options %}
             <option value="{{ opt.id }}"
-                {% if task and task.priority_id == opt.id %}selected{% endif %}>
+                {% if task and task.priority == opt.name %}selected{% endif %}>
                 {{ opt.name }}
             </option>
             {% endfor %}
@@ -74,7 +74,7 @@
         <input type="text"
                id="links"
                name="links"
-               value="{{ task.links if task else '' }}"
+               value="{{ task.links or '' }}"
                placeholder="{{ field.placeholder or '' }}">
         {% if field.help_text %}
         <small class="field-help">{{ field.help_text }}</small>
@@ -86,7 +86,7 @@
         {{ field.label }}
         <textarea id="notes"
                   name="notes"
-                  placeholder="{{ field.placeholder or '' }}">{{ task.notes if task else '' }}</textarea>
+                  placeholder="{{ field.placeholder or '' }}">{{ task.notes or '' }}</textarea>
         {% if field.help_text %}
         <small class="field-help">{{ field.help_text }}</small>
         {% endif %}
@@ -99,7 +99,7 @@
         <button type="submit" class="btn-primary">
             {% if task %}Save Changes{% else %}Create Task{% endif %}
         </button>
-        <a href="{{ next }}" class="btn-secondary">Cancel</a>
+        <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>
@@ -111,7 +111,7 @@
     Deleting it will also delete all subtasks.</p>
     <form method="post" action="/tasks/{{ task.id }}/force-delete">
         <input type="hidden" name="project_slug" value="{{ project.slug }}">
-        <input type="hidden" name="next_url" value="{{ next }}">
+        <input type="hidden" name="next_url" value="{{ next_url }}">
         <button type="submit" class="btn-danger">Delete Task and All Subtasks</button>
     </form>
 </div>

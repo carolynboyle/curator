@@ -1,0 +1,22 @@
+graph TD
+    A["doc-gen<br/>(with --code-only flag)"] -->|generates| B["manifest.yml<br/>(Python files only)"]
+    B -->|consumed by| C["fletcher"]
+    C -->|generates| D["manifest.fletch<br/>(raw GitHub URLs)"]
+    
+    D -->|read by| E["docstring_generator.py"]
+    
+    E -->|Phase 1: Scan| F["Loop through URLs<br/>curl + ast.parse"]
+    F -->|collect| G["curator_missing_docstrings.txt"]
+    
+    G -->|summary| H["Print undocumented<br/>function count"]
+    H -->|user confirms| I{Proceed?}
+    
+    I -->|no| J["Exit"]
+    I -->|yes| K["Phase 2: Generate"]
+    
+    K -->|for each function| L["Fetch from GitHub<br/>Extract context"]
+    L -->|send to| M["Mistral via ollama"]
+    M -->|receives| N["Google-style<br/>docstring"]
+    N -->|append to| O[".doc files<br/>one per module"]
+    
+    O -->|done| P["Ready for review"]

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if file %}Edit File{% else %}New File{% endif %}</h1>
-    <a href="{{ next }}" class="btn-secondary">Cancel</a>
+    <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
@@ -15,7 +15,7 @@
     <input type="hidden" name="project_id" value="{{ project_id or '' }}">
     <input type="hidden" name="task_id" value="{{ task_id or '' }}">
     <input type="hidden" name="project_slug" value="{{ project_slug or '' }}">
-    <input type="hidden" name="next_url" value="{{ next }}">
+    <input type="hidden" name="next_url" value="{{ next_url }}">
 
     {% for field in view.fields %}
 
@@ -87,7 +87,7 @@
         <button type="submit" class="btn-primary">
             {% if file %}Save Changes{% else %}Add File{% endif %}
         </button>
-        <a href="{{ next }}" class="btn-secondary">Cancel</a>
+        <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>

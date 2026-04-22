@@ -45,10 +45,10 @@ projects:
     type: select_scalar
     sql: >
       INSERT INTO projects
-          (name, slug, description, status_id, type_id, parent_id, target_date)
-      VALUES (%s, %s, %s, %s, %s, %s, %s)
+          (name, slug, description, status_id, type_id, parent_id, target_date, notes)
+      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
       RETURNING slug
-
+      
   update:
     type: execute
     sql: >
@@ -58,7 +58,8 @@ projects:
           status_id   = %s,
           type_id     = %s,
           parent_id   = %s,
-          target_date = %s
+          target_date = %s,
+          notes       = %s
       WHERE slug = %s
 
   delete:
@@ -110,8 +111,8 @@ tasks:
     sql: >
       INSERT INTO tasks
           (project_id, parent_id, description, status_id, priority_id,
-           links, source_file, sort_order)
-      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+           notes, links, source_file, sort_order)
+      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
       RETURNING id
 
   update:
@@ -122,6 +123,7 @@ tasks:
           status_id    = %s,
           priority_id  = %s,
           parent_id    = %s,
+          notes        = %s,
           links        = %s,
           sort_order   = %s,
           completed_at = %s

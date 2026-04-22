@@ -112,12 +112,12 @@ async def list_tasks(
         },
     )
 
-
 @router.get("/new/{slug}", response_class=HTMLResponse)
 async def new_task_form(
     slug: str,
     request: Request,
     parent_id: int | None = None,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
@@ -131,6 +131,10 @@ async def new_task_form(
             status_code=404,
         )
 
+    # Compute next_url from query param, referer, or default to project detail
+    if not next_url:
+        next_url = request.headers.get("referer", f"/projects/{slug}")
+
     task_repo = TaskRepository(db)
     view = ViewBuilder(config.views_path).get_view("tasks")
 
@@ -142,12 +146,12 @@ async def new_task_form(
             "task": None,
             "project": project,
             "parent_id": parent_id,
+            "next_url": next_url,
             "status_options": await task_repo.get_status_options(),
             "priority_options": await task_repo.get_priority_options(),
             "parent_options": await task_repo.get_parent_options(project["id"]),
         },
     )
-
 
 @router.post("/new/{slug}")
 async def create_task(
@@ -158,6 +162,7 @@ async def create_task(
     parent_id: int | None = Form(None),
     links: str = Form(""),
     sort_order: int = Form(0),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     proj_repo = ProjectRepository(db)
@@ -175,13 +180,16 @@ async def create_task(
             "sort_order": sort_order,
         }
     )
-    return RedirectResponse(url=f"/projects/{slug}", status_code=303)
+    # Use next_url if provided, otherwise default to project detail
+    redirect_url = next_url or f"/projects/{slug}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.get("/{task_id}/edit", response_class=HTMLResponse)
 async def edit_task_form(
     task_id: int,
     request: Request,
+    next_url: str | None = None,
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
@@ -195,8 +203,15 @@ async def edit_task_form(
             status_code=404,
         )
 
-    proj_repo = ProjectRepository(db)
-    project = await proj_repo.get_by_id(task["project_id"])
+    # Compute next_url from query param, referer, or default to project detail
+    if not next_url:
+        proj_repo = ProjectRepository(db)
+        project = await proj_repo.get_by_id(task["project_id"])
+        next_url = request.headers.get("referer", f"/projects/{project['slug']}")
+    else:
+        proj_repo = ProjectRepository(db)
+        project = await proj_repo.get_by_id(task["project_id"])
+
     view = ViewBuilder(config.views_path).get_view("tasks")
 
     return templates.TemplateResponse(
@@ -207,6 +222,7 @@ async def edit_task_form(
             "task": task,
             "project": project,
             "parent_id": task.get("parent_id"),
+            "next_url": next_url,
             "status_options": await task_repo.get_status_options(),
             "priority_options": await task_repo.get_priority_options(),
             "parent_options": await task_repo.get_parent_options(task["project_id"]),
@@ -225,6 +241,7 @@ async def update_task(
     links: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
@@ -240,8 +257,9 @@ async def update_task(
             "sort_order": sort_order,
         },
     )
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
-
+    # Use next_url if provided, otherwise default to project detail
+    redirect_url = next_url or f"/projects/{project_slug}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @router.post("/new-panel/{slug}", response_class=HTMLResponse)
 async def create_task_panel(
@@ -251,6 +269,7 @@ async def create_task_panel(
     status_id: int = Form(...),
     priority_id: int = Form(...),
     parent_id: int | None = Form(None),
+    notes: str = Form(""),
     links: str = Form(""),
     sort_order: int = Form(0),
     db: AsyncDBConnection = Depends(get_db),
@@ -266,6 +285,7 @@ async def create_task_panel(
             "status_id": status_id,
             "priority_id": priority_id,
             "parent_id": parent_id,
+            "notes": notes,
             "links": links,
             "sort_order": sort_order,
         }
@@ -282,6 +302,7 @@ async def update_task_panel(
     priority_id: int = Form(...),
     is_terminal: bool = Form(False),
     parent_id: int | None = Form(None),
+    notes: str = Form(""),
     links: str = Form(""),
     sort_order: int = Form(0),
     project_slug: str = Form(...),
@@ -296,6 +317,7 @@ async def update_task_panel(
             "priority_id": priority_id,
             "is_terminal": is_terminal,
             "parent_id": parent_id,
+            "notes": notes,
             "links": links,
             "sort_order": sort_order,
         },
@@ -308,25 +330,31 @@ async def update_task_panel(
 async def delete_task(
     task_id: int,
     project_slug: str = Form(...),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
+    redirect_url = next_url or f"/projects/{project_slug}"
+    
     try:
         await task_repo.delete(task_id)
     except DeleteBlockedError as exc:
         return RedirectResponse(
-            url=f"/projects/{project_slug}?delete_blocked={task_id}&count={exc.count}",
+            url=f"{redirect_url}?delete_blocked={task_id}&count={exc.count}",
             status_code=303,
         )
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/{task_id}/force-delete")
 async def force_delete_task(
     task_id: int,
     project_slug: str = Form(...),
+    next_url: str = Form(""),
     db: AsyncDBConnection = Depends(get_db),
 ):
     task_repo = TaskRepository(db)
     await task_repo.force_delete(task_id)
-    return RedirectResponse(url=f"/projects/{project_slug}", status_code=303)
+    # Use next_url if provided, otherwise default to project detail
+    redirect_url = next_url or f"/projects/{project_slug}"
+    return RedirectResponse(url=redirect_url, status_code=303)

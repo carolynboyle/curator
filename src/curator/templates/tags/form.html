@@ -4,12 +4,14 @@
 {% block content %}
 <div class="page-header">
     <h1>{% if tag %}Edit Tag{% else %}New Tag{% endif %}</h1>
-    <a href="/tags/" class="btn-secondary">Cancel</a>
+    <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
 </div>
 
 <form method="post"
       action="{% if tag %}/tags/{{ tag.id }}/edit{% else %}/tags/new{% endif %}"
       class="curator-form">
+
+    <input type="hidden" name="next_url" value="{{ next_url }}">
 
     {% for field in view.fields %}
 
@@ -45,7 +47,7 @@
         <button type="submit" class="btn-primary">
             {% if tag %}Save Changes{% else %}Create Tag{% endif %}
         </button>
-        <a href="/tags/" class="btn-secondary">Cancel</a>
+        <a href="{{ next_url }}" class="btn-secondary">Cancel</a>
     </div>
 
 </form>

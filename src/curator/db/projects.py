@@ -163,7 +163,7 @@ class ProjectRepository(BaseRepository):
 
         Args:
             data: Dict with keys: name, description, status_id, type_id,
-                  parent_id. All optional except name and status_id.
+                  parent_id, notes. All optional except name and status_id.
 
         Returns:
             The slug of the newly created project.
@@ -177,8 +177,8 @@ class ProjectRepository(BaseRepository):
 
         await self.execute(
             """
-            INSERT INTO projects (name, slug, description, status_id, type_id, parent_id)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO projects (name, slug, description, status_id, type_id, parent_id, notes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 data["name"],
@@ -187,9 +187,11 @@ class ProjectRepository(BaseRepository):
                 data["status_id"],
                 data.get("type_id"),
                 data.get("parent_id"),
+                data.get("notes"),
             ),
         )
         return slug
+
 
     async def update(self, slug: str, data: dict) -> None:
         """
@@ -200,7 +202,7 @@ class ProjectRepository(BaseRepository):
         Args:
             slug: Slug identifying the project to update.
             data: Dict with any of: name, description, status_id,
-                  type_id, parent_id, target_date.
+                  type_id, parent_id, target_date, notes.
 
         Raises:
             RecordNotFoundError: If no project with that slug exists.
@@ -215,7 +217,8 @@ class ProjectRepository(BaseRepository):
                 status_id   = %s,
                 type_id     = %s,
                 parent_id   = %s,
-                target_date = %s
+                target_date = %s,
+                notes       = %s
             WHERE slug = %s
             """,
             (
@@ -225,6 +228,7 @@ class ProjectRepository(BaseRepository):
                 data.get("type_id"),
                 data.get("parent_id"),
                 data.get("target_date"),
+                data.get("notes"),
                 slug,
             ),
         )
