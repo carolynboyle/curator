@@ -1,13 +1,31 @@
-# Generated: 2026-04-22 12:49:32
+# Generated: 2026-04-22 07:25:37
 # Project: /home/carolyn/projects/curator
-# Files: 56
+# Files: 76
 
 version: 1
 documents:
 - path: .gitignore
 - path: Dockerfile
+- path: README.md
 - path: docker-compose.yml
+- path: docs/Testing/Nav_CODE_CHANGES.md
+- path: docs/Testing/integration_tests.md
+- path: docs/changedocs/2026apr20/CHANGES_SUMMARY.md
+- path: docs/changedocs/2026apr20/EXACT_CODE_CHANGES.md
+- path: docs/changedocs/2026apr20/NEXT_STEPS.md
+- path: docs/changedocs/2026apr21/REDIRECT_STANDARDIZATION.md
+- path: docs/changedocs/2026apr21/TEST_UPDATES_navigation.md
+- path: docs/changedocs/2026apr21/add_notes_to_projects.md
+- path: docs/changedocs/2026apr21/add_notes_to_tasks.md
+- path: docs/changedocs/2026apr21/curator_debug_session_2026apr21.md
+- path: docs/changedocs/2026apr21/curator_deferred_issues_2026apr21.md
+- path: docs/changedocs/2026apr21/fix_task_form_template.md
+- path: docs/changedocs/DEFERRED.md
+- path: docs/curator_architecture.mmd
+- path: docs/project-structure.md
+- path: go.sh
 - path: pyproject.toml
+- path: scratchpad.md
 - path: src/curator/__init__.py
 - path: src/curator/config.py
 - path: src/curator/data/curator.yaml
@@ -53,6 +71,7 @@ documents:
 - path: tests/integration/test_projects_repo.py
 - path: tests/integration/test_tags_repo.py
 - path: tests/integration/test_tasks_repo.py
+- path: tests/test_tree.md
 - path: tests/unit/__init__.py
 - path: tests/unit/conftest.py
 - path: tests/unit/test_config.py
@@ -60,3 +79,4 @@ documents:
 - path: tests/unit/test_routes_projects.py
 - path: tests/unit/test_routes_tags.py
 - path: tests/unit/test_routes_tasks.py
+- path: ~curator-test.txt

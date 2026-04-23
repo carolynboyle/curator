@@ -14,7 +14,7 @@
       <div class="panel-meta">{{ project.status }} · {{ project.project_type or '—' }}</div>
     </div>
     <div class="panel-header-actions">
-      <a href="/projects/{{ project.slug }}/edit" class="btn-secondary btn-sm">Full edit</a>
+      <a href="/projects/{{ project.slug }}/edit?next_url=/projects/board" class="btn-secondary btn-sm">Full edit</a>
       <form method="post" action="/projects/{{ project.slug }}/delete"
             onsubmit="return confirm('Delete {{ project.name }}? This cannot be undone.');"
             style="display:inline;">
@@ -160,7 +160,7 @@
             {{ task.description }}
           </span>
           <span class="subform-row-meta task-pri-{{ task.priority }}">{{ task.priority }}</span>
-          <a href="/tasks/{{ task.id }}/edit" class="subform-row-edit" title="Full edit">✎</a>
+          <a href="/tasks/{{ task.id }}/edit?next_url=/projects/board" class="subform-row-edit" title="Full edit">✎</a>
         </div>
         {% endfor %}
       {% else %}
@@ -173,7 +173,7 @@
   <div class="panel-card">
     <div class="subform-header">
       <span>Files</span>
-      <a href="/files/new?project_id={{ project.id }}" class="btn-secondary btn-sm">+ Add</a>
+      <a href="/files/new?project_id={{ project.id }}&amp;next_url=/projects/board" class="btn-secondary btn-sm">+ Add</a>
     </div>
     <div class="subform-body">
       {% if files %}
@@ -183,7 +183,7 @@
             <a href="{{ f.location }}" target="_blank" rel="noopener">{{ f.label }}</a>
           </span>
           <span class="subform-row-meta">{{ f.location_type }}</span>
-          <a href="/files/{{ f.id }}/edit" class="subform-row-edit">✎</a>
+          <a href="/files/{{ f.id }}/edit?next_url=/projects/board" class="subform-row-edit">✎</a>
         </div>
         {% endfor %}
       {% else %}

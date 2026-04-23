@@ -55,6 +55,7 @@ async def new_file_form(
     db: AsyncDBConnection = Depends(get_db),
     config=Depends(get_config),
 ):
+    print(f"DEBUG next_url={next_url!r}")
     repo = FileRepository(db)
     view = ViewBuilder(config.views_path).get_view("files")
 
