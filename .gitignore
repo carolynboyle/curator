@@ -35,6 +35,9 @@ Thumbs.db
 *.env
 .env.test
 
+# Template for .env - commit this
+!.env.example
+
 # API keys and tokens
 *.key
 *.pem
@@ -66,7 +69,6 @@ db_config.json
 service-account*.json
 *-credentials.json
 # Curator specific
-.env.example.local
 curator.egg-info/
 
 # Logs
