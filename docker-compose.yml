@@ -35,7 +35,7 @@ services:
     # Network: bind to Tailscale interface only
     # -------------------------------------------------------------------------
     ports:
-      - "${CURATOR_TAILSCALE_IP}:8080:8080"
+      - "${CURATOR_TAILSCALE_IP}:8070:8080"
     networks:
       - curator_net
 
