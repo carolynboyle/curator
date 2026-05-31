@@ -1,0 +1,66 @@
+graph TD
+    A["🌐 Browser\nJinja2 templates + HTMX\nForms, lists, board panel"]
+
+    B["FastAPI app\nRoute handlers\nprojects, tasks, tags, files"]
+
+    E["Dependency injection\nget_db · get_config · get_query_loader"]
+
+    C["ViewBuilder\nParses views.yaml → ViewDef\nColumnDef · FieldDef"]
+    Q["QueryLoader\nParses queries.yaml → QueryDef\nSQL lookup by entity + name"]
+
+    D["ConfigManager\ncurator.yaml\nResolves views_path · queries_path"]
+
+    Y["views.yaml\nColumn and field definitions\nfor all views"]
+    Z["queries.yaml\n46 SQL queries\norganized by entity"]
+
+    F["Repositories\nProjectRepository · TaskRepository\nTagRepository · FileRepository"]
+
+    H["dbkit: AsyncDBConnection\nAsync PostgreSQL management\nReads ~/.config/dev-utils/config.yaml"]
+
+    I["PostgreSQL on Steward\nTables: projects · tasks · tags · files\nLookups: status · priority · type\nViews: v_projects · v_tasks · v_task_tree"]
+
+    A -->|"HTTP / HTMX XHR"| B
+    B --> E
+    E --> D
+    E --> H
+    D --> C
+    D --> Q
+    C --> Y
+    Q --> Z
+    B --> C
+    B --> Q
+    B --> F
+    F --> H
+    H --> I
+
+    L0["Legend"]
+    L1["🌐 Client layer"]
+    L2["⚙️ Route layer"]
+    L3["🔧 Config / DI"]
+    L4["📄 viewkit"]
+    L5["🗄️ Repository layer"]
+    L6["🔌 dbkit"]
+    L7["🐘 PostgreSQL"]
+
+    L0 ~~~ L1 ~~~ L2 ~~~ L3 ~~~ L4 ~~~ L5 ~~~ L6 ~~~ L7
+
+    style L0 fill:#fafafa,stroke:#cccccc,color:#333333
+    style L1 fill:#e6f1fb,stroke:#185fa5,color:#042c53
+    style L2 fill:#e1f5ee,stroke:#0f6e56,color:#04342c
+    style L3 fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+    style L4 fill:#eeedfe,stroke:#534ab7,color:#26215c
+    style L5 fill:#faece7,stroke:#993c1d,color:#4a1b0c
+    style L6 fill:#eaf3de,stroke:#3b6d11,color:#173404
+    style L7 fill:#faeeda,stroke:#854f0b,color:#412402
+
+    style A fill:#e6f1fb,stroke:#185fa5,color:#042c53
+    style B fill:#e1f5ee,stroke:#0f6e56,color:#04342c
+    style E fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+    style D fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+    style C fill:#eeedfe,stroke:#534ab7,color:#26215c
+    style Q fill:#eeedfe,stroke:#534ab7,color:#26215c
+    style Y fill:#f8f4ff,stroke:#534ab7,color:#26215c
+    style Z fill:#f8f4ff,stroke:#534ab7,color:#26215c
+    style F fill:#faece7,stroke:#993c1d,color:#4a1b0c
+    style H fill:#eaf3de,stroke:#3b6d11,color:#173404
+    style I fill:#faeeda,stroke:#854f0b,color:#412402
