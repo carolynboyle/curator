@@ -1,5 +1,13 @@
-# Curator v2 Configuration
-# Branding, crew definitions, UI defaults, theme selection
+# curator.yaml - Curator default configuration
+#
+# This file ships with the Curator and provides defaults.
+# To override, create ~/.config/curator/curator.yaml with only
+# the keys you want to change. You do not need to repeat keys
+# that match the defaults.
+#
+# The database connection is configured separately in
+# ~/.config/dev-utils/config.yaml under the 'dbkit:' key.
+# Passwords are handled by ~/.pgpass — never put credentials here.
 
 branding:
   site_title: "Curator"
@@ -7,14 +15,14 @@ branding:
   site_icon: "🎭"
 
 server:
-  host: localhost
+  host: "127.0.0.1"      # Override with Tailscale IP in production
   port: 8080
-  reload: true
 
 ui:
-  page_size: 20
-  theme: "light"           # Phase 1: read from here
-                           # Phase 3: read from settings table instead
+  page_size: 25           # Rows per page in list views
+  date_format: "%Y-%m-%d"
+  theme: "light"          # Phase 1: read from here
+                          # Phase 3: read from settings table instead
 
 crew:
   roles:
@@ -33,3 +41,10 @@ crew:
     - name: "scribe"
       title: "The Scribe"
       description: "Writing projects and documentation"
+
+plugin:
+  name: "The Curator"
+  version: "0.2.0"
+  description: "Web UI and database interface for the projects database"
+  type: "web"
+  crew_member: "curator"

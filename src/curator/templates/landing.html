@@ -4,15 +4,13 @@
 
 {% block content %}
 <section class="landing">
+    <img src="/static/curator.png" alt="The Curator" class="hero-image">
     <h1>{{ site_title }}</h1>
     <p class="subtitle">{{ site_subtitle }}</p>
 
     <div class="crew-cards">
         {% for role in crew_roles %}
         <a href="/crew?role={{ role.name }}" class="crew-card {{ role.name }}">
-            <div class="card-image">
-                <img src="/static/{{ role.name }}.png" alt="{{ role.title }}">
-            </div>
             <h2>{{ role.title }}</h2>
             <p>{{ role.description }}</p>
         </a>

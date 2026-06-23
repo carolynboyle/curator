@@ -1,72 +1,90 @@
 /* =============================================================================
-   Base Styles — Resets, Typography, CSS Variables
+   Layout — Page skeleton, container, main content area
    ============================================================================= */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* -- Page structure -------------------------------------------------------- */
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-:root {
-    /* Colors — overridden by theme files */
-    --color-primary: #2c3e50;
-    --color-accent: #3498db;
-    --color-success: #27ae60;
-    --color-warning: #f39c12;
-    --color-danger: #e74c3c;
-    --color-light: #ecf0f1;
-    --color-lighter: #f5f7fa;
-    --color-border: #bdc3c7;
-    --color-text: #2c3e50;
-    --color-text-light: #7f8c8d;
-    
-    /* Spacing */
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
-    
-    /* Borders & Shadows */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+main.curator-main {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
 }
 
-html, body {
-    height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--color-text);
-    background: var(--color-lighter);
+/* -- Container ------------------------------------------------------------- */
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    line-height: 1.2;
-}
+/* -- Landing page layout --------------------------------------------------- */
 
-a {
-    color: var(--color-accent);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-a:hover {
-    color: var(--color-primary);
-}
-
-footer {
-    margin-top: var(--spacing-2xl);
-    padding: var(--spacing-xl) 0;
+.landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    border-top: 1px solid var(--color-border);
+    padding: var(--spacing-xl) 0;
+}
+
+.landing h1 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.landing .subtitle {
     color: var(--color-text-light);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.landing .hero-image {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* -- Crew dashboard layout ------------------------------------------------- */
+
+.crew-dashboard {
+    padding: var(--spacing-xl) 0;
+}
+
+.crew-dashboard h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.crew-dashboard .phase-message {
+    color: var(--color-text-light);
+    font-style: italic;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* -- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+    main.curator-main {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .landing h1 {
+        font-size: 1.5rem;
+    }
+
+    .landing .hero-image {
+        width: 160px;
+        height: 160px;
+    }
 }
