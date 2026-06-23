@@ -1,0 +1,49 @@
+# base.html
+
+**Path:** src/curator/templates/base.html
+**Syntax:** html
+**Generated:** 2026-06-23 12:09:21
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_title | default("Curator") }}{% endblock %}</title>
+    
+    <!-- Base styles -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    
+    <!-- Component styles -->
+    <link rel="stylesheet" href="/static/css/components/navbar.css">
+    <link rel="stylesheet" href="/static/css/components/card.css">
+    <link rel="stylesheet" href="/static/css/components/table.css">
+    <link rel="stylesheet" href="/static/css/components/empty-state.css">
+    
+    <!-- Theme (Phase 3: loaded from settings table) -->
+    <link rel="stylesheet" href="/static/css/themes/{{ theme | default('light') }}.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="/">{{ site_icon | default("🎭") }} {{ site_title | default("Curator") }}</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Project Crew. All hands on deck.</p>
+    </footer>
+</body>
+</html>
+```

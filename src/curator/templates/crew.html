@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role_title }} — Curator{% endblock %}
+
+{% block content %}
+<section class="crew-section">
+    <div class="crew-header">
+        <h1>{{ role_title }}</h1>
+        <a href="/" class="btn-back">← Back to Crew</a>
+    </div>
+
+    <div class="crew-content">
+        {% if records %}
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record.name }}</td>
+                        <td>{{ record.status }}</td>
+                        <td>{{ record.details }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>{{ message }}</p>
+                <p class="hint">Phase 2 will load role-specific views from the database.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,9 @@
+# ALWAYS IGNORED (hardcoded, do not remove):
+# These patterns are enforced by doc-gen and cannot be documented
+.doc-gen/
+.git/
+__pycache__/
+.venv/
+# Patterns below are customizable:
+
+# Copied from .gitignore:

@@ -1,0 +1,52 @@
+# pyproject.toml
+
+**Path:** pyproject.toml
+**Syntax:** toml
+**Generated:** 2026-06-23 12:09:21
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "curator"
+version = "0.2.0"
+description = "The Curator — web UI and database interface for the Project Crew (v2)"
+authors = [
+    { name = "Carolyn Boyle" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.29.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.9",
+    "dbkit @ git+https://github.com/carolynboyle/dev-utils.git#subdirectory=python/dbkit",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["curator*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+markers = ["integration: requires steward wcyj database (run with -m integration)"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "python-dotenv",
+    "httpx",
+]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "python-dotenv",
+    "httpx",
+]
+```

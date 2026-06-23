@@ -1,0 +1,43 @@
+# curator.yaml
+
+**Path:** src/curator/data/curator.yaml
+**Syntax:** yaml
+**Generated:** 2026-06-23 12:09:21
+
+```yaml
+# Curator v2 Configuration
+# Branding, crew definitions, UI defaults, theme selection
+
+branding:
+  site_title: "Curator"
+  site_subtitle: "Navigate the Project Crew"
+  site_icon: "🎭"
+
+server:
+  host: localhost
+  port: 8080
+  reload: true
+
+ui:
+  page_size: 20
+  theme: "light"           # Phase 1: read from here
+                           # Phase 3: read from settings table instead
+
+crew:
+  roles:
+    - name: "captain"
+      title: "The Captain"
+      description: "Full admin access to all projects and records"
+    - name: "curator"
+      title: "The Curator"
+      description: "Manage projects and tasks"
+    - name: "mechanic"
+      title: "The Mechanic"
+      description: "Hardware management and refurb tracking"
+    - name: "envoy"
+      title: "The Envoy"
+      description: "Connection tracking and coordination"
+    - name: "scribe"
+      title: "The Scribe"
+      description: "Writing projects and documentation"
+```

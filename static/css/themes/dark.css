@@ -1,0 +1,44 @@
+/* =============================================================================
+   Dark Theme — Inverted Colors
+   ============================================================================= */
+
+:root {
+    --color-primary: #ecf0f1;
+    --color-accent: #3498db;
+    --color-success: #2ecc71;
+    --color-warning: #f39c12;
+    --color-danger: #e74c3c;
+    --color-light: #34495e;
+    --color-lighter: #2c3e50;
+    --color-border: #7f8c8d;
+    --color-text: #ecf0f1;
+    --color-text-light: #bdc3c7;
+}
+
+body {
+    background: #1a252f;
+    color: var(--color-text);
+}
+
+.navbar {
+    background: #2c3e50;
+    border-bottom-color: var(--color-border);
+}
+
+.crew-card {
+    background: #34495e;
+    border-color: var(--color-border);
+}
+
+.crew-content {
+    background: #34495e;
+    color: var(--color-text);
+}
+
+.records-table thead {
+    background: #2c3e50;
+}
+
+.records-table tbody tr:hover {
+    background: #2c3e50;
+}

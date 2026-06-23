@@ -1,0 +1,18 @@
+/* =============================================================================
+   Empty State Component
+   ============================================================================= */
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--color-text-light);
+}
+
+.empty-state p {
+    margin: var(--spacing-md) 0;
+}
+
+.empty-state .hint {
+    font-size: 0.9rem;
+    font-style: italic;
+}

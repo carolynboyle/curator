@@ -1,0 +1,29 @@
+/* =============================================================================
+   Light Theme — Default Colors
+   ============================================================================= */
+
+:root {
+    --color-primary: #2c3e50;
+    --color-accent: #3498db;
+    --color-success: #27ae60;
+    --color-warning: #f39c12;
+    --color-danger: #e74c3c;
+    --color-light: #ecf0f1;
+    --color-lighter: #f5f7fa;
+    --color-border: #bdc3c7;
+    --color-text: #2c3e50;
+    --color-text-light: #7f8c8d;
+}
+
+body {
+    background: #f8f9fa;
+    color: var(--color-text);
+}
+
+.crew-card {
+    background: white;
+}
+
+.crew-content {
+    background: white;
+}
