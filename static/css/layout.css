@@ -55,6 +55,12 @@ main.curator-main {
     margin-bottom: var(--spacing-xl);
 }
 
+/* Cards must break out of the centered column to use full width */
+.landing .crew-cards {
+    width: 100%;
+    align-self: stretch;
+}
+
 /* -- Crew dashboard layout ------------------------------------------------- */
 
 .crew-dashboard {
