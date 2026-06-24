@@ -1,29 +1,66 @@
 /* =============================================================================
-   Light Theme — Default Colors
+   Light Theme (default)
+   App shell colors — WCYJ teal identity
+   Crew workspace colors are in static/css/crew/{role}.css
    ============================================================================= */
 
 :root {
-    --color-primary: #2c3e50;
-    --color-accent: #3498db;
-    --color-success: #27ae60;
-    --color-warning: #f39c12;
-    --color-danger: #e74c3c;
-    --color-light: #ecf0f1;
-    --color-lighter: #f5f7fa;
-    --color-border: #bdc3c7;
-    --color-text: #2c3e50;
-    --color-text-light: #7f8c8d;
+    /* App shell — WCYJ teal */
+    --color-primary:      #0f766e;
+    --color-primary-dark: #0d6460;
+    --color-primary-light:#ccebe9;
+
+    /* Neutrals */
+    --color-bg:           #f5f7fa;
+    --color-surface:      #ffffff;
+    --color-border:       #dde1e7;
+    --color-text:         #1a1a1a;
+    --color-text-light:   #6b7280;
+
+    /* Semantic */
+    --color-danger:       #dc2626;
+    --color-danger-bg:    #fef2f2;
+    --color-success:      #166534;
+    --color-warning:      #b45309;
 }
 
 body {
-    background: #f8f9fa;
+    background: var(--color-bg);
     color: var(--color-text);
 }
 
-.crew-card {
-    background: white;
+/* -- Navbar ---------------------------------------------------------------- */
+
+.navbar {
+    background: #ffffff;
+    border-bottom: 2px solid var(--color-primary);
 }
 
-.crew-content {
-    background: white;
+.nav-brand a {
+    color: var(--color-primary);
+}
+
+.nav-links a {
+    color: var(--color-text-light);
+}
+
+.nav-links a:hover {
+    color: var(--color-primary);
+}
+
+/* -- Footer ---------------------------------------------------------------- */
+
+footer {
+    color: var(--color-text-light);
+    border-top-color: var(--color-border);
+}
+
+/* -- Links ----------------------------------------------------------------- */
+
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-dark);
 }

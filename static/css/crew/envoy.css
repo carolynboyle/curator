@@ -1,0 +1,49 @@
+/* =============================================================================
+   Envoy Workspace — Crimson #9b1c1c
+   ============================================================================= */
+
+.crew-card.envoy {
+    background-color: #9b1c1c;
+    color: #ffffff;
+}
+
+.crew-card.envoy h2 { color: #ffffff; }
+
+.crew-card.envoy p { color: rgba(255,255,255,0.85); }
+
+.crew-card.envoy:hover {
+    background-color: #7f1d1d;
+    border-color: #dc2626;
+}
+
+.crew-section.envoy .crew-header {
+    background-color: #9b1c1c;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.envoy .crew-header h1 { color: #ffffff; }
+
+.crew-section.envoy .crew-header .btn-back {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.envoy .crew-header .btn-back:hover { color: #ffffff; }
+
+.crew-section.envoy .records-table thead {
+    background-color: #7f1d1d;
+    color: #ffffff;
+}
+
+.crew-section.envoy .records-table tbody tr:hover { background-color: #fff5f5; }
+
+.crew-section.envoy .records-table a { color: #dc2626; }
+
+.crew-section.envoy .badge {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+}

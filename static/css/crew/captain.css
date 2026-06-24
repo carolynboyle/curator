@@ -1,0 +1,57 @@
+/* =============================================================================
+   Captain Workspace — French Blue #234187
+   ============================================================================= */
+
+/* -- Card (landing page) --------------------------------------------------- */
+
+.crew-card.captain {
+    background-color: #234187;
+    color: #ffffff;
+}
+
+.crew-card.captain h2 { color: #ffffff; }
+
+.crew-card.captain p { color: rgba(255,255,255,0.85); }
+
+.crew-card.captain:hover {
+    background-color: #1a3066;
+    border-color: #4a6db5;
+}
+
+/* -- Crew page header ------------------------------------------------------- */
+
+.crew-section.captain .crew-header {
+    background-color: #234187;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.captain .crew-header h1 { color: #ffffff; }
+
+.crew-section.captain .crew-header .btn-back {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.captain .crew-header .btn-back:hover { color: #ffffff; }
+
+/* -- Table ------------------------------------------------------------------ */
+
+.crew-section.captain .records-table thead {
+    background-color: #1a3066;
+    color: #ffffff;
+}
+
+.crew-section.captain .records-table tbody tr:hover { background-color: #f0f4fc; }
+
+.crew-section.captain .records-table a { color: #4a6db5; }
+
+/* -- Badges ----------------------------------------------------------------- */
+
+.crew-section.captain .badge {
+    background-color: #dce6f7;
+    color: #1a3066;
+}

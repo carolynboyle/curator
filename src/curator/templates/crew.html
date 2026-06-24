@@ -3,11 +3,13 @@
 {% block title %}{{ role_title }} — Curator{% endblock %}
 
 {% block content %}
-<section class="crew-section">
+<section class="crew-section {{ role }}">
     <div class="crew-header">
         <h1>{{ role_title }}</h1>
         <a href="/" class="btn-back">← Back to Crew</a>
     </div>
+
+    <img src="/static/img/{{ role }}.png" alt="{{ role_title }}" class="crew-hero-image">
 
     <div class="crew-content">
         {% if records %}

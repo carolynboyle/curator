@@ -1,0 +1,49 @@
+/* =============================================================================
+   Mechanic Workspace — Forest Green #166534
+   ============================================================================= */
+
+.crew-card.mechanic {
+    background-color: #166534;
+    color: #ffffff;
+}
+
+.crew-card.mechanic h2 { color: #ffffff; }
+
+.crew-card.mechanic p { color: rgba(255,255,255,0.85); }
+
+.crew-card.mechanic:hover {
+    background-color: #14532d;
+    border-color: #16a34a;
+}
+
+.crew-section.mechanic .crew-header {
+    background-color: #166534;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.mechanic .crew-header h1 { color: #ffffff; }
+
+.crew-section.mechanic .crew-header .btn-back {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.mechanic .crew-header .btn-back:hover { color: #ffffff; }
+
+.crew-section.mechanic .records-table thead {
+    background-color: #14532d;
+    color: #ffffff;
+}
+
+.crew-section.mechanic .records-table tbody tr:hover { background-color: #f0fdf4; }
+
+.crew-section.mechanic .records-table a { color: #16a34a; }
+
+.crew-section.mechanic .badge {
+    background-color: #dcfce7;
+    color: #14532d;
+}

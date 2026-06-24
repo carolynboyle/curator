@@ -1,44 +1,75 @@
 /* =============================================================================
-   Dark Theme — Inverted Colors
+   Dark Theme
+   Overrides light.css variables for dark mode readability
    ============================================================================= */
 
 :root {
-    --color-primary: #ecf0f1;
-    --color-accent: #3498db;
-    --color-success: #2ecc71;
-    --color-warning: #f39c12;
-    --color-danger: #e74c3c;
-    --color-light: #34495e;
-    --color-lighter: #2c3e50;
-    --color-border: #7f8c8d;
-    --color-text: #ecf0f1;
-    --color-text-light: #bdc3c7;
+    /* App shell — dark backgrounds, light text */
+    --color-primary:      #0f766e;  /* teal stays same for accent */
+    --color-primary-dark: #0d6460;
+    --color-primary-light:#1a2f2d;
+
+    /* Neutrals — inverted */
+    --color-bg:           #1a1a1a;
+    --color-surface:      #2a2a2a;
+    --color-border:       #404040;
+    --color-text:         #e5e5e5;
+    --color-text-light:   #a0a0a0;
+
+    /* Semantic */
+    --color-danger:       #dc2626;
+    --color-danger-bg:    #3a1a1a;
+    --color-success:      #166534;
+    --color-warning:      #b45309;
 }
 
 body {
-    background: #1a252f;
+    background: var(--color-bg);
     color: var(--color-text);
 }
+
+/* -- Navbar ---------------------------------------------------------------- */
 
 .navbar {
-    background: #2c3e50;
-    border-bottom-color: var(--color-border);
+    background: var(--color-surface);
+    border-bottom: 2px solid var(--color-primary);
 }
 
-.crew-card {
-    background: #34495e;
-    border-color: var(--color-border);
+.nav-brand a {
+    color: var(--color-primary);
 }
 
-.crew-content {
-    background: #34495e;
+.nav-links a {
+    color: var(--color-text-light);
+}
+
+.nav-links a:hover {
+    color: var(--color-primary);
+}
+
+/* -- Footer ---------------------------------------------------------------- */
+
+footer {
+    color: var(--color-text-light);
+    border-top-color: var(--color-border);
+}
+
+/* -- Links ----------------------------------------------------------------- */
+
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-light);
+}
+
+/* -- Landing page specific ------------------------------------------------- */
+
+h1, h2, h3, h4, h5, h6 {
     color: var(--color-text);
 }
 
-.records-table thead {
-    background: #2c3e50;
-}
-
-.records-table tbody tr:hover {
-    background: #2c3e50;
+.subtitle {
+    color: var(--color-text-light);
 }

@@ -1,0 +1,49 @@
+/* =============================================================================
+   Scribe Workspace — Slate #475569
+   ============================================================================= */
+
+.crew-card.scribe {
+    background-color: #475569;
+    color: #ffffff;
+}
+
+.crew-card.scribe h2 { color: #ffffff; }
+
+.crew-card.scribe p { color: rgba(255,255,255,0.85); }
+
+.crew-card.scribe:hover {
+    background-color: #334155;
+    border-color: #64748b;
+}
+
+.crew-section.scribe .crew-header {
+    background-color: #475569;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.scribe .crew-header h1 { color: #ffffff; }
+
+.crew-section.scribe .crew-header .btn-back {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.scribe .crew-header .btn-back:hover { color: #ffffff; }
+
+.crew-section.scribe .records-table thead {
+    background-color: #334155;
+    color: #ffffff;
+}
+
+.crew-section.scribe .records-table tbody tr:hover { background-color: #f8fafc; }
+
+.crew-section.scribe .records-table a { color: #64748b; }
+
+.crew-section.scribe .badge {
+    background-color: #e2e8f0;
+    color: #334155;
+}

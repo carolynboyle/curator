@@ -8,7 +8,7 @@
     <!-- Pico CSS (base layer) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
 
-    <!-- Curator styles -->
+    <!-- Curator base styles -->
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/layout.css">
 
@@ -18,8 +18,14 @@
     <link rel="stylesheet" href="/static/css/components/table.css">
     <link rel="stylesheet" href="/static/css/components/empty-state.css">
 
-    <!-- Theme (Phase 3: loaded from settings table) -->
+    <!-- Theme -->
     <link rel="stylesheet" href="/static/css/themes/{{ theme | default('light') }}.css">
+
+    <!-- Crew workspace palettes -->
+    <link rel="stylesheet" href="/static/css/crew/captain.css">
+    <link rel="stylesheet" href="/static/css/crew/scribe.css">
+    <link rel="stylesheet" href="/static/css/crew/mechanic.css">
+    <link rel="stylesheet" href="/static/css/crew/envoy.css">
 </head>
 <body>
     <nav class="navbar">
