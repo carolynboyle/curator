@@ -1,0 +1,36 @@
+<div class="crew-content">
+    <input
+        type="search"
+        name="search"
+        placeholder="Search projects..."
+        value="{{ search }}"
+        hx-get="/crew"
+        hx-trigger="keyup changed delay:300ms"
+        hx-target="#crew-rows"
+        hx-include="[name='search']"
+        hx-vals='{"role": "{{ role }}"}'
+    >
+
+    <table class="crew-table">
+        <thead>
+            <tr>
+                <th class="icon-col"></th>
+                <th>
+                    <button
+                        class="add-icon"
+                        hx-get="/crew/projects/new?role={{ role }}"
+                        hx-target="#crew-rows"
+                        hx-swap="afterbegin"
+                        title="Add project"
+                    >+</button>
+                    Name
+                </th>
+                <th>Type</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="crew-rows">
+            {% include "_crew_rows.html" %}
+        </tbody>
+    </table>
+</div>

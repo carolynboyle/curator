@@ -1,0 +1,12 @@
+<div class="crew-header crew-card {{ role or '' }}">
+    {% if hero_image %}
+        <img src="/static/img/{{ hero_image }}" alt="{{ title }}" class="crew-hero-image">
+    {% endif %}
+    <h1>{{ title }}</h1>
+    {% if subtitle %}
+        <p class="subtitle">{{ subtitle }}</p>
+    {% endif %}
+    {% if show_back %}
+        <a href="/" class="btn-back">← Back to Crew</a>
+    {% endif %}
+</div>

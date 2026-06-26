@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role_title }} — Curator{% endblock %}
+
+{% block content %}
+<section class="crew-section">
+    {% with
+        role=role,
+        hero_image="captain.png",
+        title=role_title,
+        show_back=true
+    %}
+        {% include "_crew_header.html" %}
+    {% endwith %}
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-projects">Projects</button>
+        <button class="tab-btn" data-tab="tab-identities">Identities</button>
+        <button class="tab-btn" data-tab="tab-configuration">Configuration</button>
+    </div>
+
+    <!-- Projects Tab -->
+    <div id="tab-projects" class="tab-panel active">
+        {% include "_projects_table.html" %}
+    </div>
+
+    <!-- Identities Tab -->
+    <div id="tab-identities" class="tab-panel">
+        <div class="crew-content">
+            <div class="identity-selector">
+                <button class="selector-btn active" data-selector="contacts">Contacts</button>
+                <button class="selector-btn" data-selector="organizations">Organizations</button>
+                <button class="selector-btn" data-selector="users">Users / DB Auth</button>
+            </div>
+
+            <!-- Contacts Sub-view -->
+            <div id="selector-contacts" class="selector-panel active">
+                {% if contacts %}
+                    <table class="crew-table">
+                        <thead>
+                            <tr>
+                                <th class="icon-col"></th>
+                                <th>
+                                    <button
+                                        class="add-icon"
+                                        hx-get="/crew/identities/contacts/new?role={{ role }}"
+                                        hx-target="#contacts-rows"
+                                        hx-swap="afterbegin"
+                                        title="Add contact"
+                                    >+</button>
+                                    Name
+                                </th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contacts-rows">
+                            {% for contact in contacts %}
+                            <tr class="contact-row" id="display-row-contact-{{ contact.id }}">
+                                <td class="icon-col">
+                                    <button class="edit-icon" 
+                                            hx-get="/crew/identities/contacts/{{ contact.id }}/edit-form" 
+                                            hx-target="#display-row-contact-{{ contact.id }}" 
+                                            hx-swap="outerHTML"
+                                            title="Edit">✏️</button>
+                                    <button class="detail-icon" title="Details" disabled>⋯</button>
+                                </td>
+                                <td>{{ contact.name }}</td>
+                                <td>{{ contact.email or "—" }}</td>
+                                <td>{{ contact.phone or "—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No contacts found.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Organizations Sub-view -->
+            <div id="selector-organizations" class="selector-panel">
+                {% if organizations %}
+                    <table class="crew-table">
+                        <thead>
+                            <tr>
+                                <th class="icon-col"></th>
+                                <th>
+                                    <button
+                                        class="add-icon"
+                                        hx-get="/crew/identities/organizations/new?role={{ role }}"
+                                        hx-target="#organizations-rows"
+                                        hx-swap="afterbegin"
+                                        title="Add organization"
+                                    >+</button>
+                                    Name
+                                </th>
+                                <th>Type</th>
+                                <th>Website</th>
+                            </tr>
+                        </thead>
+                        <tbody id="organizations-rows">
+                            {% for org in organizations %}
+                            <tr class="organization-row" id="display-row-org-{{ org.id }}">
+                                <td class="icon-col">
+                                    <button class="edit-icon" 
+                                            hx-get="/crew/identities/organizations/{{ org.id }}/edit-form" 
+                                            hx-target="#display-row-org-{{ org.id }}" 
+                                            hx-swap="outerHTML"
+                                            title="Edit">✏️</button>
+                                    <button class="detail-icon" title="Details" disabled>⋯</button>
+                                </td>
+                                <td>{{ org.name }}</td>
+                                <td>{{ org.type or "—" }}</td>
+                                <td>{{ org.website or "—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No organizations found.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Users / DB Auth Sub-view -->
+            <div id="selector-users" class="selector-panel">
+                {% if users %}
+                    <table class="crew-table">
+                        <thead>
+                            <tr>
+                                <th class="icon-col"></th>
+                                <th>
+                                    <button
+                                        class="add-icon"
+                                        hx-get="/crew/identities/users/new?role={{ role }}"
+                                        hx-target="#users-rows"
+                                        hx-swap="afterbegin"
+                                        title="Add user"
+                                    >+</button>
+                                    Username
+                                </th>
+                                <th>Email</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-rows">
+                            {% for user in users %}
+                            <tr class="user-row" id="display-row-user-{{ user.id }}">
+                                <td class="icon-col">
+                                    <button class="edit-icon" 
+                                            hx-get="/crew/identities/users/{{ user.id }}/edit-form" 
+                                            hx-target="#display-row-user-{{ user.id }}" 
+                                            hx-swap="outerHTML"
+                                            title="Edit">✏️</button>
+                                    <button class="detail-icon" title="Details" disabled>⋯</button>
+                                </td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email or "—" }}</td>
+                                <td>{{ user.role or "—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No users found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Tab -->
+    <div id="tab-configuration" class="tab-panel">
+        <div class="crew-content">
+            <div class="empty-state">
+                <p>Configuration options coming soon.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Embed lookups as data for access in partials -->
+<script>
+    window.projectTypes = {{ project_types | tojson }};
+    window.projectStatuses = {{ project_statuses | tojson }};
+
+    // Main tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Hide all tabs, remove active class from all buttons
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab, add active class to clicked button
+            document.getElementById(tabId).classList.add('active');
+            this.classList.add('active');
+        });
+    });
+
+    // Identities sub-selector switching
+    document.querySelectorAll('.selector-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectorId = 'selector-' + this.dataset.selector;
+            
+            // Hide all selector panels, remove active class from all buttons
+            document.querySelectorAll('.selector-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.selector-btn').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected panel, add active class to clicked button
+            document.getElementById(selectorId).classList.add('active');
+            this.classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

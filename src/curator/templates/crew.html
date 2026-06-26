@@ -4,39 +4,23 @@
 
 {% block content %}
 <section class="crew-section {{ role }}">
-    <div class="crew-header">
-        <h1>{{ role_title }}</h1>
-        <a href="/" class="btn-back">← Back to Crew</a>
-    </div>
 
-    <img src="/static/img/{{ role }}.png" alt="{{ role_title }}" class="crew-hero-image">
+    {% with
+        role=role,
+        hero_image=role + ".png",
+        title=role_title,
+        show_back=true
+    %}
+        {% include "_crew_header.html" %}
+    {% endwith %}
 
-    <div class="crew-content">
-        {% if records %}
-            <table class="records-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in records %}
-                    <tr>
-                        <td>{{ record.name }}</td>
-                        <td>{{ record.status }}</td>
-                        <td>{{ record.details }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty-state">
-                <p>{{ message }}</p>
-                <p class="hint">Phase 2 will load role-specific views from the database.</p>
-            </div>
-        {% endif %}
-    </div>
+    {% include "_projects_table.html" %}
+
 </section>
+
+<!-- Embed lookups as data for access in partials -->
+<script>
+    window.projectTypes = {{ project_types | tojson }};
+    window.projectStatuses = {{ project_statuses | tojson }};
+</script>
 {% endblock %}

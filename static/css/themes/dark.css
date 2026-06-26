@@ -7,7 +7,7 @@
     /* App shell — dark backgrounds, light text */
     --color-primary:      #0f766e;  /* teal stays same for accent */
     --color-primary-dark: #0d6460;
-    --color-primary-light:#1a2f2d;
+    --color-primary-light:#20b2aa;  /* Lighter teal for dark theme contrast */
 
     /* Neutrals — inverted */
     --color-bg:           #1a1a1a;

@@ -1,0 +1,54 @@
+<!-- Edit form row — targeted by Save/Cancel buttons via ID -->
+<tr class="crew-row-edit" id="edit-row-{{ project.id }}" data-project-id="{{ project.id }}">
+    <td class="icon-col"></td>
+    <td>
+        <input
+            type="text"
+            name="name"
+            class="edit-input"
+            value="{{ project.name }}"
+            placeholder="Project name"
+            required
+        >
+    </td>
+    <td>
+        <select name="type_id" class="edit-select" required>
+            <option value="">— Type —</option>
+            {% for t in project_types %}
+            <option value="{{ t.id }}" {% if t.id == project.type_id %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <select name="status_id" class="edit-select" required>
+            <option value="">— Status —</option>
+            {% for s in project_statuses %}
+            <option value="{{ s.id }}" {% if s.id == project.status_id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+</tr>
+
+<!-- Edit controls row — removed by OOB delete on save/cancel response -->
+<tr class="crew-row-edit-controls" id="edit-controls-{{ project.id }}" data-project-id="{{ project.id }}">
+    <td class="icon-col"></td>
+    <td colspan="3">
+        <div class="edit-controls">
+            <button
+                type="button"
+                class="btn-save"
+                hx-post="/crew/projects/{{ project.id }}/save"
+                hx-include="#edit-row-{{ project.id }}"
+                hx-target="#edit-row-{{ project.id }}"
+                hx-swap="outerHTML"
+            >Save</button>
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-post="/crew/projects/{{ project.id }}/cancel"
+                hx-target="#edit-row-{{ project.id }}"
+                hx-swap="outerHTML"
+            >Cancel</button>
+        </div>
+    </td>
+</tr>
