@@ -21,7 +21,7 @@ server:
 ui:
   page_size: 25           # Rows per page in list views
   date_format: "%Y-%m-%d"
-  theme: "light"          # Phase 1: read from here
+  theme: "dark"          # Phase 1: read from here
                           # Phase 3: read from settings table instead
 
 crew:

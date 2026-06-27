@@ -1,16 +1,14 @@
-<!DOCTYPE html>
+<link rel="stylesheet" <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ site_title | default("Curator") }}{% endblock %}</title>
 
-    <!-- Pico CSS (base layer) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
-
     <!-- Curator base styles -->
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/components/baseline.css">
 
     <!-- Component styles -->
     <link rel="stylesheet" href="/static/css/components/navbar.css">
@@ -19,6 +17,12 @@
     <link rel="stylesheet" href="/static/css/components/empty-state.css">
     <link rel="stylesheet" href="/static/css/components/forms.css">
     <link rel="stylesheet" href="/static/css/components/tabs.css">
+    <link rel="stylesheet" href="/static/css/components/datasheet.css">
+    <link rel="stylesheet" href="/static/css/components/identity.css">
+
+    <!-- Tabulator data grid — simple theme (grid lines) + compact overrides -->
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.5.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="/static/css/components/tabulator-overrides.css">
 
     <!-- Theme -->
     <link rel="stylesheet" href="/static/css/themes/{{ theme | default('light') }}.css">
@@ -30,6 +34,19 @@
     <link rel="stylesheet" href="/static/css/crew/envoy.css">
 </head>
 <body>
+
+    <!-- Save/Discard confirmation dialog — used by datasheet.js -->
+    <dialog id="datasheet-dialog">
+        <div class="ds-dialog-inner">
+            <p class="ds-dialog-title">Unsaved Changes</p>
+            <p class="ds-dialog-message">Save changes to this row before continuing?</p>
+            <div class="ds-dialog-actions">
+                <button class="ds-dialog-discard">Discard</button>
+                <button class="ds-dialog-save">Save</button>
+            </div>
+        </div>
+    </dialog>
+
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
@@ -51,5 +68,7 @@
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Tabulator data grid -->
+    <script src="https://unpkg.com/tabulator-tables@6.5.0/dist/js/tabulator.min.js"></script>
 </body>
 </html>

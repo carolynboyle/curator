@@ -1,38 +1,13 @@
 /* ============================================================
-   forms.css — Crew table edit/add form component styles
-   No color declarations — role colors live in crew CSS files
+   forms.css — Icon and add button styles
+   Edit/add field styles moved to datasheet.css
    ============================================================ */
 
 /* Icon column */
 table.crew-table .icon-col {
-    width: 3.5rem;
+    width: 3rem;
     text-align: left;
     white-space: nowrap;
-}
-
-/* Pencil and detail icons — hidden until row hover */
-table.crew-table .edit-icon,
-table.crew-table .detail-icon {
-    visibility: hidden;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.25rem 0.3rem;
-    font-size: 1rem;
-    color: currentColor;
-}
-
-table.crew-table tr:hover .edit-icon,
-table.crew-table tr:hover .detail-icon {
-    visibility: visible;
-}
-
-/* Touch devices: always show icons (no hover available) */
-@media (hover: none) {
-    table.crew-table .edit-icon,
-    table.crew-table .detail-icon {
-        visibility: visible;
-    }
 }
 
 /* Add icon in header */
@@ -50,76 +25,4 @@ table.crew-table th .add-icon {
 
 table.crew-table th .add-icon:hover {
     opacity: 1;
-}
-
-/* Edit / add form fields */
-tr.crew-row-edit fieldset.edit-fields,
-tr.crew-row-add fieldset.edit-fields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
-    margin: 0.5rem 0;
-    border: none;
-    padding: 0;
-}
-
-tr.crew-row-edit .edit-input,
-tr.crew-row-edit .edit-select,
-tr.crew-row-add .edit-input,
-tr.crew-row-add .edit-select {
-    padding: 0.5rem;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 0.25rem;
-    font-size: 0.95rem;
-    font-family: inherit;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Controls row */
-tr.crew-row-edit-controls .edit-controls {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 0;
-    align-items: center;
-}
-
-/* Save and Cancel buttons */
-.btn-save,
-.btn-cancel {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 0.25rem;
-    background: white;
-    color: #111 !important;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 200ms ease;
-}
-
-.btn-save:hover {
-    background: #e6f2ff;
-    border-color: #0066cc;
-}
-
-.btn-cancel:hover {
-    background: #f5f5f5;
-    border-color: #666;
-}
-
-/* Inline error message on add */
-.add-error {
-    color: #9b1c1c;
-    font-size: 0.9rem;
-    margin-left: 0.5rem;
-}
-
-/* Responsive: stack fields on small screens */
-@media (max-width: 640px) {
-    .btn-save,
-    .btn-cancel {
-        flex: 1;
-        text-align: center;
-    }
 }

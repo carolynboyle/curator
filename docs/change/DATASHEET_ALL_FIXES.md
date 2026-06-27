@@ -1,3 +1,332 @@
+# Datasheet — All Fixes
+
+**Date:** 2026-06-26  
+**Apply in this order. Browser reload only — no uvicorn restart needed except for step 1.**
+
+---
+
+## Files changed
+
+| # | File | What changes |
+|---|------|-------------|
+| 1 | `templates/base.html` | Remove Pico, add baseline.css |
+| 2 | `static/css/components/baseline.css` | NEW FILE — minimal element resets |
+| 3 | `static/css/components/tabulator-overrides.css` | Replace entire file |
+| 4 | `templates/_projects_table.html` | Replace entire file |
+
+---
+
+## 1. `templates/base.html`
+
+**WHY:** Remove Pico CSS entirely. It styles native HTML elements globally and
+was fighting Tabulator's internal divs. Replace with a minimal baseline.css
+that only resets what we actually need.
+
+**BEFORE:**
+```html
+    <!-- Pico CSS (base layer) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+
+    <!-- Curator base styles -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+```
+
+**AFTER:**
+```html
+    <!-- Curator base styles -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/components/baseline.css">
+```
+
+---
+
+## 2. `static/css/components/baseline.css` — NEW FILE
+
+**WHY:** Replaces the handful of useful things Pico was doing (box-sizing,
+font resets, button/input normalization) with nothing extra. No classless
+global styling, no framework opinions.
+
+**Create this file at `static/css/components/baseline.css`:**
+```css
+/* =============================================================================
+   baseline.css — Minimal element resets
+   Replaces Pico CSS. Only resets what we actually need.
+   No classless global styling. No framework opinions.
+   ============================================================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+}
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    border: 1px solid var(--color-border, #dde1e7);
+    border-radius: 3px;
+    padding: 0.35rem 0.5rem;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #1a1a1a);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--color-primary, #0f766e);
+    outline-offset: -1px;
+    border-color: var(--color-primary, #0f766e);
+}
+
+ul, ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+p {
+    margin: 0 0 0.75rem 0;
+}
+
+a {
+    color: var(--color-primary, #0f766e);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+```
+
+---
+
+## 3. `static/css/components/tabulator-overrides.css` — REPLACE ENTIRE FILE
+
+**WHY:** 
+- All CSS variable references replaced with hardcoded light values so the
+  datasheet always looks light regardless of the app theme
+- Row height fixed: `!important` needed because Tabulator's simple theme sets
+  min-height inline on row elements, which beats external CSS without it
+- Checkbox column and right-pinned `⋯` column styles added
+- Row selected highlight (blue) added
+
+**REPLACE THE ENTIRE FILE WITH:**
+```css
+/* ============================================================
+   tabulator-overrides.css — Compact pgAdmin-style datasheet
+   Loaded AFTER tabulator_simple.min.css to win specificity.
+   
+   All colors are hardcoded light values — the datasheet is
+   always light regardless of the app theme (dark.css, etc).
+   ============================================================ */
+
+/* ---- Grid container ----------------------------------------------- */
+
+.tabulator {
+    border: 1px solid #dde1e7;
+    font-size: 0.875rem;
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+/* ---- Header row ---------------------------------------------------- */
+
+.tabulator .tabulator-header {
+    border-bottom: 2px solid #dde1e7;
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    background: #f3f4f6;
+    border-right: 1px solid #dde1e7;
+}
+
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+    padding: 4px 8px;
+}
+
+/* ---- Data rows — compact ------------------------------------------ */
+
+.tabulator .tabulator-row {
+    min-height: 0 !important;
+    max-height: 26px !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tabulator .tabulator-row .tabulator-cell {
+    padding: 3px 8px;
+    border-right: 1px solid #e5e7eb;
+    height: 26px;
+    line-height: 20px;
+    overflow: hidden;
+}
+
+.tabulator .tabulator-row:hover {
+    background: #f0faf9;
+}
+
+/* Alternating row stripes — pgAdmin style */
+.tabulator .tabulator-row.tabulator-row-even {
+    background: #ffffff;
+}
+
+.tabulator .tabulator-row.tabulator-row-odd {
+    background: #fafafa;
+}
+
+/* ---- Row selected (checkbox selection) ---------------------------- */
+
+.tabulator .tabulator-row.row-selected,
+.tabulator .tabulator-row.row-selected:hover {
+    background: #dbeafe !important;
+}
+
+.tabulator .tabulator-row.row-selected .tabulator-cell {
+    color: #1e3a5f;
+}
+
+/* ---- Header filter (search box) ----------------------------------- */
+
+.tabulator .tabulator-header-filter input,
+.tabulator .tabulator-header-filter select {
+    width: 100%;
+    padding: 2px 6px;
+    margin: 0;
+    border: 1px solid #dde1e7;
+    border-radius: 0;
+    font-size: 0.85rem;
+    font-family: inherit;
+    height: auto;
+    box-shadow: none;
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+/* ---- Cell editors — flat, flush with cell ------------------------- */
+
+.tabulator .tabulator-cell.tabulator-editing input,
+.tabulator .tabulator-cell.tabulator-editing select {
+    border: none;
+    border-radius: 0;
+    padding: 2px 6px;
+    margin: 0;
+    font-size: 0.85rem;
+    font-family: inherit;
+    width: 100%;
+    box-shadow: none;
+    background: #ffffff;
+    color: #1a1a1a;
+    outline: 2px solid #0f766e;
+    outline-offset: -2px;
+}
+
+/* ---- Editing cell highlight --------------------------------------- */
+
+.tabulator .tabulator-cell.tabulator-editing {
+    border: none;
+    padding: 0;
+}
+
+/* ---- Checkbox column (left) --------------------------------------- */
+
+.tabulator .tabulator-col.col-select,
+.tabulator .tabulator-cell.col-select {
+    padding: 0;
+    text-align: center;
+    border-right: 2px solid #dde1e7;
+}
+
+.tabulator .col-select input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+    accent-color: #0f766e;
+}
+
+/* ---- Detail icon column (right) ----------------------------------- */
+
+.tabulator .tabulator-cell.col-detail {
+    text-align: center;
+    padding: 0;
+    border-left: 1px solid #e5e7eb;
+    border-right: none;
+}
+
+.tabulator .detail-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    font-size: 1rem;
+    color: #6b7280;
+    opacity: 0.3;
+}
+
+.tabulator .detail-icon:hover:not(:disabled) {
+    opacity: 1;
+}
+
+/* ---- Add button in Name header ------------------------------------ */
+
+.tabulator .add-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0 0.3rem 0 0;
+    color: #0f766e;
+    opacity: 0.7;
+}
+
+.tabulator .add-icon:hover {
+    opacity: 1;
+}
+```
+
+---
+
+## 4. `templates/_projects_table.html` — REPLACE ENTIRE FILE
+
+**WHY:**
+- Checkbox column on left, `⋯` column on right
+- Double-click to edit cells (single-click is for row selection)
+- Row selection with blue highlight
+- Clipboard copy via Ctrl+C with HTTP fallback (works on localhost,
+  Tailscale HTTP, and future HTTPS without any code changes)
+
+**REPLACE THE ENTIRE FILE WITH:**
+```html
 <div class="crew-content">
     <div id="projects-grid"></div>
 </div>
@@ -211,7 +540,7 @@ window.addEventListener('load', function () {
         ajaxURL: '/crew',
         ajaxParams: { role: '{{ role }}' },
         ajaxConfig: { headers: { 'Accept': 'application/json' } },
-        filterMode: 'local',
+        filterMode: 'remote',
         ajaxResponse: function(url, params, response) {
             return response.records || response;
         },
@@ -384,3 +713,20 @@ window.addEventListener('load', function () {
 
 });
 </script>
+```
+
+---
+
+## Behavior after all fixes applied
+
+| Action | Result |
+|--------|--------|
+| Page background | Light grey (`#f5f7fa`) regardless of theme setting |
+| Grid background | Always white with light grey header |
+| Row height | 26px compact — pgAdmin style |
+| Single-click row | Selects / deselects (blue highlight) |
+| Ctrl+C with rows selected | Copies tab-separated values to clipboard |
+| Double-click a data cell | Opens cell for editing |
+| Escape while editing | Save/Discard dialog if dirty |
+| Click `⋯` (right column) | Future: opens detail form |
+| Dark theme | Page goes dark, grid stays light |

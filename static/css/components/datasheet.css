@@ -1,0 +1,174 @@
+/* ============================================================
+   datasheet.css — Inline datasheet editor styles
+   No color declarations — role colors live in crew CSS files
+   ============================================================ */
+
+/* ---- Editable cells ----------------------------------------------- */
+
+table.crew-table td[data-field] {
+    cursor: text;
+}
+
+/* Active editing row highlight */
+table.crew-table tr.ds-editing {
+    background-color: var(--color-surface, #fff);
+    outline: 2px solid var(--color-primary, #0f766e);
+    outline-offset: -2px;
+}
+
+/* Inputs inside cells — invisible until focused, spreadsheet style */
+table.crew-table tr.ds-editing .ds-input,
+table.crew-table tr.ds-editing .ds-select {
+    width: 100%;
+    padding: 0.2rem 0.3rem;
+    border: none;
+    border-bottom: 1px solid var(--color-border, #d1d5db);
+    border-radius: 0;
+    font-size: inherit;
+    font-family: inherit;
+    background: transparent;
+    color: var(--color-text, #1a1a1a);
+    box-sizing: border-box;
+    outline: none;
+}
+
+table.crew-table tr.ds-editing .ds-input:focus,
+table.crew-table tr.ds-editing .ds-select:focus {
+    border-bottom: 2px solid var(--color-primary, #0f766e);
+    background: var(--color-surface, #fff);
+}
+
+/* ---- Icon column --------------------------------------------------- */
+
+table.crew-table .icon-col {
+    width: 3rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+table.crew-table .detail-icon {
+    visibility: hidden;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.3rem;
+    font-size: 1rem;
+    color: currentColor;
+}
+
+table.crew-table tr:hover .detail-icon {
+    visibility: visible;
+}
+
+table.crew-table tr.ds-editing .detail-icon {
+    visibility: hidden;
+}
+
+/* Touch devices: always show icons */
+@media (hover: none) {
+    table.crew-table .detail-icon {
+        visibility: visible;
+    }
+}
+
+/* ---- Add icon in header ------------------------------------------- */
+
+table.crew-table th .add-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0 0.3rem 0 0;
+    color: currentColor;
+    opacity: 0.6;
+    vertical-align: middle;
+}
+
+table.crew-table th .add-icon:hover {
+    opacity: 1;
+}
+
+/* ---- Save/Discard dialog ------------------------------------------ */
+
+#datasheet-dialog {
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    max-width: 360px;
+    width: 90vw;
+}
+
+#datasheet-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.ds-dialog-inner {
+    padding: 1.5rem;
+}
+
+.ds-dialog-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-dark, #171717);
+}
+
+.ds-dialog-message {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.9rem;
+    color: var(--color-text, #1a1a1a);
+}
+
+.ds-dialog-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.ds-dialog-discard {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 0.25rem;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #1a1a1a);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: background 150ms ease;
+}
+
+.ds-dialog-discard:hover {
+    background: var(--color-bg, #e5e5e5);
+}
+
+.ds-dialog-save {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    background: var(--color-primary, #0f766e);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: background 150ms ease;
+}
+
+.ds-dialog-save:hover {
+    background: var(--color-teal-dark, #0d6460);
+}
+
+/* ---- Responsive --------------------------------------------------- */
+
+@media (max-width: 640px) {
+    .ds-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .ds-dialog-save,
+    .ds-dialog-discard {
+        width: 100%;
+        text-align: center;
+    }
+}
