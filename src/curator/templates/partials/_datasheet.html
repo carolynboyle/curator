@@ -1,0 +1,74 @@
+{#
+  _datasheet.html
+  
+  Reusable Tabulator datasheet grid.
+  
+  This partial renders just the Tabulator instance. It is always used as
+  a child of _datasheet_with_header.html (which provides the + button,
+  search, and controls).
+  
+  Parameters:
+    - container_id (str): DOM id for Tabulator to mount to (required)
+    - entity (str): QueryLoader entity name (e.g., "tasks", "contact_emails")
+    - query_name (str): QueryLoader query name (e.g., "for_project")
+    - query_params (str): Comma-separated bind parameters (e.g., "123")
+    - columns (list): Column definitions for Tabulator
+    - save_url (str): POST endpoint for saving row edits
+    - add_url (str, optional): POST endpoint for adding new rows
+  
+  Example usage (from _datasheet_with_header.html):
+    
+    {% include '_datasheet.html' with
+        container_id='tasks-datasheet',
+        entity='tasks',
+        query_name='for_project',
+        query_params=record.id,
+        columns=[
+          { "title": "Name", "field": "name", "width": 200, "editor": "input" },
+          { "title": "Status", "field": "status_id", "width": 100 }
+        ],
+        save_url='/crew/tasks/save'
+    %}
+#}
+
+<div id="{{ container_id }}" style="height: 100%;"></div>
+
+<script type="module">
+  import Tabulator from '/static/lib/tabulator/tabulator.esm.js';
+
+  const container = document.getElementById('{{ container_id }}');
+  const queryName = '{{ query_name }}';
+  const entity = '{{ entity }}';
+  const queryParams = '{{ query_params }}';
+  const ajaxUrl = `/api/query/${entity}/${queryName}?params=${queryParams}`;
+  
+  const columns = {{ columns | tojson }};
+
+  const table = new Tabulator(container, {
+    height: '100%',
+    layout: 'fitColumns',
+    selectable: true,
+    clipboard: true,
+    ajax: {
+      url: ajaxUrl,
+      headers: { 'Accept': 'application/json' },
+    },
+    ajaxResponse: (url, params, response) => {
+      return response.records || [];
+    },
+    columns: columns,
+    dataLoaded: (data) => {
+      // Data loaded successfully
+    },
+    dataLoadError: (error) => {
+      console.error(
+        `Failed to load ${entity}/${queryName}:`,
+        error
+      );
+    },
+  });
+
+  // Store reference on window for parent (detail panel) access
+  // Parent may need to refresh table after saves
+  window[`tabulator_${container}`] = table;
+</script>

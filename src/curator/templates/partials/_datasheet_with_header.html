@@ -1,0 +1,161 @@
+{#
+  _datasheet_with_header.html
+  
+  Reusable datasheet component with header controls.
+  
+  Includes:
+    - Header bar with [+ Add] button, search input, clear button
+    - Calls _datasheet.html for the actual grid
+  
+  This is the standard way to use Tabulator in Curator. Always use this
+  instead of _datasheet.html directly.
+  
+  Parameters:
+    - add_button_label (str): Label for the + button (e.g., "+ Task")
+    - add_url (str, optional): POST endpoint for adding new rows
+    - container_id (str): DOM id for Tabulator to mount to (required)
+    - entity (str): QueryLoader entity name (e.g., "tasks")
+    - query_name (str): QueryLoader query name (e.g., "for_project")
+    - query_params (str): Comma-separated bind parameters
+    - columns (list): Column definitions for Tabulator
+    - save_url (str): POST endpoint for saving row edits
+  
+  Example usage (from detail panel):
+    
+    {% include '_datasheet_with_header.html' with
+        add_button_label='+ Task',
+        add_url='/crew/tasks/add',
+        container_id='tasks-datasheet',
+        entity='tasks',
+        query_name='for_project',
+        query_params=record.id,
+        columns=[...],
+        save_url='/crew/tasks/save'
+    %}
+#}
+
+<div class="datasheet-container">
+  
+  <!-- Header with controls -->
+  <div class="datasheet-header">
+    {% if add_url %}
+      <button class="datasheet-add-button" data-add-url="{{ add_url }}">
+        {{ add_button_label }}
+      </button>
+    {% endif %}
+    <input
+      type="text"
+      class="datasheet-search"
+      placeholder="Search..."
+      aria-label="Search datasheet"
+    />
+    <button class="datasheet-clear-button" aria-label="Clear search">
+      ×
+    </button>
+  </div>
+
+  <!-- Tabulator grid -->
+  <div class="datasheet-body">
+    {% include 'partials/_datasheet.html' with
+        container_id=container_id,
+        entity=entity,
+        query_name=query_name,
+        query_params=query_params,
+        columns=columns,
+        save_url=save_url
+    %}
+  </div>
+
+</div>
+
+<script type="module">
+  {# Search and clear button handlers (deferred — implement with full detail panel JS) #}
+  {#
+  const header = document.currentScript.parentElement;
+  const searchInput = header.querySelector('.datasheet-search');
+  const clearBtn = header.querySelector('.datasheet-clear-button');
+  const addBtn = header.querySelector('.datasheet-add-button');
+  
+  searchInput.addEventListener('input', (e) => {
+    // Filter table using Tabulator's setFilter API
+  });
+  
+  clearBtn.addEventListener('click', () => {
+    // Clear search and reset table
+  });
+  
+  addBtn?.addEventListener('click', () => {
+    // Open form or POST to add_url
+  });
+  #}
+</script>
+
+<style>
+  .datasheet-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0;
+  }
+
+  .datasheet-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    flex-shrink: 0;
+  }
+
+  .datasheet-add-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-button-primary-text);
+    background: var(--color-button-primary-bg);
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .datasheet-add-button:hover {
+    opacity: 0.9;
+  }
+
+  .datasheet-search {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.25rem;
+    background: var(--color-input-bg);
+    color: var(--color-input-text);
+    font-size: 0.875rem;
+  }
+
+  .datasheet-search::placeholder {
+    color: var(--color-text-light);
+  }
+
+  .datasheet-clear-button {
+    padding: 0.25rem 0.5rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--color-text-light);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .datasheet-clear-button:hover {
+    color: var(--color-text);
+  }
+
+  .datasheet-body {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;  /* Important: allows flex child to shrink below content size */
+  }
+</style>

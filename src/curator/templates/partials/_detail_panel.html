@@ -1,0 +1,242 @@
+{#
+  _detail_panel.html
+  
+  Detail panel — displays a record's details in a tabbed interface.
+  Replaces the hero image when a user clicks ⋯ on a datasheet row.
+  
+  Parameters:
+    - entity (str): Entity type ("projects", "contacts", "organizations")
+    - record_id (int): ID of the record being displayed
+    - record (dict): Full record data for form fields
+    - project_types (list, optional): Type lookup for projects
+    - project_statuses (list, optional): Status lookup for projects
+    - contact_map (dict, optional): Contact ID → name mapping for dropdowns
+    - status_map (dict, optional): Status ID → name mapping for dropdowns
+  
+  Example usage (from captain.html):
+    
+    {% include '_detail_panel.html' with
+        entity='projects',
+        record_id=project.id,
+        record=project,
+        project_types=project_types,
+        project_statuses=project_statuses
+    %}
+#}
+
+<div class="detail-panel" data-entity="{{ entity }}" data-id="{{ record_id }}">
+  
+  <!-- Tab navigation -->
+  <div class="detail-tabs">
+    <button class="detail-tab-button active" data-tab="details">Details</button>
+    
+    {% if entity == "projects" %}
+      <button class="detail-tab-button" data-tab="tasks">Tasks</button>
+      <button class="detail-tab-button" data-tab="links">Links</button>
+      <button class="detail-tab-button" data-tab="contacts">Contacts</button>
+    {% elif entity == "contacts" %}
+      <button class="detail-tab-button" data-tab="emails">Emails</button>
+      <button class="detail-tab-button" data-tab="phones">Phones</button>
+      <button class="detail-tab-button" data-tab="urls">URLs</button>
+      <button class="detail-tab-button" data-tab="organizations">Organizations</button>
+    {% elif entity == "organizations" %}
+      <button class="detail-tab-button" data-tab="contacts">Contacts</button>
+    {% endif %}
+    
+    <button class="detail-close-button" aria-label="Close detail panel">×</button>
+  </div>
+
+  <!-- Tab content container -->
+  <div class="detail-tab-panels">
+    
+    <!-- ===== DETAILS TAB (always first) ===== -->
+    <div class="detail-tab-panel active" data-tab="details">
+      <form class="detail-form" data-entity="{{ entity }}" data-id="{{ record_id }}">
+        
+        {% if entity == "projects" %}
+          <!-- Project details -->
+          <div class="form-group">
+            <label for="detail-name">Name</label>
+            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
+          </div>
+          
+          <div class="form-group">
+            <label for="detail-type">Type</label>
+            <select id="detail-type" name="type_id">
+              <option value="">—</option>
+              {% for type in project_types %}
+                <option value="{{ type.id }}" {% if record.type_id == type.id %}selected{% endif %}>
+                  {{ type.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="detail-status">Status</label>
+            <select id="detail-status" name="status_id">
+              <option value="">—</option>
+              {% for status in project_statuses %}
+                <option value="{{ status.id }}" {% if record.status_id == status.id %}selected{% endif %}>
+                  {{ status.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="detail-description">Description</label>
+            <textarea id="detail-description" name="description">{{ record.description or '' }}</textarea>
+          </div>
+
+        {% elif entity == "contacts" %}
+          <!-- Contact details -->
+          <div class="form-group">
+            <label for="detail-name">Name</label>
+            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
+          </div>
+          
+          <div class="form-group">
+            <label for="detail-title">Title</label>
+            <input type="text" id="detail-title" name="title" value="{{ record.title or '' }}" />
+          </div>
+
+        {% elif entity == "organizations" %}
+          <!-- Organization details -->
+          <div class="form-group">
+            <label for="detail-name">Name</label>
+            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
+          </div>
+        {% endif %}
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-save">Save</button>
+          <button type="reset" class="btn-discard">Discard</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== PROJECT CHILD DATASHEETS ===== -->
+    {% if entity == "projects" %}
+      
+      <!-- Tasks Tab -->
+      <div class="detail-tab-panel" data-tab="tasks">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ Task',
+            add_url='/crew/tasks/add',
+            container_id='tasks-datasheet',
+            entity='tasks',
+            query_name='for_project',
+            query_params=record.id,
+            columns=[
+              { "title": "Name", "field": "name", "width": 200, "editor": "input" },
+              { "title": "Status", "field": "status_id", "width": 100 },
+              { "title": "Assignee", "field": "assignee_id", "width": 100 },
+              { "title": "Due", "field": "due_date", "width": 100 }
+            ],
+            save_url='/crew/tasks/save'
+        %}
+      </div>
+
+      <!-- Links Tab (deferred) -->
+      <div class="detail-tab-panel" data-tab="links">
+        <p style="padding: 1rem; color: var(--color-text-light);">Links tab — coming soon</p>
+      </div>
+
+      <!-- Contacts Tab (deferred) -->
+      <div class="detail-tab-panel" data-tab="contacts">
+        <p style="padding: 1rem; color: var(--color-text-light);">Contacts tab — coming soon</p>
+      </div>
+
+    {% elif entity == "contacts" %}
+      
+      <!-- Emails Tab -->
+      <div class="detail-tab-panel" data-tab="emails">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ Email',
+            add_url='/crew/contacts/emails/add',
+            container_id='emails-datasheet',
+            entity='contact_emails',
+            query_name='for_contact',
+            query_params=record.id,
+            columns=[
+              { "title": "Label", "field": "label", "width": 100, "editor": "input" },
+              { "title": "Address", "field": "address", "width": 200, "editor": "input" }
+            ],
+            save_url='/crew/contacts/emails/save'
+        %}
+      </div>
+
+      <!-- Phones Tab -->
+      <div class="detail-tab-panel" data-tab="phones">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ Phone',
+            add_url='/crew/contacts/phones/add',
+            container_id='phones-datasheet',
+            entity='contact_phones',
+            query_name='for_contact',
+            query_params=record.id,
+            columns=[
+              { "title": "Label", "field": "label", "width": 100, "editor": "input" },
+              { "title": "Number", "field": "number", "width": 200, "editor": "input" }
+            ],
+            save_url='/crew/contacts/phones/save'
+        %}
+      </div>
+
+      <!-- URLs Tab -->
+      <div class="detail-tab-panel" data-tab="urls">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ URL',
+            add_url='/crew/contacts/urls/add',
+            container_id='urls-datasheet',
+            entity='contact_urls',
+            query_name='for_contact',
+            query_params=record.id,
+            columns=[
+              { "title": "Type", "field": "type", "width": 100, "editor": "input" },
+              { "title": "Value", "field": "value", "width": 200, "editor": "input" }
+            ],
+            save_url='/crew/contacts/urls/save'
+        %}
+      </div>
+
+      <!-- Organizations Tab -->
+      <div class="detail-tab-panel" data-tab="organizations">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ Organization',
+            container_id='orgs-datasheet',
+            entity='organization_contacts',
+            query_name='for_contact',
+            query_params=record.id,
+            columns=[
+              { "title": "Organization", "field": "name", "width": 200 },
+              { "title": "Role", "field": "role", "width": 100, "editor": "input" }
+            ],
+            save_url='/crew/organizations/contacts/save'
+        %}
+      </div>
+
+    {% elif entity == "organizations" %}
+      
+      <!-- Contacts Tab -->
+      <div class="detail-tab-panel" data-tab="contacts">
+        {% include 'partials/_datasheet_with_header.html' with
+            add_button_label='+ Contact',
+            container_id='contacts-datasheet',
+            entity='organization_contacts',
+            query_name='for_organization',
+            query_params=record.id,
+            columns=[
+              { "title": "Name", "field": "name", "width": 200 },
+              { "title": "Title", "field": "title", "width": 150 },
+              { "title": "Role", "field": "role", "width": 100, "editor": "input" }
+            ],
+            save_url='/crew/organizations/contacts/save'
+        %}
+      </div>
+
+    {% endif %}
+
+  </div>
+</div>
