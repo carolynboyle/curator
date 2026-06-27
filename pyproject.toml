@@ -17,6 +17,7 @@ dependencies = [
     "jinja2>=3.1.0",
     "python-multipart>=0.0.9",
     "dbkit @ git+https://github.com/carolynboyle/dev-utils.git#subdirectory=python/dbkit",
+    "viewkit @ git+https://github.com/carolynboyle/dev-utils.git#subdirectory=python/viewkit",
 ]
 
 [tool.setuptools.packages.find]

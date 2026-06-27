@@ -10,6 +10,13 @@ from jinja2 import Environment, FileSystemLoader
 from dbkit.connection import AsyncDBConnection
 from curator.config import ConfigManager
 from curator.web.deps import get_config, get_db
+from viewkit.query_builder import QueryBuilder
+from viewkit.query_loader import QueryLoader
+
+# Initialize QueryLoader for /api/query endpoint
+_QUERIES_PATH = Path(__file__).parent.parent.parent / "data" / "queries.yaml"
+_query_builder = QueryBuilder(_QUERIES_PATH)
+_query_loader = QueryLoader(_query_builder)
 
 router = APIRouter()
 
@@ -183,6 +190,27 @@ async def _fetch_records(db: AsyncDBConnection, role: str, search: str) -> list:
 
 
 # -- Dashboard ----------------------------------------------------------------
+@router.get("/api/query/{entity}/{query_name}")
+async def run_query(
+    entity: str,
+    query_name: str,
+    params: str = Query(""),
+    db: AsyncDBConnection = Depends(get_db),
+):
+    """Generic query endpoint for child datasheets in detail panels."""
+    try:
+        sql = _query_loader.sql(entity, query_name)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Query not found: {entity}.{query_name}"
+        )
+    params_list = tuple(p.strip() for p in params.split(",")) if params else ()
+    try:
+        rows = await db.fetch_all(sql, params_list)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return JSONResponse({"records": [dict(r) for r in rows]})
 
 @router.get("/crew")
 async def crew_dashboard(
@@ -246,6 +274,18 @@ async def crew_dashboard(
     return HTMLResponse(template.render(**data))
 
 
+
+@router.get("/crew/projects/{project_id}")
+async def get_project(
+    project_id: int,
+    db: AsyncDBConnection = Depends(get_db),
+):
+    """Fetch a single project as JSON for the detail panel."""
+    record = await _fetch_project_for_display(db, project_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return JSONResponse(dict(record))
+    
 # -- Project save routes ------------------------------------------------------
 # /crew/projects/save must be declared before /crew/projects/{project_id}/save
 # to prevent "save" matching as a project_id integer.

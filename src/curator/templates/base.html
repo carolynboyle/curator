@@ -1,4 +1,4 @@
-<link rel="stylesheet" <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="/static/css/components/tabs.css">
     <link rel="stylesheet" href="/static/css/components/datasheet.css">
     <link rel="stylesheet" href="/static/css/components/identity.css">
+    <link rel="stylesheet" href="/static/css/components/detail-panel.css">
+
 
     <!-- Tabulator data grid — simple theme (grid lines) + compact overrides -->
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.5.0/dist/css/tabulator_simple.min.css">
@@ -32,9 +34,10 @@
     <link rel="stylesheet" href="/static/css/crew/scribe.css">
     <link rel="stylesheet" href="/static/css/crew/mechanic.css">
     <link rel="stylesheet" href="/static/css/crew/envoy.css">
-</head>
+    </head>
+    
+    
 <body>
-
     <!-- Save/Discard confirmation dialog — used by datasheet.js -->
     <dialog id="datasheet-dialog">
         <div class="ds-dialog-inner">
@@ -70,5 +73,8 @@
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <!-- Tabulator data grid -->
     <script src="https://unpkg.com/tabulator-tables@6.5.0/dist/js/tabulator.min.js"></script>
+
+    <!-- Detail panel — tab switching, open/close, form save -->
+    <script type="module" src="/static/js/detail-panel.js"></script>
 </body>
 </html>

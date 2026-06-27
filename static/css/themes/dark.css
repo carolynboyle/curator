@@ -21,6 +21,17 @@
     --color-danger-bg:    #3a1a1a;
     --color-success:      #166534;
     --color-warning:      #b45309;
+
+    /* Form inputs */
+    --color-input-bg:     #3a3a3a;
+    --color-input-border: #404040;
+    --color-input-text:   #e5e5e5;
+
+    /* Buttons */
+    --color-button-primary-bg:    #0f766e;
+    --color-button-primary-text:  #ffffff;
+    --color-button-secondary-bg:  #3a3a3a;
+    --color-button-secondary-text:#e5e5e5;
 }
 
 body {

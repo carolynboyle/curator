@@ -10,8 +10,11 @@
         title=role_title,
         show_back=true
     %}
-        {% include "_crew_header.html" %}
+        {% include "partials/_crew_header.html" %}
     {% endwith %}
+
+    <!-- Detail panel — replaces hero image when ⋯ is clicked -->
+    <div id="detail-panel-container"></div>
 
     <!-- Tab Navigation -->
     <div class="tabs">
@@ -22,7 +25,7 @@
 
     <!-- Projects Tab -->
     <div id="tab-projects" class="tab-panel active">
-        {% include "_projects_table.html" %}
+        {% include "partials/_projects_table.html" %}
     </div>
 
     <!-- Identities Tab -->

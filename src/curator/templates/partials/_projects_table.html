@@ -348,9 +348,11 @@ window.addEventListener('load', function () {
                 formatter: function() {
                     return '<button class="detail-icon" title="Project details">⋯</button>';
                 },
+                
                 cellClick: function(e, cell) {
                     e.stopPropagation();
-                    // Future: open detail panel for cell.getRow().getData().id
+                    const id = cell.getRow().getData().id;
+                    window.openDetailPanel('projects', id);
                 },
             },
         ],

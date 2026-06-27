@@ -150,6 +150,11 @@ export function closeDetailPanel() {
   }
 }
 
+// Expose for non-module scripts (e.g. _projects_table.html)
+window.openDetailPanel = openDetailPanel;
+window.closeDetailPanel = closeDetailPanel;
+
+
 // Initialize on page load
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDetailPanel);
