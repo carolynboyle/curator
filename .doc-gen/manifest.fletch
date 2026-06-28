@@ -1,14 +1,14 @@
-# Generated: 2026-06-27 14:52:50
+# Generated: 2026-06-27 17:30:21
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
 # Version: v0.2.0
-# Files: 113
+# Files: 117
 
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-06-27 14:52:50'
+generated: '2026-06-27 17:30:21'
 version: 0.2.0
 files:
 - path: .env
@@ -51,6 +51,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/captain_implementation_guide.md
 - path: docs/change/captain_projects_dry_refactor.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/captain_projects_dry_refactor.md
+- path: docs/change/crew_template/CHANGEDOC_CREW_TEMPLATE_MERGE.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/crew_template/CHANGEDOC_CREW_TEMPLATE_MERGE.md
 - path: docs/change/curator_handoff_2026-06-25.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/curator_handoff_2026-06-25.md
 - path: docs/change/curator_handoff_2026-06-25b.md
@@ -154,6 +156,12 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_identities_users.html
 - path: src/curator/templates/partials/_projects_table.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_projects_table.html
+- path: src/curator/templates/partials/_tab_configuration.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_tab_configuration.html
+- path: src/curator/templates/partials/_tab_identities.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_tab_identities.html
+- path: src/curator/templates/partials/_tab_projects.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_tab_projects.html
 - path: src/curator/web/__init__.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/__init__.py
 - path: src/curator/web/app.py

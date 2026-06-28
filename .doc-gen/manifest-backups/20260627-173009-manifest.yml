@@ -1,6 +1,6 @@
-# Generated: 2026-06-27 17:30:09
+# Generated: 2026-06-27 14:52:34
 # Project: /home/carolyn/projects/curator
-# Files: 117
+# Files: 113
 
 version: 1
 documents:
@@ -24,7 +24,6 @@ documents:
 - path: docs/change/PHASE1_FIXES.md
 - path: docs/change/captain_implementation_guide.md
 - path: docs/change/captain_projects_dry_refactor.md
-- path: docs/change/crew_template/CHANGEDOC_CREW_TEMPLATE_MERGE.md
 - path: docs/change/curator_handoff_2026-06-25.md
 - path: docs/change/curator_handoff_2026-06-25b.md
 - path: docs/change/curator_handoff_2026-06-26.md
@@ -76,9 +75,6 @@ documents:
 - path: src/curator/templates/partials/_identities_organizations.html
 - path: src/curator/templates/partials/_identities_users.html
 - path: src/curator/templates/partials/_projects_table.html
-- path: src/curator/templates/partials/_tab_configuration.html
-- path: src/curator/templates/partials/_tab_identities.html
-- path: src/curator/templates/partials/_tab_projects.html
 - path: src/curator/web/__init__.py
 - path: src/curator/web/app.py
 - path: src/curator/web/deps.py

@@ -2,98 +2,186 @@
  * detail-panel.js
  *
  * Handles detail panel interactions:
- * - Opening detail panel when ⋯ is clicked on a datasheet row
- * - Closing detail panel on × button or Escape
+ * - Opening detail panel for existing records (⋯ button)
+ * - Opening detail panel for new records (+ Add button)
+ * - Closing panel on × / Alt+X / Escape
  * - Tab switching
- * - Form save on button click
+ * - Save (Alt+S) — save and close
+ * - New  (Alt+N) — save current, clear form, focus Name
+ * - Discard (Alt+X) — discard and close
  *
- * Usage: Include in base.html with <script type="module" src="/static/js/detail-panel.js"></script>
+ * Hero image and detail panel occupy the same spot. Opening the panel
+ * hides the hero (display:none) and shows the panel (display:flex).
  */
 
-export function initDetailPanel() {
-  // Get references to key elements
-  const heroImage = document.querySelector('.crew-hero');
-  const detailPanelContainer = document.getElementById('detail-panel-container');
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 
-  // Tab switching
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('detail-tab-button')) {
-      const panel = e.target.closest('.detail-panel');
-      if (!panel) return;
-
-      const targetTab = e.target.dataset.tab;
-      
-      // Deactivate all buttons and panels in this detail panel
-      panel.querySelectorAll('.detail-tab-button').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      panel.querySelectorAll('.detail-tab-panel').forEach(p => {
-        p.classList.remove('active');
-      });
-
-      // Activate the clicked tab
-      e.target.classList.add('active');
-      panel.querySelector(`[data-tab="${targetTab}"]`).classList.add('active');
-    }
-
-    // Close button
-    if (e.target.classList.contains('detail-close-button')) {
-      closeDetailPanel();
-    }
-  });
-
-  // Escape key to close detail panel
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && detailPanelContainer?.querySelector('.detail-panel.active')) {
-      closeDetailPanel();
-    }
-  });
-
-  // Form save
-  document.addEventListener('submit', async (e) => {
-    if (!e.target.classList.contains('detail-form')) return;
-    e.preventDefault();
-
-    const form = e.target;
-    const entity = form.dataset.entity;
-    const recordId = form.dataset.id;
-
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-
-    const saveUrl = `/crew/${entity}/${recordId}/save`;
-
-    try {
-      const res = await fetch(saveUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        // Update successful — could refresh datasheet or show toast
-        console.log(`${entity} ${recordId} saved`);
-      } else {
-        const errorText = await res.text();
-        console.error(`Save failed: ${errorText}`);
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-    }
-  });
+function getPanel() {
+  return document.querySelector('#detail-panel-container .detail-panel');
 }
 
+function getForm() {
+  return document.getElementById('detail-form');
+}
+
+function getHero() {
+  return document.querySelector('.crew-header');
+}
+
+function showPanel() {
+  const panel = getPanel();
+  const hero  = getHero();
+  if (panel) panel.classList.add('active');
+  if (hero)  hero.classList.add('hidden');
+}
+
+function hidePanel() {
+  const panel = getPanel();
+  const hero  = getHero();
+  if (panel) panel.classList.remove('active');
+  if (hero)  hero.classList.remove('hidden');
+}
+
+function resetToDetailsTab() {
+  const panel = getPanel();
+  if (!panel) return;
+  panel.querySelectorAll('.detail-tab-button').forEach(b => b.classList.remove('active'));
+  panel.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+  const firstBtn   = panel.querySelector('.detail-tab-button');
+  const detailsTab = panel.querySelector('.detail-tab-panel[data-tab="details"]');
+  if (firstBtn)   firstBtn.classList.add('active');
+  if (detailsTab) detailsTab.classList.add('active');
+}
+
+function clearForm() {
+  const form = getForm();
+  if (!form) return;
+  form.dataset.id = '';
+  form.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  form.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+}
+
+function focusName() {
+  const nameField = document.getElementById('detail-name');
+  if (nameField) {
+    nameField.focus();
+    nameField.select();
+  }
+}
+
+function populateForm(record) {
+  const form = getForm();
+  if (!form) return;
+  form.dataset.id = record.id ?? '';
+
+  const nameField   = form.querySelector('[name="name"]');
+  const typeField   = form.querySelector('[name="type_id"]');
+  const statusField = form.querySelector('[name="status_id"]');
+  const descField   = form.querySelector('[name="description"]');
+
+  if (nameField)   nameField.value   = record.name        ?? '';
+  if (typeField)   typeField.value   = record.type_id     ?? '';
+  if (statusField) statusField.value = record.status_id   ?? '';
+  if (descField)   descField.value   = record.description ?? '';
+}
+
+// ---------------------------------------------------------------------------
+// Save to server
+// Returns the saved record on success, null on failure.
+// ---------------------------------------------------------------------------
+
+// Guard against double-saves from rapid clicks or accesskey + click firing together
+let _saving = false;
+
+async function saveForm() {
+  const form = getForm();
+  if (!form) return null;
+
+  const entity   = form.dataset.entity;
+  const recordId = form.dataset.id;
+  const isNew    = !recordId;
+
+  const formData = new FormData(form);
+  const data     = Object.fromEntries(formData);
+
+  const url = isNew
+    ? `/crew/${entity}/save`
+    : `/crew/${entity}/${recordId}/save`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      const saved = await res.json();
+      // Update form id to the newly saved record's id
+      form.dataset.id = saved.id;
+      const panel = getPanel();
+      if (panel) panel.dataset.id = saved.id;
+      return saved;
+    } else {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      alert(err.detail || 'Save failed');
+      return null;
+    }
+  } catch (err) {
+    console.error('Save error:', err);
+    alert('Save error: ' + err.message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Button handlers
+// ---------------------------------------------------------------------------
+
+async function handleSave() {
+  if (_saving) return;
+  _saving = true;
+  try {
+    const saved = await saveForm();
+    if (saved) {
+      if (window._refreshProjectsGrid) window._refreshProjectsGrid();
+      hidePanel();
+    }
+  } finally {
+    _saving = false;
+  }
+}
+
+async function handleNew() {
+  if (_saving) return;
+  _saving = true;
+  try {
+    const saved = await saveForm();
+    if (!saved) return;
+    clearForm();
+    resetToDetailsTab();
+    focusName();
+    if (window._refreshProjectsGrid) window._refreshProjectsGrid();
+  } finally {
+    _saving = false;
+  }
+}
+
+function handleDiscard() {
+  hidePanel();
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
- * Open detail panel for a specific row.
- *
- * Called when user clicks ⋯ on a datasheet row.
- * Fetches full record, renders panel, fades hero/panel, attaches listeners.
+ * Open detail panel for an existing record.
+ * Fetches record from server and populates the form.
  */
 export async function openDetailPanel(entity, recordId) {
-  const heroImage = document.querySelector('.crew-hero');
-  const detailPanelContainer = document.getElementById('detail-panel-container');
-
-  // Fetch full record data
   let record;
   try {
     const res = await fetch(`/crew/${entity}/${recordId}`);
@@ -104,58 +192,91 @@ export async function openDetailPanel(entity, recordId) {
     return;
   }
 
-  // Render detail panel partial (deferred — will be rendered by template initially)
-  // For now, just activate the panel if it exists
+  const panel = getPanel();
+  const form  = getForm();
+  if (!panel || !form) return;
 
-  const detailPanel = detailPanelContainer?.querySelector('.detail-panel');
-  if (!detailPanel) {
-    console.error('Detail panel not found in DOM');
-    return;
-  }
+  panel.dataset.entity = entity;
+  panel.dataset.id     = recordId;
+  form.dataset.entity  = entity;
 
-  // Update panel data attributes
-  detailPanel.dataset.entity = entity;
-  detailPanel.dataset.id = recordId;
-
-  // Fade out hero, fade in detail panel
-  if (heroImage) {
-    heroImage.classList.add('hidden');
-  }
-  detailPanel.classList.add('active');
-
-  // Reset form to first tab
-  const firstButton = detailPanel.querySelector('.detail-tab-button');
-  const firstPanel = detailPanel.querySelector('[data-tab="details"]');
-  if (firstButton && firstPanel) {
-    detailPanel.querySelectorAll('.detail-tab-button').forEach(b => b.classList.remove('active'));
-    detailPanel.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
-    firstButton.classList.add('active');
-    firstPanel.classList.add('active');
-  }
+  populateForm(record);
+  resetToDetailsTab();
+  showPanel();
 }
 
 /**
- * Close the detail panel and fade hero back in.
+ * Open detail panel in new-record mode.
+ * Form is empty, save will POST to /crew/{entity}/save.
  */
-export function closeDetailPanel() {
-  const heroImage = document.querySelector('.crew-hero');
-  const detailPanelContainer = document.getElementById('detail-panel-container');
-  const detailPanel = detailPanelContainer?.querySelector('.detail-panel');
+export function openNewRecordPanel(entity) {
+  const panel = getPanel();
+  const form  = getForm();
+  if (!panel || !form) return;
 
-  if (detailPanel) {
-    detailPanel.classList.remove('active');
-  }
-  if (heroImage) {
-    heroImage.classList.remove('hidden');
-  }
+  panel.dataset.entity = entity;
+  panel.dataset.id     = '';
+  form.dataset.entity  = entity;
+
+  clearForm();
+  resetToDetailsTab();
+  showPanel();
+  focusName();
 }
 
+/**
+ * Close the detail panel and restore the hero image.
+ */
+export function closeDetailPanel() {
+  hidePanel();
+}
+
+// ---------------------------------------------------------------------------
+// Init — wire up all event listeners
+// ---------------------------------------------------------------------------
+
+export function initDetailPanel() {
+  // Tab switching
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('detail-tab-button')) {
+      const panel = e.target.closest('.detail-panel');
+      if (!panel) return;
+      const targetTab = e.target.dataset.tab;
+      panel.querySelectorAll('.detail-tab-button').forEach(b => b.classList.remove('active'));
+      panel.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+      e.target.classList.add('active');
+      const tabPanel = panel.querySelector(`.detail-tab-panel[data-tab="${targetTab}"]`);
+      if (tabPanel) tabPanel.classList.add('active');
+    }
+
+    if (e.target.classList.contains('detail-close-button')) handleDiscard();
+    if (e.target.classList.contains('btn-save'))            handleSave();
+    if (e.target.classList.contains('btn-new'))             handleNew();
+    if (e.target.classList.contains('btn-discard'))         handleDiscard();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    const panel = getPanel();
+    if (!panel?.classList.contains('active')) return;
+
+    // Alt+S — Save and close
+    if (e.altKey && e.key === 's') { e.preventDefault(); handleSave(); }
+    // Alt+N — Save and new
+    if (e.altKey && e.key === 'n') { e.preventDefault(); handleNew(); }
+    // Alt+X or Escape — Discard and close
+    if ((e.altKey && e.key === 'x') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Expose for non-module scripts (e.g. _projects_table.html)
-window.openDetailPanel = openDetailPanel;
-window.closeDetailPanel = closeDetailPanel;
+// ---------------------------------------------------------------------------
+window.openDetailPanel    = openDetailPanel;
+window.openNewRecordPanel = openNewRecordPanel;
+window.closeDetailPanel   = closeDetailPanel;
 
-
-// Initialize on page load
+// Initialize
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDetailPanel);
 } else {

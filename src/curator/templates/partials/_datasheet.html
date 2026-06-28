@@ -33,42 +33,131 @@
 
 <div id="{{ container_id }}" style="height: 100%;"></div>
 
-<script type="module">
-  import Tabulator from '/static/lib/tabulator/tabulator.esm.js';
+<script>
+window.addEventListener('load', function () {
 
   const container = document.getElementById('{{ container_id }}');
-  const queryName = '{{ query_name }}';
   const entity = '{{ entity }}';
+  const queryName = '{{ query_name }}';
   const queryParams = '{{ query_params }}';
   const ajaxUrl = `/api/query/${entity}/${queryName}?params=${queryParams}`;
-  
+
   const columns = {{ columns | tojson }};
 
+  // -------------------------------------------------------------------------
+  // Save a row to the server via generic entity endpoint
+  // -------------------------------------------------------------------------
+  async function saveRow(row) {
+    const data = row.getData();
+    const isNew = !data.id;
+
+    // Don't save a new row with no content — just delete it
+    const firstEditable = columns.find(c => c.editor);
+    if (isNew && firstEditable && !data[firstEditable.field]) {
+      row.delete();
+      return true;
+    }
+
+    const url = isNew
+      ? `/api/${entity}/save`
+      : `/api/${entity}/${data.id}/save`;
+
+    // Only send editable columns
+    const editableFields = columns
+      .filter(c => c.editor && c.field !== 'id')
+      .map(c => c.field);
+
+    const payload = {};
+    editableFields.forEach(f => { payload[f] = data[f] ?? null; });
+
+    // For new rows, also include the parent foreign key if present
+    // (e.g. contact_id, project_id — passed in via query_params)
+    {% if query_params %}
+    if (isNew) {
+      const paramKey = '{{ entity }}'.replace(/s$/, '_id').replace('contact_email', 'contact').replace('contact_phone', 'contact');
+      if (paramKey && !payload[paramKey]) {
+        payload[paramKey] = {{ query_params }};
+      }
+    }
+    {% endif %}
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+      alert(err.detail || 'Save failed');
+      return false;
+    }
+
+    const saved = await resp.json();
+    row.update(saved);
+    return true;
+  }
+
+  // -------------------------------------------------------------------------
+  // Delete a row from the server
+  // -------------------------------------------------------------------------
+  async function deleteRow(row) {
+    const id = row.getData().id;
+    if (!id) { row.delete(); return; }
+
+    if (!confirm('Delete this row?')) return;
+
+    const resp = await fetch(`/api/${entity}/${id}`, { method: 'DELETE' });
+    if (resp.ok) {
+      row.delete();
+    } else {
+      alert('Delete failed');
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Tabulator init — uses global Tabulator loaded by base.html via CDN
+  // -------------------------------------------------------------------------
   const table = new Tabulator(container, {
     height: '100%',
     layout: 'fitColumns',
-    selectable: true,
-    clipboard: true,
-    ajax: {
-      url: ajaxUrl,
-      headers: { 'Accept': 'application/json' },
-    },
-    ajaxResponse: (url, params, response) => {
-      return response.records || [];
-    },
+    ajaxURL: ajaxUrl,
+    ajaxConfig: { headers: { 'Accept': 'application/json' } },
+    ajaxResponse: (url, params, response) => response.records || [],
+    editTriggerEvent: 'dblclick',
     columns: columns,
-    dataLoaded: (data) => {
-      // Data loaded successfully
+
+    // Auto-save when a cell edit is confirmed (Enter or click away)
+    cellEdited: async function(cell) {
+      await saveRow(cell.getRow());
     },
+
+    rowContextMenu: [
+      {
+        label: 'Delete row',
+        action: (e, row) => deleteRow(row),
+      }
+    ],
+
     dataLoadError: (error) => {
-      console.error(
-        `Failed to load ${entity}/${queryName}:`,
-        error
-      );
+      console.error(`Failed to load ${entity}/${queryName}:`, error);
     },
   });
 
-  // Store reference on window for parent (detail panel) access
-  // Parent may need to refresh table after saves
-  window[`tabulator_${container}`] = table;
+  // Esc — delete empty new row, or cancel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      // Find any unsaved new row and remove it
+      const newRow = table.getRows().find(r => !r.getData().id);
+      if (newRow) {
+        newRow.delete();
+      }
+    }
+  });
+
+  // Store reference on window for parent access (e.g. refresh after external save)
+  window[`tabulator_${container.id}`] = table;
+  window[`refresh_${container.id}`] = () => table.setData(ajaxUrl);
+
+});
 </script>

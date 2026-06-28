@@ -1,0 +1,89 @@
+/* =============================================================================
+   buttons.css — Site-wide button styles
+   
+   Two semantic classes for all buttons everywhere:
+     .btn-primary   — confirm actions (Save, Submit)
+     .btn-secondary — neutral actions (New, Cancel, Discard)
+   
+   Specific button names (.btn-save, .btn-new, .btn-discard, .btn-cancel)
+   are aliases — they just apply the right semantic class.
+   No hardcoded colors — all values come from theme variables.
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Base button reset (baseline.css already strips browser defaults,
+   this adds the shared structural styles)
+   --------------------------------------------------------------------------- */
+
+.btn-primary,
+.btn-secondary,
+.btn-save,
+.btn-new,
+.btn-discard,
+.btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Primary — confirm actions: Save
+   Uses accent color (teal)
+   --------------------------------------------------------------------------- */
+
+.btn-primary,
+.btn-save {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover,
+.btn-save:hover {
+  opacity: 0.88;
+}
+
+/* ---------------------------------------------------------------------------
+   Secondary — neutral actions: New, Discard, Cancel
+   Outlined style — visible but not dominant
+   --------------------------------------------------------------------------- */
+
+.btn-secondary,
+.btn-new,
+.btn-discard,
+.btn-cancel {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn-secondary:hover,
+.btn-new:hover,
+.btn-discard:hover,
+.btn-cancel:hover {
+  background: var(--color-border);
+}
+
+/* ---------------------------------------------------------------------------
+   Accelerator key underlines
+   <u> inside button labels marks the accesskey letter
+   --------------------------------------------------------------------------- */
+
+.btn-primary u,
+.btn-secondary u,
+.btn-save u,
+.btn-new u,
+.btn-discard u,
+.btn-cancel u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

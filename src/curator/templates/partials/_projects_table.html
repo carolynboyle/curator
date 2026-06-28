@@ -1,4 +1,7 @@
 <div class="crew-content">
+    <div class="datasheet-toolbar">
+        <button class="add-icon" id="add-project-btn" title="Add project">+ Add Project</button>
+    </div>
     <div id="projects-grid"></div>
 </div>
 
@@ -137,8 +140,17 @@ window.addEventListener('load', function () {
     async function saveRow(row) {
         const data = row.getData();
         const isNew = !data.id;
+
+        // Don't save a new row with no name — just delete it
+        if (isNew && !data.name) {
+            row.delete();
+            dirtyRow = null;
+            originalValues = {};
+            return true;
+        }
+
         const url = isNew
-            ? `/crew/projects/save?role={{ role }}`
+            ? `/crew/projects/save`
             : `/crew/projects/${data.id}/save`;
 
         const resp = await fetch(url, {
@@ -152,19 +164,14 @@ window.addEventListener('load', function () {
         });
 
         if (!resp.ok) {
-            const msg = await resp.text();
-            alert(msg);
+            const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+            alert(err.detail || 'Save failed');
             return false;
         }
 
-        const html = await resp.text();
-        const tmp = document.createElement('tbody');
-        tmp.innerHTML = html;
-        const tr = tmp.querySelector('tr');
-        if (tr && isNew) {
-            const newId = tr.dataset.id;
-            if (newId) row.update({ id: parseInt(newId) });
-        }
+        // Response is JSON — update row with server values (id, timestamps, etc.)
+        const saved = await resp.json();
+        row.update(saved);
 
         dirtyRow = null;
         originalValues = {};
@@ -219,7 +226,6 @@ window.addEventListener('load', function () {
         height: 'auto',
         placeholder: 'No projects found.',
         editTriggerEvent: 'dblclick',
-
         cellEditing: function(cell) {
             const row = cell.getRow();
             if (dirtyRow && dirtyRow !== row) {
@@ -235,6 +241,16 @@ window.addEventListener('load', function () {
                 dirtyRow = row;
                 originalValues = snapshot(row);
             }
+        },
+
+        // cellEdited fires when the user confirms an edit (Enter or click away)
+        // Auto-save immediately — no separate Save button needed for grid rows
+        cellEdited: async function(cell) {
+            const row = cell.getRow();
+            dirtyRow = row; // ensure dirtyRow is set even if cellEditing was skipped
+            await saveRow(row);
+            // Refresh the detail icon cell so ⋯ un-dims after new row gets an id
+            row.reformat();
         },
 
         rowClick: function(e, row) {
@@ -293,20 +309,6 @@ window.addEventListener('load', function () {
                 headerFilterPlaceholder: 'Search projects...',
                 headerFilterLiveFilter: true,
                 headerFilterFunc: 'like',
-                titleFormatter: function() {
-                    const btn = document.createElement('button');
-                    btn.className = 'add-icon';
-                    btn.title = 'Add project';
-                    btn.textContent = '+';
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const addRow = () => table.addRow(
-                            { id: null, name: '', type_id: null, status_id: null }, true
-                        );
-                        if (dirtyRow) { attemptLeave(dirtyRow, addRow); } else { addRow(); }
-                    });
-                    return btn.outerHTML + ' Name';
-                },
                 widthGrow: 3,
             },
 
@@ -345,32 +347,82 @@ window.addEventListener('load', function () {
                 resizable: false,
                 headerSort: false,
                 cssClass: 'col-detail',
-                formatter: function() {
-                    return '<button class="detail-icon" title="Project details">⋯</button>';
+                formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    const disabled = id ? '' : 'style="opacity:0.3;cursor:default"';
+                    const title = id ? 'Project details' : 'Save record first';
+                    return `<button class="detail-icon" title="${title}" ${disabled}>⋯</button>`;
                 },
-                
+
                 cellClick: function(e, cell) {
                     e.stopPropagation();
                     const id = cell.getRow().getData().id;
+                    if (!id) return; // unsaved row — silently ignore
                     window.openDetailPanel('projects', id);
                 },
             },
         ],
     });
 
+    // + Add Project — opens detail panel in new-record mode
+    document.getElementById('add-project-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.openNewRecordPanel('projects');
+    });
+
+    // Expose grid refresh so detail-panel.js can reload after Save & New
+    window._refreshProjectsGrid = () => {
+        table.setData('/crew', { role: '{{ role }}' });
+    };
+
     // Ctrl+C — copy selected rows
-    // Escape — clear selection or discard dirty row
-    document.addEventListener('keydown', (e) => {
+    // Delete — delete selected rows with confirmation
+    // Escape — discard dirty row or clear selection
+    document.addEventListener('keydown', async (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedRows.size > 0) {
             e.preventDefault();
             copySelectionToClipboard();
         }
+
+        if (e.key === 'Delete' && selectedRows.size > 0) {
+            e.preventDefault();
+            const rows = [...selectedRows];
+            const count = rows.length;
+            const names = rows.map(r => r.getData().name || 'Untitled').join(', ');
+            const msg = count === 1
+                ? `Delete "${names}"? This cannot be undone.`
+                : `Delete ${count} projects (${names})? This cannot be undone.`;
+            if (!confirm(msg)) return;
+
+            for (const row of rows) {
+                const id = row.getData().id;
+                if (!id) { row.delete(); continue; }
+                const resp = await fetch(`/crew/projects/${id}`, { method: 'DELETE' });
+                if (resp.ok) {
+                    row.delete();
+                    selectedRows.delete(row);
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+                    alert(`Failed to delete "${row.getData().name}": ${err.detail}`);
+                }
+            }
+            updateSelectAllCheckbox();
+        }
+
         if (e.key === 'Escape') {
-            if (selectedRows.size > 0) {
-                clearSelection();
-            } else if (dirtyRow) {
+            if (dirtyRow) {
                 e.preventDefault();
-                attemptLeave(dirtyRow, () => {});
+                const data = dirtyRow.getData();
+                const isNew = !data.id;
+                if (isNew) {
+                    dirtyRow.delete();
+                    dirtyRow = null;
+                    originalValues = {};
+                } else {
+                    attemptLeave(dirtyRow, () => {});
+                }
+            } else if (selectedRows.size > 0) {
+                clearSelection();
             }
         }
     });

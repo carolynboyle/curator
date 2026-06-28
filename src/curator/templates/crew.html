@@ -5,24 +5,22 @@
 {% block content %}
 <section class="crew-section {{ role }}">
 
-    {% with
-        role=role,
-        hero_image=role + ".png",
-        title=role_title,
-        show_back=true
-    %}
-        {% include "partials/_crew_header.html" %}
-    {% endwith %}
-
-    <!-- Detail panel — replaces hero image when ⋯ is clicked -->
-    <div id="detail-panel-container">
-        {% include "partials/_detail_panel.html" with
-            entity='projects',
-            record_id=0,
-            record={},
-            project_types=project_types,
-            project_statuses=project_statuses
+    <!-- Hero image and detail panel share the same spot; toggle visibility -->
+    <div class="hero-detail-stack">
+        {% with
+            role=role,
+            hero_image=role + ".png",
+            title=role_title,
+            show_back=true
         %}
+            {% include "partials/_crew_header.html" %}
+        {% endwith %}
+
+        <div id="detail-panel-container">
+            {% with entity='projects', record_id=0, record={}, project_types=project_types, project_statuses=project_statuses %}
+                {% include "partials/_detail_panel.html" %}
+            {% endwith %}
+        </div>
     </div>
 
     <!-- Tab Navigation -->
