@@ -247,17 +247,35 @@ async def crew_dashboard(
     # Full page HTML request
     lookups = await _fetch_lookups(db)
 
-    if role == "captain":
-        template = env.get_template("captain.html")
-    else:
-        template = env.get_template("crew.html")
+        # Tab definitions per role
+    # Each tab references a partial in templates/partials/
+    # Future: load from database (identity.landing_card)
+    role_tabs = {
+        "captain": [
+            {"id": "projects",      "label": "Projects",      "template": "_tab_projects.html"},
+            {"id": "identities",    "label": "Identities",    "template": "_tab_identities.html"},
+            {"id": "configuration", "label": "Configuration", "template": "_tab_configuration.html"},
+        ],
+        "scribe": [
+            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+        ],
+        "mechanic": [
+            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+        ],
+        "envoy": [
+            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+        ],
+    }
 
+    # Fetch captain-only data
     if role == "captain":
         contacts = await _fetch_contacts(db)
         organizations = await _fetch_organizations(db)
     else:
         contacts = []
         organizations = []
+
+    template = env.get_template("crew.html")
 
     data = {
         "role": role,
@@ -269,6 +287,7 @@ async def crew_dashboard(
         "project_statuses": lookups["statuses"],
         "contacts": contacts,
         "organizations": organizations,
+        "tabs": role_tabs.get(role, [{"id": "projects", "label": "Projects", "template": "_tab_projects.html"}]),
     }
 
     return HTMLResponse(template.render(**data))

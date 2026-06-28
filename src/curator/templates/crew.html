@@ -11,16 +11,52 @@
         title=role_title,
         show_back=true
     %}
-        {% include "_crew_header.html" %}
+        {% include "partials/_crew_header.html" %}
     {% endwith %}
 
-    {% include "_projects_table.html" %}
+    <!-- Detail panel — replaces hero image when ⋯ is clicked -->
+    <div id="detail-panel-container">
+        {% include "partials/_detail_panel.html" with
+            entity='projects',
+            record_id=0,
+            record={},
+            project_types=project_types,
+            project_statuses=project_statuses
+        %}
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        {% for tab in tabs %}
+            <button
+                class="tab-btn {% if loop.first %}active{% endif %}"
+                data-tab="tab-{{ tab.id }}"
+            >{{ tab.label }}</button>
+        {% endfor %}
+    </div>
+
+    <!-- Tab Panels -->
+    {% for tab in tabs %}
+        <div id="tab-{{ tab.id }}" class="tab-panel {% if loop.first %}active{% endif %}">
+            {% include "partials/" + tab.template %}
+        </div>
+    {% endfor %}
 
 </section>
 
-<!-- Embed lookups as data for access in partials -->
+<!-- Embed lookups for Tabulator and identity panels -->
 <script>
-    window.projectTypes = {{ project_types | tojson }};
+    window.projectTypes    = {{ project_types    | tojson }};
     window.projectStatuses = {{ project_statuses | tojson }};
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(this.dataset.tab).classList.add('active');
+            this.classList.add('active');
+        });
+    });
 </script>
 {% endblock %}

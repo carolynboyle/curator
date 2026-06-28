@@ -1,0 +1,13 @@
+{#
+  _tab_projects.html
+
+  Projects tab content — used by all crew roles.
+  Renders the Tabulator projects grid.
+
+  Variables passed from crew.html:
+    - role (str): current crew role
+    - project_types (list): lookup for type dropdown
+    - project_statuses (list): lookup for status dropdown
+#}
+
+{% include "partials/_projects_table.html" %}
