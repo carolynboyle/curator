@@ -19,7 +19,8 @@ Or:
     ]
 """
 
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class FormAction:
@@ -178,3 +179,67 @@ class FormActions:
     def to_dicts(actions: List[FormAction]) -> List[Dict[str, Any]]:
         """Convert list of FormAction objects to list of dicts for Jinja2."""
         return [action.to_dict() for action in actions]
+
+    @staticmethod
+    def from_yaml(forms_path: Path, preset: str) -> Dict[str, Any]:
+        """Load a button preset from forms.yaml.
+
+        Looks up each action's button definition from the buttons: section,
+        then merges any preset-level overrides (e.g. form_id).
+
+        Returns dict with keys:
+            container_class (str):  CSS class for the button container div
+            actions         (list): Action dicts ready for _form_actions.html
+
+        Each action dict has keys:
+            label, type, class, id, title, form_id, data_attrs
+
+        Args:
+            forms_path: Path to forms.yaml
+            preset:     Name of the preset to load (e.g. 'detail_panel')
+
+        Raises:
+            KeyError:          If preset or a referenced button is not found
+            FileNotFoundError: If forms.yaml does not exist
+        """
+        import yaml
+
+        with open(forms_path, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+
+        button_defs = config.get("buttons", {})
+        preset_cfg  = config.get("presets", {}).get(preset)
+
+        if preset_cfg is None:
+            raise KeyError(f"Preset '{preset}' not found in {forms_path}")
+
+        container_class = preset_cfg.get("container_class", "form-actions")
+
+        actions = []
+        for action_cfg in preset_cfg.get("actions", []):
+            btn_name = action_cfg.get("button")
+            if btn_name not in button_defs:
+                raise KeyError(
+                    f"Button '{btn_name}' referenced in preset '{preset}' "
+                    f"is not defined in buttons: section of {forms_path}"
+                )
+
+            # Start from the button definition, then apply preset overrides
+            btn = dict(button_defs[btn_name])
+            if "form_id" in action_cfg:
+                btn["form_id"] = action_cfg["form_id"]
+
+            actions.append({
+                "label":      btn.get("label", ""),
+                "type":       btn.get("type", "button"),
+                "class":      btn.get("class", ""),
+                "id":         btn.get("id", ""),
+                "title":      btn.get("title", ""),
+                "form_id":    btn.get("form_id", ""),
+                "data_attrs": btn.get("data_attrs", {}),
+            })
+
+        return {
+            "container_class": container_class,
+            "actions":         actions,
+        }

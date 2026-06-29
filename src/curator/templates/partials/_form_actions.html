@@ -1,49 +1,39 @@
 {#
   _form_actions.html
-  
+
   Reusable form action button bar. Can be used in any form context:
   detail panels, add/edit forms, dialogs, etc.
-  
-  This partial renders nothing but the button container and buttons.
-  All styling, keyboard handling, and state management is external.
-  
+
   Parameters:
-    - actions (list): List of action dicts with keys:
-        - label (str): Button text
-        - type (str): HTML button type ("submit", "button", "reset")
-        - class (str): CSS classes (e.g., "btn-save btn-primary")
-        - id (str, optional): HTML id attribute
-        - title (str, optional): Tooltip text
-        - form_id (str, optional): Form ID for submit buttons (form= attribute)
-        - data_attrs (dict, optional): Additional data-* attributes
-    
-    - container_class (str, optional): CSS class for the container div
-      Default: "form-actions"
-    
-    - container_id (str, optional): HTML id for the container div
-  
-  Example usage (from Python):
-    
-    from formkit import FormActions
-    
-    actions = FormActions.detail_panel_actions(form_id='detail-form')
-    actions_dicts = FormActions.to_dicts(actions)
-    
-    # In template:
-    {% include '_form_actions.html' with
-        actions=actions_dicts,
-        container_class='detail-panel-actions'
-    %}
-  
-  Example usage (from template):
-    
-    {% include '_form_actions.html' with
-        actions=[
-            {'label': 'Save', 'type': 'submit', 'class': 'btn-save', 'form_id': 'form'},
-            {'label': 'Cancel', 'type': 'button', 'class': 'btn-cancel'},
-        ],
-        container_class='form-actions'
-    %}
+    - actions (list): List of action dicts. Build with formkit.FormActions:
+
+        from curator.formkit import FormActions
+        actions = FormActions.to_dicts(FormActions.detail_panel_actions())
+
+      Each dict has keys:
+        label      (str)  — Button text
+        type       (str)  — HTML button type: "submit", "button", "reset"
+        class      (str)  — CSS class(es), e.g. "btn-save"
+        id         (str, optional) — HTML id attribute
+        title      (str, optional) — Tooltip text
+        form_id    (str, optional) — Associates button with a form by id
+        data_attrs (dict, optional) — data-* attributes, e.g. {"action": "new"}
+
+    - container_class (str, optional): Extra CSS class on the container div
+    - container_id    (str, optional): HTML id on the container div
+
+  Usage in a template — set variables first, then include:
+
+    {% set actions = [
+        {'label': 'Save',    'type': 'submit', 'class': 'btn-save',    'form_id': 'detail-form', 'title': 'Save (Alt+S)'},
+        {'label': 'New',     'type': 'button', 'class': 'btn-new',     'data_attrs': {'action': 'new'},     'title': 'New (Alt+N)'},
+        {'label': 'Discard', 'type': 'button', 'class': 'btn-discard', 'data_attrs': {'action': 'discard'}, 'title': 'Discard (Alt+X)'},
+    ] %}
+    {% set container_class = 'detail-panel-actions' %}
+    {% include 'partials/_form_actions.html' %}
+
+  NOTE: Jinja2 does not support {% include ... with key=value %} syntax.
+  Always set variables before the include.
 #}
 
 <div class="form-actions {% if container_class %}{{ container_class }}{% endif %}"
@@ -62,7 +52,7 @@
           {% endfor %}
         {% endif %}
     >
-      {{ action.label }}
+      {{ action.label | safe }}
     </button>
   {% endfor %}
 

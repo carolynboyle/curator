@@ -1,4 +1,4 @@
-# Generated: 2026-06-27 17:30:21
+# Generated: 2026-06-28 17:08:07
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
@@ -8,7 +8,7 @@
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-06-27 17:30:21'
+generated: '2026-06-28 17:08:07'
 version: 0.2.0
 files:
 - path: .env

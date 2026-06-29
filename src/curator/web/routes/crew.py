@@ -9,14 +9,16 @@ from jinja2 import Environment, FileSystemLoader
 
 from dbkit.connection import AsyncDBConnection
 from curator.config import ConfigManager
+from curator.formkit import FormActions
 from curator.web.deps import get_config, get_db
 from viewkit.query_builder import QueryBuilder
 from viewkit.query_loader import QueryLoader
 
 # Initialize QueryLoader for /api/query endpoint
 _QUERIES_PATH = Path(__file__).parent.parent.parent / "data" / "queries.yaml"
+_FORMS_PATH   = Path(__file__).parent.parent.parent / "data" / "forms.yaml"
 _query_builder = QueryBuilder(_QUERIES_PATH)
-_query_loader = QueryLoader(_query_builder)
+_query_loader  = QueryLoader(_query_builder)
 
 router = APIRouter()
 
@@ -282,6 +284,8 @@ async def crew_dashboard(
 
     template = env.get_template("crew.html")
 
+    detail_panel_actions = FormActions.from_yaml(_FORMS_PATH, "detail_panel")
+
     data = {
         "role": role,
         "role_title": role_meta["title"] if role_meta else role.title(),
@@ -296,8 +300,10 @@ async def crew_dashboard(
             role,
             [{"id": "projects", "label": "Projects", "template": "_tab_projects.html"}]
         ),
+        "actions":         detail_panel_actions["actions"],
+        "container_class": detail_panel_actions["container_class"],
     }
-
+    
     return HTMLResponse(template.render(**data))
 
 

@@ -40,24 +40,18 @@
    Uses accent color (teal)
    --------------------------------------------------------------------------- */
 
-.btn-primary,
-.btn-save {
+.btn-primary {
   background: var(--color-accent);
   color: #ffffff;
   border-color: var(--color-accent);
 }
 
-.btn-primary:hover,
-.btn-save:hover {
+.btn-primary:hover {
   opacity: 0.88;
 }
 
-/* ---------------------------------------------------------------------------
-   Secondary — neutral actions: New, Discard, Cancel
-   Outlined style — visible but not dominant
-   --------------------------------------------------------------------------- */
-
 .btn-secondary,
+.btn-save,
 .btn-new,
 .btn-discard,
 .btn-cancel {
@@ -67,6 +61,7 @@
 }
 
 .btn-secondary:hover,
+.btn-save:hover,
 .btn-new:hover,
 .btn-discard:hover,
 .btn-cancel:hover {

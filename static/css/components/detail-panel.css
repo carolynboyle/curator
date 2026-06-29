@@ -1,27 +1,36 @@
-/* =============================================================================
-   Detail Panel Component
-   
-   Tabbed panel that occupies the same spot as the hero image. Opening the
-   panel hides the hero (display:none) and shows the panel (display:flex).
-   Contains Details form + child datasheets.
-   ============================================================================= */
+/* Action button sticky footer */
+.detail-panel-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
 
-/* Container and layout */
+/* Placeholder text for deferred child tabs */
+.tab-placeholder {
+  padding: 1rem;
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}
+
+/* Panel show/hide */
 .detail-panel {
-  display: none;            /* hidden by default */
+  display: none;
   flex-direction: column;
   height: 420px;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-surface);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .detail-panel.active {
   display: flex;
 }
 
-/* Hero image hides when detail panel is active */
+
 .crew-header.hidden {
   display: none;
 }
@@ -47,7 +56,6 @@
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -60,27 +68,9 @@
   border-bottom-color: var(--color-primary);
 }
 
-/* Action bar: Save/Discard centered, Close pinned right */
-.detail-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
-  flex-shrink: 0;
-  position: relative;
-}
-
-.detail-form-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Close button (pinned top-right of action bar) */
+/* Close button */
 .detail-close-button {
-  position: absolute;
-  right: 0.5rem;
+  margin-left: auto;
   padding: 0.25rem 0.5rem;
   font-size: 1.5rem;
   line-height: 1;
@@ -88,7 +78,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .detail-close-button:hover {
@@ -117,18 +107,20 @@
   display: block;
 }
 
-/* Details form (in Details tab) */
+/* Details form */
 .detail-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  width: 100%;
 }
 
 .form-group label {
@@ -140,6 +132,8 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.5rem;
   border: 1px solid var(--color-input-border);
   border-radius: 0.25rem;
@@ -147,11 +141,6 @@
   color: var(--color-input-text);
   font-family: inherit;
   font-size: 0.875rem;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--color-text-light);
 }
 
 .form-group input:focus,
@@ -165,10 +154,4 @@
 .form-group textarea {
   resize: vertical;
   min-height: 4rem;
-  font-family: inherit;
-}
-
-/* Child datasheets in tab panels */
-.detail-tab-panel .datasheet-container {
-  height: 100%;
 }

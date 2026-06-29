@@ -1,0 +1,65 @@
+# forms.yaml
+# Formkit configuration — button definitions and form presets.
+#
+# Structure:
+#   buttons:   Named button definitions. Each button is defined once here
+#              and referenced by name in presets. This is the only place
+#              you need to edit to change a button's label, class, or tooltip.
+#
+#   presets:   Named collections of buttons for a specific form context.
+#              Presets reference buttons by name and can add context-specific
+#              overrides (e.g. form_id differs per form).
+#
+# Button fields:
+#   label      — Button text. Supports HTML: use <u> to mark accelerator letter.
+#   type       — HTML button type: submit | button | reset
+#   class      — CSS class from buttons.css (e.g. btn-secondary)
+#   title      — Tooltip text (shown on hover)
+#   data_attrs — Optional dict of data-* attributes
+#
+# Preset fields:
+#   container_class — CSS class applied to the wrapping <div>
+#   actions         — Ordered list of buttons to include
+#     button        — Name of a button defined in buttons: above
+#     form_id       — Optional; associates a submit button with a <form id="...">
+#                     Lives in the preset (not the button) because the same
+#                     Save button wires to different forms in different contexts.
+
+buttons:
+  save:
+    label:   "<u>S</u>ave"
+    type:    submit
+    class:   btn-secondary
+    title:   "Save (Alt+S)"
+
+  new:
+    label:   "<u>N</u>ew"
+    type:    button
+    class:   btn-secondary
+    title:   "New (Alt+N)"
+    data_attrs:
+      action: new
+
+  discard:
+    label:   "E<u>x</u>it"
+    type:    button
+    class:   btn-secondary
+    title:   "Exit (Alt+X)"
+    data_attrs:
+      action: discard
+
+presets:
+  detail_panel:
+    container_class: detail-panel-actions
+    actions:
+      - button:  save
+        form_id: detail-form
+      - button:  new
+      - button:  discard
+
+  create_form:
+    container_class: form-actions
+    actions:
+      - button:  save
+        form_id: create-form
+      - button:  discard
