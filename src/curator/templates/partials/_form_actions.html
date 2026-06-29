@@ -1,0 +1,69 @@
+{#
+  _form_actions.html
+  
+  Reusable form action button bar. Can be used in any form context:
+  detail panels, add/edit forms, dialogs, etc.
+  
+  This partial renders nothing but the button container and buttons.
+  All styling, keyboard handling, and state management is external.
+  
+  Parameters:
+    - actions (list): List of action dicts with keys:
+        - label (str): Button text
+        - type (str): HTML button type ("submit", "button", "reset")
+        - class (str): CSS classes (e.g., "btn-save btn-primary")
+        - id (str, optional): HTML id attribute
+        - title (str, optional): Tooltip text
+        - form_id (str, optional): Form ID for submit buttons (form= attribute)
+        - data_attrs (dict, optional): Additional data-* attributes
+    
+    - container_class (str, optional): CSS class for the container div
+      Default: "form-actions"
+    
+    - container_id (str, optional): HTML id for the container div
+  
+  Example usage (from Python):
+    
+    from formkit import FormActions
+    
+    actions = FormActions.detail_panel_actions(form_id='detail-form')
+    actions_dicts = FormActions.to_dicts(actions)
+    
+    # In template:
+    {% include '_form_actions.html' with
+        actions=actions_dicts,
+        container_class='detail-panel-actions'
+    %}
+  
+  Example usage (from template):
+    
+    {% include '_form_actions.html' with
+        actions=[
+            {'label': 'Save', 'type': 'submit', 'class': 'btn-save', 'form_id': 'form'},
+            {'label': 'Cancel', 'type': 'button', 'class': 'btn-cancel'},
+        ],
+        container_class='form-actions'
+    %}
+#}
+
+<div class="form-actions {% if container_class %}{{ container_class }}{% endif %}"
+     {% if container_id %}id="{{ container_id }}"{% endif %}>
+  
+  {% for action in actions %}
+    <button
+        type="{{ action.type }}"
+        class="form-action-button {{ action.class }}"
+        {% if action.id %}id="{{ action.id }}"{% endif %}
+        {% if action.title %}title="{{ action.title }}"{% endif %}
+        {% if action.form_id %}form="{{ action.form_id }}"{% endif %}
+        {% if action.data_attrs %}
+          {% for key, value in action.data_attrs.items() %}
+            data-{{ key }}="{{ value }}"
+          {% endfor %}
+        {% endif %}
+    >
+      {{ action.label }}
+    </button>
+  {% endfor %}
+
+</div>
