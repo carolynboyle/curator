@@ -1,14 +1,14 @@
-# Generated: 2026-06-28 17:08:07
+# Generated: 2026-06-29 18:07:17
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
 # Version: v0.2.0
-# Files: 117
+# Files: 127
 
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-06-28 17:08:07'
+generated: '2026-06-29 18:07:17'
 version: 0.2.0
 files:
 - path: .env
@@ -27,6 +27,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docker-compose.yml
 - path: docs/change/BASE_HTML_CHANGES.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/BASE_HTML_CHANGES.md
+- path: docs/change/CHANGEDOC_DETAIL_PANEL_AUTO_CLOSE_ON_SAVE.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/CHANGEDOC_DETAIL_PANEL_AUTO_CLOSE_ON_SAVE.md
 - path: docs/change/CHANGEDOC_TEMPLATE_REORGANIZATION.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/CHANGEDOC_TEMPLATE_REORGANIZATION.md
 - path: docs/change/CONTACTS_TWO_PANEL.md
@@ -59,12 +61,16 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/curator_handoff_2026-06-25b.md
 - path: docs/change/curator_handoff_2026-06-26.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/curator_handoff_2026-06-26.md
+- path: docs/change/curator_handoff_2026-06-28.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/curator_handoff_2026-06-28.md
 - path: docs/change/detail_panel/CHANGEDOC_API_QUERY_ENDPOINT.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/CHANGEDOC_API_QUERY_ENDPOINT.md
 - path: docs/change/detail_panel/CHANGEDOC_CAPTAIN_HTML_INTEGRATION.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/CHANGEDOC_CAPTAIN_HTML_INTEGRATION.md
 - path: docs/change/detail_panel/CHANGEDOC_CSS_VARIABLES.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/CHANGEDOC_CSS_VARIABLES.md
+- path: docs/change/detail_panel/CHANGEDOC_DETAIL_PANEL_FIXES.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/CHANGEDOC_DETAIL_PANEL_FIXES.md
 - path: docs/change/detail_panel/CHANGEDOC_QUERIES.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/CHANGEDOC_QUERIES.md
 - path: docs/change/detail_panel/CURATOR_V2_HANDOFF_2026-06-23.md
@@ -73,6 +79,16 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/IMPLEMENTATION_SUMMARY.md
 - path: docs/change/detail_panel/README_DELIVERABLES.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/detail_panel/README_DELIVERABLES.md
+- path: docs/change/formkit/CHANGEDOC_FORMKIT.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/formkit/CHANGEDOC_FORMKIT.md
+- path: docs/change/formkit/CHANGEDOC_FORMKIT_BUTTONS.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/formkit/CHANGEDOC_FORMKIT_BUTTONS.md
+- path: docs/change/formkit/CHANGEDOC_FORMKIT_COMPONENT.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/formkit/CHANGEDOC_FORMKIT_COMPONENT.md
+- path: docs/change/formkit/DEPLOYMENT_GUIDE.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/formkit/DEPLOYMENT_GUIDE.md
+- path: docs/change/formkit/DEPLOYMENT_GUIDE_COMPLETE.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/formkit/DEPLOYMENT_GUIDE_COMPLETE.md
 - path: docs/change/phase2_migration (1).md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/phase2_migration
     (1).md
@@ -106,6 +122,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/config.py
 - path: src/curator/data/curator.yaml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/curator.yaml
+- path: src/curator/data/forms.yaml
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/forms.yaml
 - path: src/curator/data/queries.yaml
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/data/queries.yaml
 - path: src/curator/db/__init__.py
@@ -126,10 +144,10 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/db/projects/tasks.py
 - path: src/curator/exceptions.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/exceptions.py
+- path: src/curator/formkit.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/formkit.py
 - path: src/curator/templates/base.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/base.html
-- path: src/curator/templates/captain.html
-  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/captain.html
 - path: src/curator/templates/crew.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/crew.html
 - path: src/curator/templates/index.html
@@ -148,6 +166,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_datasheet_with_header.html
 - path: src/curator/templates/partials/_detail_panel.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_detail_panel.html
+- path: src/curator/templates/partials/_form_actions.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_form_actions.html
 - path: src/curator/templates/partials/_identities_contacts.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/partials/_identities_contacts.html
 - path: src/curator/templates/partials/_identities_organizations.html
@@ -194,8 +214,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/start.sh
 - path: static/css/base.css
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/static/css/base.css
-- path: static/css/components/baseline.css
-  url: https://raw.githubusercontent.com/carolynboyle/curator/main/static/css/components/baseline.css
+- path: static/css/components/buttons.css
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/static/css/components/buttons.css
 - path: static/css/components/card.css
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/static/css/components/card.css
 - path: static/css/components/datasheet.css

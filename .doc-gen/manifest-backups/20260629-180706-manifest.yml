@@ -1,6 +1,6 @@
-# Generated: 2026-06-29 18:07:06
+# Generated: 2026-06-27 17:30:09
 # Project: /home/carolyn/projects/curator
-# Files: 127
+# Files: 117
 
 version: 1
 documents:
@@ -12,7 +12,6 @@ documents:
 - path: README.md
 - path: docker-compose.yml
 - path: docs/change/BASE_HTML_CHANGES.md
-- path: docs/change/CHANGEDOC_DETAIL_PANEL_AUTO_CLOSE_ON_SAVE.md
 - path: docs/change/CHANGEDOC_TEMPLATE_REORGANIZATION.md
 - path: docs/change/CONTACTS_TWO_PANEL.md
 - path: docs/change/CREW_PY_FIXES.md
@@ -29,20 +28,13 @@ documents:
 - path: docs/change/curator_handoff_2026-06-25.md
 - path: docs/change/curator_handoff_2026-06-25b.md
 - path: docs/change/curator_handoff_2026-06-26.md
-- path: docs/change/curator_handoff_2026-06-28.md
 - path: docs/change/detail_panel/CHANGEDOC_API_QUERY_ENDPOINT.md
 - path: docs/change/detail_panel/CHANGEDOC_CAPTAIN_HTML_INTEGRATION.md
 - path: docs/change/detail_panel/CHANGEDOC_CSS_VARIABLES.md
-- path: docs/change/detail_panel/CHANGEDOC_DETAIL_PANEL_FIXES.md
 - path: docs/change/detail_panel/CHANGEDOC_QUERIES.md
 - path: docs/change/detail_panel/CURATOR_V2_HANDOFF_2026-06-23.md
 - path: docs/change/detail_panel/IMPLEMENTATION_SUMMARY.md
 - path: docs/change/detail_panel/README_DELIVERABLES.md
-- path: docs/change/formkit/CHANGEDOC_FORMKIT.md
-- path: docs/change/formkit/CHANGEDOC_FORMKIT_BUTTONS.md
-- path: docs/change/formkit/CHANGEDOC_FORMKIT_COMPONENT.md
-- path: docs/change/formkit/DEPLOYMENT_GUIDE.md
-- path: docs/change/formkit/DEPLOYMENT_GUIDE_COMPLETE.md
 - path: docs/change/phase2_migration (1).md
 - path: docs/change/phase2_migration.md
 - path: docs/change/rename_schema_contacts_to_identity.md
@@ -59,7 +51,6 @@ documents:
 - path: src/curator/__init__.py
 - path: src/curator/config.py
 - path: src/curator/data/curator.yaml
-- path: src/curator/data/forms.yaml
 - path: src/curator/data/queries.yaml
 - path: src/curator/db/__init__.py
 - path: src/curator/db/base.py
@@ -70,8 +61,8 @@ documents:
 - path: src/curator/db/projects/projects.py
 - path: src/curator/db/projects/tasks.py
 - path: src/curator/exceptions.py
-- path: src/curator/formkit.py
 - path: src/curator/templates/base.html
+- path: src/curator/templates/captain.html
 - path: src/curator/templates/crew.html
 - path: src/curator/templates/index.html
 - path: src/curator/templates/landing.html
@@ -81,7 +72,6 @@ documents:
 - path: src/curator/templates/partials/_datasheet.html
 - path: src/curator/templates/partials/_datasheet_with_header.html
 - path: src/curator/templates/partials/_detail_panel.html
-- path: src/curator/templates/partials/_form_actions.html
 - path: src/curator/templates/partials/_identities_contacts.html
 - path: src/curator/templates/partials/_identities_organizations.html
 - path: src/curator/templates/partials/_identities_users.html
@@ -105,7 +95,7 @@ documents:
 - path: src/curator.egg-info/top_level.txt
 - path: start.sh
 - path: static/css/base.css
-- path: static/css/components/buttons.css
+- path: static/css/components/baseline.css
 - path: static/css/components/card.css
 - path: static/css/components/datasheet.css
 - path: static/css/components/detail-panel.css
