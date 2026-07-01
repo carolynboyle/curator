@@ -1,18 +1,18 @@
 """Crew role dashboard routes."""
 
-import re
+import json
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from jinja2 import Environment, FileSystemLoader
+from viewkit.query_builder import QueryBuilder
+from viewkit.query_loader import QueryLoader
 
 from dbkit.connection import AsyncDBConnection
 from curator.config import ConfigManager
 from curator.formkit import FormActions
 from curator.web.deps import get_config, get_db
-from viewkit.query_builder import QueryBuilder
-from viewkit.query_loader import QueryLoader
 
 # Initialize QueryLoader for /api/query endpoint
 _QUERIES_PATH = Path(__file__).parent.parent.parent / "data" / "queries.yaml"
@@ -25,6 +25,33 @@ router = APIRouter()
 # Initialize Jinja2 for crew dashboard
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates"
 env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+
+# Tab definitions per role — static, read-only, shared across all requests.
+# Each tab references a partial in templates/partials/.
+# Future: load from database (identity.landing_card).
+_ROLE_TABS = {
+    "captain": [
+        {"id": "projects",      "label": "Projects",      "template": "_tab_projects.html"},
+        {"id": "identities",    "label": "Identities",    "template": "_tab_identities.html"},
+        {
+            "id": "configuration",
+            "label": "Configuration",
+            "template": "_tab_configuration.html",
+        },
+    ],
+    "scribe": [
+        {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+    ],
+    "mechanic": [
+        {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+    ],
+    "envoy": [
+        {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+    ],
+}
+_DEFAULT_TABS = [
+    {"id": "projects", "label": "Projects", "template": "_tab_projects.html"}
+]
 
 
 async def _fetch_lookups(db: AsyncDBConnection) -> dict:
@@ -135,15 +162,49 @@ async def _fetch_project_for_display(db: AsyncDBConnection, project_id: int) -> 
     return await db.fetch_one(sql, (project_id,))
 
 
-def _make_slug(name: str) -> str:
-    """Generate a URL-safe slug from a project name.
+async def _call_proc(db: AsyncDBConnection, sql: str, params: tuple) -> dict:
+    """Call a stored proc that returns a single JSONB envelope and unwrap it.
 
-    Lowercases, replaces non-alphanumeric runs with hyphens,
-    strips leading/trailing hyphens.
+    Every api.* proc returns {"success": bool, "data": ..., "message": str}.
+    fetch_one() gives back a dict keyed by the proc's column name (e.g.
+    {"save_project": {...}}); this pulls out that single value and parses
+    it if dbkit returned it as a JSON string rather than an already-decoded
+    dict (encoding-dependent — see dbkit client_encoding note in handoff).
 
-    Example: "WCYJ Store Website" -> "wcyj-store-website"
+    Returns the envelope dict: {"success": ..., "data": ..., "message": ...}
     """
-    return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+    result = await db.fetch_one(sql, params)
+    envelope = list(result.values())[0]
+    if isinstance(envelope, str):
+        envelope = json.loads(envelope)
+    return envelope
+
+
+async def _resolve_type_status_names(
+    db: AsyncDBConnection, type_id, status_id
+) -> tuple:
+    """Look up type and status name strings from their ids.
+
+    api.save_project() takes name strings, not ids, so the browser's
+    type_id/status_id selections are translated here before the proc call.
+    Either id may be None; returns (type_name, status_name), each possibly
+    None if not found or not provided.
+    """
+    type_name = None
+    if type_id:
+        row = await db.fetch_one(
+            "SELECT name FROM projects.project_type WHERE id = %s", (type_id,)
+        )
+        type_name = row["name"] if row else None
+
+    status_name = None
+    if status_id:
+        row = await db.fetch_one(
+            "SELECT name FROM projects.project_status WHERE id = %s", (status_id,)
+        )
+        status_name = row["name"] if row else None
+
+    return type_name, status_name
 
 
 async def _fetch_records(db: AsyncDBConnection, role: str, search: str) -> list:
@@ -204,22 +265,75 @@ async def run_query(
     """Generic query endpoint for child datasheets in detail panels."""
     try:
         sql = _query_loader.sql(entity, query_name)
-    except KeyError:
+    except KeyError as exc:
         raise HTTPException(
             status_code=404,
             detail=f"Query not found: {entity}.{query_name}"
-        )
+        ) from exc
     params_list = tuple(p.strip() for p in params.split(",")) if params else ()
     try:
         rows = await db.fetch_all(sql, params_list)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return JSONResponse({"records": [dict(r) for r in rows]})
 
 
 # -- Dashboard ----------------------------------------------------------------
 
+async def _render_crew_dashboard_html(
+    role: str,
+    role_meta: dict,
+    config: ConfigManager,
+    db: AsyncDBConnection,
+    records: list,
+    search: str,
+) -> HTMLResponse:
+    """Render the full crew dashboard HTML page.
+
+    Split out from crew_dashboard() — this is the HTML-rendering half of
+    the route; crew_dashboard() itself handles role validation, record
+    fetching, and the JSON-request short-circuit for Tabulator's Ajax
+    calls. The two were previously one function; separated because they
+    are genuinely different jobs (serve JSON vs. render a full page) that
+    happened to share a route.
+    """
+    lookups = await _fetch_lookups(db)
+
+    # Fetch captain-only data
+    if role == "captain":
+        contacts = await _fetch_contacts(db)
+        organizations = await _fetch_organizations(db)
+    else:
+        contacts = []
+        organizations = []
+
+    template = env.get_template("crew.html")
+    detail_panel_actions = FormActions.from_yaml(_FORMS_PATH, "detail_panel")
+
+    data = {
+        "role": role,
+        "role_title": role_meta["title"] if role_meta else role.title(),
+        "theme": config.get("ui", "theme"),
+        "records": records,
+        "search": search,
+        "project_types": lookups["types"],
+        "project_statuses": lookups["statuses"],
+        "contacts": contacts,
+        "organizations": organizations,
+        "tabs": _ROLE_TABS.get(role, _DEFAULT_TABS),
+        "actions": detail_panel_actions["actions"],
+        "container_class": detail_panel_actions["container_class"],
+    }
+
+    return HTMLResponse(template.render(**data))
+
+
 @router.get("/crew")
+# _render_crew_dashboard_html takes 6 parameters (one over pylint's default
+# threshold of 5). All 6 are genuinely needed — role/role_meta/search
+# describe the current request context, config/db/records are runtime
+# dependencies. Restructuring into a context object would add indirection
+# without improving clarity. Left as-is by design
 async def crew_dashboard(
     request: Request,
     role: str = Query("captain"),
@@ -234,7 +348,8 @@ async def crew_dashboard(
         search: Optional name filter (ILIKE match)
 
     JSON requests (Accept: application/json) return records for Tabulator.
-    HTML requests return the full page template.
+    HTML requests return the full page template (see
+    _render_crew_dashboard_html).
     """
     crew_roles = config.get("crew", "roles")
     valid_roles = [r["name"] for r in crew_roles]
@@ -251,60 +366,9 @@ async def crew_dashboard(
     if "application/json" in accept:
         return JSONResponse({"records": records})
 
-    # Full page HTML request
-    lookups = await _fetch_lookups(db)
-
-    # Tab definitions per role
-    # Each tab references a partial in templates/partials/
-    # Future: load from database (identity.landing_card)
-    role_tabs = {
-        "captain": [
-            {"id": "projects",      "label": "Projects",      "template": "_tab_projects.html"},
-            {"id": "identities",    "label": "Identities",    "template": "_tab_identities.html"},
-            {"id": "configuration", "label": "Configuration", "template": "_tab_configuration.html"},
-        ],
-        "scribe": [
-            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
-        ],
-        "mechanic": [
-            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
-        ],
-        "envoy": [
-            {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
-        ],
-    }
-
-    # Fetch captain-only data
-    if role == "captain":
-        contacts = await _fetch_contacts(db)
-        organizations = await _fetch_organizations(db)
-    else:
-        contacts = []
-        organizations = []
-
-    template = env.get_template("crew.html")
-
-    detail_panel_actions = FormActions.from_yaml(_FORMS_PATH, "detail_panel")
-
-    data = {
-        "role": role,
-        "role_title": role_meta["title"] if role_meta else role.title(),
-        "theme": config.get("ui", "theme"),
-        "records": records,
-        "search": search,
-        "project_types": lookups["types"],
-        "project_statuses": lookups["statuses"],
-        "contacts": contacts,
-        "organizations": organizations,
-        "tabs": role_tabs.get(
-            role,
-            [{"id": "projects", "label": "Projects", "template": "_tab_projects.html"}]
-        ),
-        "actions":         detail_panel_actions["actions"],
-        "container_class": detail_panel_actions["container_class"],
-    }
-    
-    return HTMLResponse(template.render(**data))
+    return await _render_crew_dashboard_html(
+        role, role_meta, config, db, records, search
+    )
 
 
 # -- Single project fetch (for detail panel) ----------------------------------
@@ -328,14 +392,17 @@ async def get_project(
 @router.post("/crew/projects/save")
 async def save_new_project(
     request: Request,
-    role: str = Query("captain"),
     db: AsyncDBConnection = Depends(get_db),
 ):
-    """Insert a new project.
+    """Insert a new project via api.save_project().
 
     Accepts JSON body: {name, type_id, status_id, description}
-    Returns the new project record as JSON on success.
-    Returns 409 text on duplicate name, 422 text on missing name.
+    Returns the new project record as JSON on success (200).
+    Returns {"success": false, "message": "...", "data": ...} (200) on
+    failure — e.g. missing name, duplicate name. The message is
+    proc-supplied and safe to display directly in the UI. data is None
+    for most failures but may carry extra context (e.g. conflicting_id
+    on a duplicate-name rejection) for future UI features to consume.
     """
     body = await request.json()
     name = (body.get("name") or "").strip()
@@ -344,42 +411,33 @@ async def save_new_project(
     description = body.get("description") or None
 
     if not name:
-        return JSONResponse({"detail": "Name is required"}, status_code=422)
+        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
 
-    # Default to "active" status if none selected — status_id is NOT NULL
-    if not status_id:
-        active = await db.fetch_one(
-            "SELECT id FROM projects.project_status WHERE name = 'active'"
-        )
-        if active:
-            status_id = active["id"]
-        else:
-            return JSONResponse({"detail": "Status is required"}, status_code=422)
+    type_name, status_name = await _resolve_type_status_names(db, type_id, status_id)
 
-    # If slug already exists, append incrementing suffix until unique
-    slug = _make_slug(name)
-    base_slug = slug
-    counter = 1
-    while True:
-        existing = await db.fetch_one(
-            "SELECT id FROM projects.projects WHERE slug = %s",
-            (slug,)
-        )
-        if not existing:
-            break
-        slug = f"{base_slug}-{counter}"
-        counter += 1
+    user_id = request.state.user["user_id"] if request.state.user else None
 
-    result = await db.fetch_one(
-        """
-        INSERT INTO projects.projects (name, slug, type_id, status_id, description)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING id
-        """,
-        (name, slug, type_id, status_id, description)
+    payload = {
+        "name": name,
+        "description": description,
+        "type": type_name,
+        "status": status_name,
+    }
+
+    envelope = await _call_proc(
+        db,
+        "SELECT api.save_project(%s, %s)",
+        (json.dumps(payload), user_id),
     )
-    new_id = result["id"]
 
+    if not envelope.get("success"):
+        return JSONResponse({
+            "success": False,
+            "message": envelope.get("message"),
+            "data": envelope.get("data"),
+        })
+
+    new_id = envelope["data"]["id"]
     record = await _fetch_project_for_display(db, new_id)
     if not record:
         raise HTTPException(status_code=500, detail="Insert succeeded but fetch failed")
@@ -393,11 +451,15 @@ async def save_project(
     request: Request,
     db: AsyncDBConnection = Depends(get_db),
 ):
-    """Save edits to an existing project.
+    """Save edits to an existing project via api.save_project().
 
     Accepts JSON body: {name, type_id, status_id, description}
-    Returns the updated project record as JSON on success.
-    Returns 422 text on missing name.
+    Returns the updated project record as JSON on success (200).
+    Returns {"success": false, "message": "...", "data": ...} (200) on
+    failure — e.g. missing name, duplicate name, project not found. data
+    is None for most failures but may carry extra context (e.g.
+    conflicting_id on a duplicate-name rejection) for future UI features
+    to consume.
     """
     body = await request.json()
     name = (body.get("name") or "").strip()
@@ -406,16 +468,32 @@ async def save_project(
     description = body.get("description") or None
 
     if not name:
-        return JSONResponse({"detail": "Name is required"}, status_code=422)
+        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
 
-    await db.execute(
-        """
-        UPDATE projects.projects
-        SET name = %s, type_id = %s, status_id = %s, description = %s
-        WHERE id = %s
-        """,
-        (name, type_id, status_id, description, project_id)
+    type_name, status_name = await _resolve_type_status_names(db, type_id, status_id)
+
+    user_id = request.state.user["user_id"] if request.state.user else None
+
+    payload = {
+        "id": project_id,
+        "name": name,
+        "description": description,
+        "type": type_name,
+        "status": status_name,
+    }
+
+    envelope = await _call_proc(
+        db,
+        "SELECT api.save_project(%s, %s)",
+        (json.dumps(payload), user_id),
     )
+
+    if not envelope.get("success"):
+        return JSONResponse({
+            "success": False,
+            "message": envelope.get("message"),
+            "data": envelope.get("data"),
+        })
 
     record = await _fetch_project_for_display(db, project_id)
     if not record:
@@ -427,24 +505,24 @@ async def save_project(
 @router.delete("/crew/projects/{project_id}")
 async def delete_project(
     project_id: int,
+    request: Request,
     db: AsyncDBConnection = Depends(get_db),
 ):
-    """Delete a project by id.
+    """Delete a project by id via api.delete_project().
 
     Returns 204 No Content on success.
-    Returns 404 if project not found.
+    Returns {"success": false, "message": "..."} (200) on failure —
+    e.g. not found, or blocked by dependent records (foreign key violation).
     """
-    from fastapi.responses import Response
+    user_id = request.state.user["user_id"] if request.state.user else None
 
-    existing = await db.fetch_one(
-        "SELECT id FROM projects.projects WHERE id = %s",
-        (project_id,)
+    envelope = await _call_proc(
+        db,
+        "SELECT api.delete_project(%s, %s)",
+        (project_id, user_id),
     )
-    if not existing:
-        raise HTTPException(status_code=404, detail="Project not found")
 
-    await db.execute(
-        "DELETE FROM projects.projects WHERE id = %s",
-        (project_id,)
-    )
+    if not envelope.get("success"):
+        return JSONResponse({"success": False, "message": envelope.get("message")})
+
     return Response(status_code=204)

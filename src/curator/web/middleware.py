@@ -17,6 +17,7 @@ Usage (in app.py):
 """
 
 import json
+import logging
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -31,7 +32,10 @@ PUBLIC_PREFIXES = ("/static/",)
 COOKIE_NAME = "curator_session"
 
 
-class SessionMiddleware(BaseHTTPMiddleware):
+class SessionMiddleware(BaseHTTPMiddleware):  # pylint: disable=too-few-public-methods
+    # BaseHTTPMiddleware's entire contract is a single dispatch() method —
+    # this is not a design gap, it's how Starlette middleware is meant to
+    # look. Disabled rather than restructured.
     """
     Validate session cookie on every request.
 
@@ -80,7 +84,6 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         except Exception as exc:  # pylint: disable=broad-except
             # Log and fail safe — never crash on auth middleware error
-            import logging
             logging.getLogger(__name__).error("Session middleware error: %s", exc)
             return RedirectResponse(url="/auth/login", status_code=302)
 

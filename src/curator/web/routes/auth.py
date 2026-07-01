@@ -35,7 +35,10 @@ COOKIE_MAX_AGE_SESSION  = 60 * 60 * 8          # 8 hours in seconds
 # ---------------------------------------------------------------------------
 
 @router.get("/auth/login", response_class=HTMLResponse)
-async def login_page(request: Request, error: str = None):
+async def login_page(request: Request, error: str = None):  # pylint: disable=unused-argument
+    # request is required in the FastAPI route signature even though this
+    # handler doesn't read from it directly — FastAPI uses it for request
+    # context injection. Removing it would break the route.
     """Render login dialog over landing page."""
     template = env.get_template("auth/login.html")
     return HTMLResponse(template.render(
@@ -52,7 +55,10 @@ async def login_page(request: Request, error: str = None):
 # ---------------------------------------------------------------------------
 
 @router.post("/auth/login")
-async def login_submit(
+async def login_submit(  # pylint: disable=too-many-locals
+    # 11 local variables are all genuinely needed to process the login
+    # response and construct the redirect with cookie — extracting them
+    # into helpers would obscure rather than clarify this flow.
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
@@ -100,7 +106,9 @@ async def login_submit(
         )
         return response
 
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
+        # Catch-all — login errors must never surface a stack trace to the
+        # browser; always return a safe error message instead.
         logger.error("Login error for user %s: %s", username, exc)
         return _login_error("An unexpected error occurred. Please try again.")
 
@@ -120,9 +128,11 @@ async def logout(request: Request):
             db = await get_db_direct()
             await db.fetch_one("SELECT api.invalidate_session(%s)", (token,))
             await db.__aexit__(None, None, None)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-except
+            # Always clear the cookie even if the DB call fails — a broken
+            # logout that leaves the cookie in place is worse than one that
+            # silently eats a DB error.
             logger.error("Logout error: %s", exc)
-            # Continue — always clear the cookie even if DB call fails
 
     response = RedirectResponse(url="/auth/login", status_code=302)
     response.delete_cookie(COOKIE_NAME)

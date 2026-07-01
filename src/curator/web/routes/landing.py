@@ -1,9 +1,10 @@
 """Landing page route."""
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader
-from pathlib import Path
 
 from curator.config import ConfigManager
 from curator.web.deps import get_config

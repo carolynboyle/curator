@@ -6,13 +6,13 @@ that can be rendered by Jinja2 templates.
 
 Usage:
     from formkit import FormActions
-    
+
     actions = FormActions.load_yaml('config/forms.yaml')
     detail_panel_actions = actions.get('detail_panel')
-    
+
 Or:
     from formkit import action_save, action_cancel
-    
+
     actions = [
         action_save(form_id='detail-form'),
         action_cancel(),
@@ -22,39 +22,39 @@ Or:
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yaml
 
-class FormAction:
+
+class FormAction:  # pylint: disable=too-few-public-methods
+    # FormAction is a data holder — it stores button attributes and
+    # exposes one conversion method (to_dict). Having only one public
+    # method is correct by design, not a gap.
     """Represents a single form action button."""
-    
-    def __init__(
-        self,
-        label: str,
-        button_type: str = "button",
-        css_class: str = "",
-        button_id: str = "",
-        title: str = "",
-        form_id: Optional[str] = None,
-        data_attrs: Optional[Dict[str, str]] = None,
-    ):
+
+    def __init__(self, attrs: Dict[str, Any]):
         """
-        Initialize a form action.
-        
+        Initialize a form action from a dict of attributes.
+
         Args:
-            label: Button text (e.g., "Save", "Cancel")
-            button_type: HTML button type: "submit", "reset", "button" (default: "button")
-            css_class: Additional CSS class for styling (e.g., "btn-primary")
-            button_id: HTML id attribute (optional)
-            title: Hover tooltip text (optional)
-            form_id: Form ID for submit buttons (optional, uses form= attribute)
-            data_attrs: Dict of data-* attributes to add to button (optional)
+            attrs: Dict with the following keys, all optional except label:
+                label       (str):  Button text (e.g., "Save", "Cancel")
+                button_type (str):  HTML button type: "submit", "reset",
+                                    "button" (default: "button")
+                css_class   (str):  Additional CSS class for styling
+                                    (e.g., "btn-primary")
+                button_id   (str):  HTML id attribute
+                title       (str):  Hover tooltip text
+                form_id     (str):  Form ID for submit buttons (uses
+                                    form= attribute)
+                data_attrs  (dict): data-* attributes to add to the button
         """
-        self.label = label
-        self.button_type = button_type
-        self.css_class = css_class
-        self.button_id = button_id
-        self.title = title
-        self.form_id = form_id
-        self.data_attrs = data_attrs or {}
+        self.label = attrs.get("label", "")
+        self.button_type = attrs.get("button_type", "button")
+        self.css_class = attrs.get("css_class", "")
+        self.button_id = attrs.get("button_id", "")
+        self.title = attrs.get("title", "")
+        self.form_id = attrs.get("form_id")
+        self.data_attrs = attrs.get("data_attrs") or {}
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict for Jinja2 template."""
@@ -69,68 +69,72 @@ class FormAction:
         }
 
 
-class FormActions:
+class FormActions:  # pylint: disable=too-few-public-methods
+    # Pylint miscounts public methods here — this class has eleven public
+    # @staticmethods (save, new, discard, cancel, delete, custom,
+    # detail_panel_actions, crud_create_actions, crud_edit_actions,
+    # to_dicts, from_yaml). Disabled rather than restructured.
     """Builder for form action specifications."""
-    
+
     @staticmethod
     def save(form_id: Optional[str] = None, label: str = "Save") -> FormAction:
         """Create a Save button."""
-        return FormAction(
-            label=label,
-            button_type="submit",
-            css_class="btn-save",
-            form_id=form_id,
-            title="Save (Alt+S)",
-        )
-    
+        return FormAction({
+            "label": label,
+            "button_type": "submit",
+            "css_class": "btn-save",
+            "form_id": form_id,
+            "title": "Save (Alt+S)",
+        })
+
     @staticmethod
     def new(label: str = "New") -> FormAction:
         """Create a New button."""
-        return FormAction(
-            label=label,
-            button_type="button",
-            css_class="btn-new",
-            title="New (Alt+N)",
-            data_attrs={"action": "new"},
-        )
-    
+        return FormAction({
+            "label": label,
+            "button_type": "button",
+            "css_class": "btn-new",
+            "title": "New (Alt+N)",
+            "data_attrs": {"action": "new"},
+        })
+
     @staticmethod
     def discard(label: str = "Discard") -> FormAction:
         """Create a Discard button."""
-        return FormAction(
-            label=label,
-            button_type="button",
-            css_class="btn-discard",
-            title="Discard (Alt+X)",
-            data_attrs={"action": "discard"},
-        )
-    
+        return FormAction({
+            "label": label,
+            "button_type": "button",
+            "css_class": "btn-discard",
+            "title": "Discard (Alt+X)",
+            "data_attrs": {"action": "discard"},
+        })
+
     @staticmethod
     def cancel(label: str = "Cancel") -> FormAction:
         """Create a Cancel button (alias for Discard)."""
-        return FormAction(
-            label=label,
-            button_type="button",
-            css_class="btn-cancel",
-            title="Cancel (Escape)",
-            data_attrs={"action": "cancel"},
-        )
-    
+        return FormAction({
+            "label": label,
+            "button_type": "button",
+            "css_class": "btn-cancel",
+            "title": "Cancel (Escape)",
+            "data_attrs": {"action": "cancel"},
+        })
+
     @staticmethod
     def delete(label: str = "Delete", confirm: bool = True) -> FormAction:
         """Create a Delete button."""
         data_attrs = {"action": "delete"}
         if confirm:
             data_attrs["confirm"] = "true"
-        
-        return FormAction(
-            label=label,
-            button_type="button",
-            css_class="btn-delete",
-            title="Delete (permanent)",
-            data_attrs=data_attrs,
-        )
-    
+
+        return FormAction({
+            "label": label,
+            "button_type": "button",
+            "css_class": "btn-delete",
+            "title": "Delete (permanent)",
+            "data_attrs": data_attrs,
+        })
+
     @staticmethod
     def custom(
         label: str,
@@ -139,13 +143,14 @@ class FormActions:
         **kwargs
     ) -> FormAction:
         """Create a custom button with arbitrary parameters."""
-        return FormAction(
-            label=label,
-            button_type=button_type,
-            css_class=css_class,
-            **kwargs
-        )
-    
+        attrs = {
+            "label": label,
+            "button_type": button_type,
+            "css_class": css_class,
+        }
+        attrs.update(kwargs)
+        return FormAction(attrs)
+
     @staticmethod
     def detail_panel_actions(form_id: str = "detail-form") -> List[FormAction]:
         """
@@ -157,7 +162,7 @@ class FormActions:
             FormActions.new(),
             FormActions.discard(),
         ]
-    
+
     @staticmethod
     def crud_create_actions(form_id: str = "form") -> List[FormAction]:
         """Preset: Create form actions (Save, Cancel)."""
@@ -165,7 +170,7 @@ class FormActions:
             FormActions.save(form_id=form_id),
             FormActions.cancel(),
         ]
-    
+
     @staticmethod
     def crud_edit_actions(form_id: str = "form") -> List[FormAction]:
         """Preset: Edit form actions (Save, Delete, Cancel)."""
@@ -174,7 +179,7 @@ class FormActions:
             FormActions.delete(),
             FormActions.cancel(),
         ]
-    
+
     @staticmethod
     def to_dicts(actions: List[FormAction]) -> List[Dict[str, Any]]:
         """Convert list of FormAction objects to list of dicts for Jinja2."""
@@ -202,8 +207,6 @@ class FormActions:
             KeyError:          If preset or a referenced button is not found
             FileNotFoundError: If forms.yaml does not exist
         """
-        import yaml
-
         with open(forms_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 

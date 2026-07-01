@@ -1,6 +1,6 @@
-# Generated: 2026-06-29 18:45:22
+# Generated: 2026-06-29 18:07:06
 # Project: /home/carolyn/projects/curator
-# Files: 131
+# Files: 127
 
 version: 1
 documents:
@@ -23,7 +23,6 @@ documents:
 - path: docs/change/DATASHEET_IMPLEMENTATION.md
 - path: docs/change/INLINE_EDIT_IMPLEMENTATION.md
 - path: docs/change/PHASE1_FIXES.md
-- path: docs/change/api/CHANGEDOC_LANDING_AUTH_FILTER.md
 - path: docs/change/captain_implementation_guide.md
 - path: docs/change/captain_projects_dry_refactor.md
 - path: docs/change/crew_template/CHANGEDOC_CREW_TEMPLATE_MERGE.md
@@ -72,7 +71,6 @@ documents:
 - path: src/curator/db/projects/tasks.py
 - path: src/curator/exceptions.py
 - path: src/curator/formkit.py
-- path: src/curator/templates/auth/login.html
 - path: src/curator/templates/base.html
 - path: src/curator/templates/crew.html
 - path: src/curator/templates/index.html
@@ -94,9 +92,7 @@ documents:
 - path: src/curator/web/__init__.py
 - path: src/curator/web/app.py
 - path: src/curator/web/deps.py
-- path: src/curator/web/middleware.py
 - path: src/curator/web/routes/__init__.py
-- path: src/curator/web/routes/auth.py
 - path: src/curator/web/routes/contacts.py
 - path: src/curator/web/routes/crew.py
 - path: src/curator/web/routes/landing.py

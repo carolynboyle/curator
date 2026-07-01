@@ -1,14 +1,14 @@
-# Generated: 2026-06-29 18:07:17
+# Generated: 2026-06-29 18:46:05
 # Repo: https://github.com/carolynboyle/curator
 # Branch: main
 # URL type: raw
 # Version: v0.2.0
-# Files: 127
+# Files: 131
 
 repo: https://github.com/carolynboyle/curator
 branch: main
 url_type: raw
-generated: '2026-06-29 18:07:17'
+generated: '2026-06-29 18:46:05'
 version: 0.2.0
 files:
 - path: .env
@@ -49,6 +49,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/INLINE_EDIT_IMPLEMENTATION.md
 - path: docs/change/PHASE1_FIXES.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/PHASE1_FIXES.md
+- path: docs/change/api/CHANGEDOC_LANDING_AUTH_FILTER.md
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/api/CHANGEDOC_LANDING_AUTH_FILTER.md
 - path: docs/change/captain_implementation_guide.md
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/docs/change/captain_implementation_guide.md
 - path: docs/change/captain_projects_dry_refactor.md
@@ -146,6 +148,8 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/exceptions.py
 - path: src/curator/formkit.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/formkit.py
+- path: src/curator/templates/auth/login.html
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/auth/login.html
 - path: src/curator/templates/base.html
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/templates/base.html
 - path: src/curator/templates/crew.html
@@ -188,8 +192,12 @@ files:
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/app.py
 - path: src/curator/web/deps.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/deps.py
+- path: src/curator/web/middleware.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/middleware.py
 - path: src/curator/web/routes/__init__.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/routes/__init__.py
+- path: src/curator/web/routes/auth.py
+  url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/routes/auth.py
 - path: src/curator/web/routes/contacts.py
   url: https://raw.githubusercontent.com/carolynboyle/curator/main/src/curator/web/routes/contacts.py
 - path: src/curator/web/routes/crew.py

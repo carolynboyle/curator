@@ -125,8 +125,11 @@ async function saveForm() {
       if (panel) panel.dataset.id = saved.id;
       return saved;
     } else {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      alert(err.detail || 'Save failed');
+      // crew.py returns {"success": false, "message": "..."} on proc
+      // rejection (duplicate name, not found, etc.) — read message, not
+      // detail, or this always falls back to the generic string below.
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      alert(err.message || 'Save failed');
       return null;
     }
   } catch (err) {
@@ -250,7 +253,15 @@ export function initDetailPanel() {
     }
 
     if (e.target.classList.contains('detail-close-button')) handleDiscard();
-    if (e.target.classList.contains('btn-save'))            handleSave();
+
+    // btn-save is type="submit" with form="detail-form" (see forms.yaml) so
+    // clicking it also triggers native form submission. Without preventDefault
+    // here, the browser's native GET-to-current-URL submission races the
+    // fetch() in handleSave() and wins, since nothing else stops it.
+    if (e.target.classList.contains('btn-save')) {
+      e.preventDefault();
+      handleSave();
+    }
     if (e.target.classList.contains('btn-new'))             handleNew();
     if (e.target.classList.contains('btn-discard'))         handleDiscard();
   });
@@ -266,6 +277,18 @@ export function initDetailPanel() {
     if (e.altKey && e.key === 'n') { e.preventDefault(); handleNew(); }
     // Alt+X or Escape — Discard and close
     if ((e.altKey && e.key === 'x') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
+  });
+
+  // Safety net: catch any native form submission (e.g. pressing Enter in a
+  // text input, which submits the nearest form by default browser behavior)
+  // that isn't already intercepted by the btn-save click handler above.
+  // Without this, Enter-to-submit falls back to a GET on the current URL
+  // with form fields as query params, identical to the btn-save race bug.
+  document.addEventListener('submit', (e) => {
+    if (e.target.id === 'detail-form') {
+      e.preventDefault();
+      handleSave();
+    }
   });
 }
 

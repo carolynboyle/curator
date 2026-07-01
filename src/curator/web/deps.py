@@ -68,12 +68,8 @@ async def get_db(
     Yields:
         An open AsyncDBConnection.
     """
-    db = AsyncDBConnection()
-    try:
-        await db.__aenter__()
+    async with AsyncDBConnection() as db:
         yield db
-    finally:
-        await db.__aexit__(None, None, None)
 
 
 # ---------------------------------------------------------------------------
@@ -93,5 +89,10 @@ async def get_db_direct() -> AsyncDBConnection:
         An open AsyncDBConnection.
     """
     db = AsyncDBConnection()
-    await db.__aenter__()
+    await db.__aenter__()  # pylint: disable=unnecessary-dunder-call
+    # Cannot use "async with" here — entry and exit are deliberately
+    # decoupled by design. The caller (e.g. middleware.py) holds this
+    # connection open across a wider scope than a single "with" block
+    # could express, and is responsible for calling __aexit__() itself
+    # once it's done. See module docstring's "Usage in middleware" section.
     return db
