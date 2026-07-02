@@ -2,6 +2,28 @@
    identity.css — Two-panel org/contact layout for Identities tab
    ============================================================================= */
 
+/* ---- Shared selection readout ---------------------------------------------
+   Full-width sibling above .identity-panels. Distinct background/border
+   from the (unlabeled) search inputs so it reads as a display, not an
+   input. Same markup works at every viewport width — no breakpoint. */
+
+.identity-selection {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #0f766e;
+    border-radius: 4px;
+    background: #f0faf9;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.identity-selection-placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+    font-style: italic;
+}
+
 /* ---- Two-panel container -------------------------------------------------- */
 
 .identity-panels {
@@ -24,17 +46,14 @@
     padding: 0.75rem;
 }
 
-/* ---- Panel header — search box + detail button ---------------------------- */
-
-.identity-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    position: relative;
-}
+/* ---- Panel search box -------------------------------------------------------
+   Direct child of .identity-panel now — the header wrapper and detail
+   button that used to sit next to it are gone (double-click on a row
+   opens the detail panel instead). */
 
 .identity-search {
-    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
     padding: 4px 8px;
     border: 1px solid #dde1e7;
     border-radius: 3px;
@@ -48,50 +67,6 @@
     outline: 2px solid #0f766e;
     outline-offset: -1px;
     border-color: #0f766e;
-}
-
-.identity-detail-btn {
-    padding: 2px 8px;
-    border: 1px solid #dde1e7;
-    border-radius: 3px;
-    background: #f3f4f6;
-    color: #6b7280;
-    font-size: 1rem;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.15s;
-}
-
-.identity-detail-btn:not(:disabled) {
-    opacity: 1;
-    color: #0f766e;
-    border-color: #0f766e;
-    background: #f0faf9;
-    cursor: pointer;
-}
-
-.identity-detail-btn:disabled {
-    cursor: default;
-}
-
-/* ---- Clear filter pill ---------------------------------------------------- */
-
-.identity-clear {
-    position: absolute;
-    right: 44px;  /* sits just inside the search box, left of detail btn */
-    background: #e5e7eb;
-    border: none;
-    border-radius: 10px;
-    padding: 1px 7px;
-    font-size: 0.8rem;
-    color: #374151;
-    cursor: pointer;
-    line-height: 1.4;
-}
-
-.identity-clear:hover {
-    background: #dc2626;
-    color: #ffffff;
 }
 
 /* ---- Add button ----------------------------------------------------------- */
@@ -124,16 +99,17 @@
     font-size: 0.875rem;
 }
 
-/* ---- List items ----------------------------------------------------------- */
+/* ---- List items ------------------------------------------------------------
+   Single field (name only) — detail info comes from double-click, not
+   from a denser row. */
 
 .identity-item {
-    display: flex;
-    flex-direction: column;
     padding: 4px 8px;
     border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
     line-height: 1.3;
     color: #1a1a1a;
+    font-weight: 500;
 }
 
 .identity-item:last-child {
@@ -151,19 +127,6 @@
 
 .identity-item.selected:hover {
     background: #bfdbfe;
-}
-
-.identity-item-name {
-    font-weight: 500;
-}
-
-.identity-item-hint {
-    font-size: 0.78rem;
-    color: #6b7280;
-}
-
-.identity-item.selected .identity-item-hint {
-    color: #3b6ea5;
 }
 
 /* ---- Empty state ---------------------------------------------------------- */
@@ -186,10 +149,3 @@
     padding: 1rem;
 }
 
-/* ---- Responsive ----------------------------------------------------------- */
-
-@media (max-width: 768px) {
-    .identity-panels {
-        grid-template-columns: 1fr;
-    }
-}

@@ -1,39 +1,42 @@
 {#
   _tab_identities.html
 
-  Identities tab content — captain only.
-  Two-panel bidirectional org/contact filtering layout.
+  Identities tab content — visibility controlled by _ROLE_TABS (currently captain only; adding a role here means adding its entry there, full org-wide list, no filtering).
+
+  Add/edit vs. delete permission is a separate, finer-grained check planned for the RLS implementation (based on identity.user_role, not crew_role) — not yet built. When that lands, delete controls should not render for non-admin users, and the underlying proc should reject unauthorized deletes quietly (standard {"success": false, ...} envelope, no special handling).
+
+  Two-panel bidirectional org/contact filtering layout. Cross-filter behavior delegated to the shared bidirectional-filter.js module — see that file for the reusable pattern.
 
   Variables available from crew.html context:
     - organizations (list): list of dicts with id, name, contact_ids
     - contacts (list): list of dicts with id, name, title, email, org_ids
 #}
 
+<!-- Shared selection readout — fills with whichever org or contact was
+     just clicked. Full-width sibling above the two-column grid so it
+     works identically at any viewport width; no breakpoint variant needed. -->
+<div class="identity-selection" id="identity-selection">
+    <span class="identity-selection-placeholder">No selection</span>
+</div>
+
 <div class="identity-panels">
 
     <!-- Organizations panel (left) -->
     <div class="identity-panel">
-        <div class="identity-panel-header">
-            <input
-                type="text"
-                id="org-search"
-                class="identity-search"
-                placeholder="Organization..."
-                autocomplete="off"
-            >
-            <button
-                id="org-detail-btn"
-                class="identity-detail-btn"
-                title="Organization details"
-                disabled
-            >⋯</button>
-        </div>
+        <input
+            type="text"
+            id="org-search"
+            class="identity-search"
+            placeholder="Organization..."
+            autocomplete="off"
+        >
         <button class="identity-add-btn" id="org-add-btn" title="Add organization">+ Organization</button>
         <div class="identity-listbox" id="org-listbox">
             {% for org in organizations %}
             <div class="identity-item"
                  data-id="{{ org.id }}"
-                 data-contact-ids="{{ org.contact_ids | join(',') }}">
+                 data-name="{{ org.name }}"
+                 data-related-ids="{{ org.contact_ids | join(',') }}">
                 {{ org.name }}
             </div>
             {% else %}
@@ -44,31 +47,21 @@
 
     <!-- Contacts panel (right) -->
     <div class="identity-panel">
-        <div class="identity-panel-header">
-            <input
-                type="text"
-                id="contact-search"
-                class="identity-search"
-                placeholder="Contact..."
-                autocomplete="off"
-            >
-            <button
-                id="contact-detail-btn"
-                class="identity-detail-btn"
-                title="Contact details"
-                disabled
-            >⋯</button>
-        </div>
+        <input
+            type="text"
+            id="contact-search"
+            class="identity-search"
+            placeholder="Contact..."
+            autocomplete="off"
+        >
         <button class="identity-add-btn" id="contact-add-btn" title="Add contact">+ Contact</button>
         <div class="identity-listbox" id="contact-listbox">
             {% for contact in contacts %}
             <div class="identity-item"
                  data-id="{{ contact.id }}"
-                 data-org-ids="{{ contact.org_ids | join(',') }}">
-                <span class="identity-item-name">{{ contact.name or "—" }}</span>
-                {% if contact.email %}
-                <span class="identity-item-hint">{{ contact.email }}</span>
-                {% endif %}
+                 data-name="{{ contact.name or '—' }}"
+                 data-related-ids="{{ contact.org_ids | join(',') }}">
+                {{ contact.name or "—" }}
             </div>
             {% else %}
             <div class="identity-empty">No contacts found.</div>
@@ -78,179 +71,22 @@
 
 </div>
 
-<script>
-// -------------------------------------------------------------------------
-// Identity panel — bidirectional filtering
-// -------------------------------------------------------------------------
-(function () {
-    let selectedOrgId     = null;
-    let selectedContactId = null;
+<script type="module">
+    import { initBidirectionalFilter } from '/static/js/bidirectional-filter.js';
 
-    const orgListbox       = document.getElementById('org-listbox');
-    const contactListbox   = document.getElementById('contact-listbox');
-    const orgSearch        = document.getElementById('org-search');
-    const contactSearch    = document.getElementById('contact-search');
-    const orgDetailBtn     = document.getElementById('org-detail-btn');
-    const contactDetailBtn = document.getElementById('contact-detail-btn');
-
-    function getOrgItems()     { return orgListbox.querySelectorAll('.identity-item'); }
-    function getContactItems() { return contactListbox.querySelectorAll('.identity-item'); }
-
-    function showClearPill(inputEl, onClear) {
-        const existing = inputEl.parentElement.querySelector('.identity-clear');
-        if (existing) existing.remove();
-        const pill = document.createElement('button');
-        pill.className = 'identity-clear';
-        pill.textContent = '×';
-        pill.title = 'Clear filter';
-        pill.addEventListener('click', onClear);
-        inputEl.parentElement.insertBefore(pill, inputEl.nextSibling);
-    }
-
-    function removeClearPill(inputEl) {
-        const existing = inputEl.parentElement.querySelector('.identity-clear');
-        if (existing) existing.remove();
-    }
-
-    function setItemVisible(el, visible) {
-        el.style.display = visible ? '' : 'none';
-    }
-
-    // -- Org selection --------------------------------------------------------
-
-    function selectOrg(item) {
-        getOrgItems().forEach(i => i.classList.remove('selected'));
-        selectedOrgId = item.dataset.id;
-        item.classList.add('selected');
-        orgSearch.value = item.textContent.trim();
-        orgDetailBtn.disabled = false;
-
-        const contactIds = item.dataset.contactIds
-            ? item.dataset.contactIds.split(',').filter(Boolean)
-            : [];
-        getContactItems().forEach(c => {
-            setItemVisible(c, contactIds.includes(c.dataset.id));
-        });
-
-        showClearPill(orgSearch, clearOrgSelection);
-        selectedContactId = null;
-        contactSearch.value = '';
-        contactDetailBtn.disabled = true;
-        removeClearPill(contactSearch);
-    }
-
-    function clearOrgSelection() {
-        selectedOrgId = null;
-        orgSearch.value = '';
-        orgDetailBtn.disabled = true;
-        removeClearPill(orgSearch);
-        getOrgItems().forEach(i => {
-            i.classList.remove('selected');
-            setItemVisible(i, true);
-        });
-        applyContactSearch(contactSearch.value);
-    }
-
-    // -- Contact selection ----------------------------------------------------
-
-    function selectContact(item) {
-        getContactItems().forEach(i => i.classList.remove('selected'));
-        selectedContactId = item.dataset.id;
-        item.classList.add('selected');
-        const name = item.querySelector('.identity-item-name');
-        contactSearch.value = name ? name.textContent.trim() : item.textContent.trim();
-        contactDetailBtn.disabled = false;
-
-        const orgIds = item.dataset.orgIds
-            ? item.dataset.orgIds.split(',').filter(Boolean)
-            : [];
-        getOrgItems().forEach(o => {
-            setItemVisible(o, orgIds.length === 0 ? false : orgIds.includes(o.dataset.id));
-        });
-
-        showClearPill(contactSearch, clearContactSelection);
-        selectedOrgId = null;
-        orgSearch.value = '';
-        orgDetailBtn.disabled = true;
-        removeClearPill(orgSearch);
-    }
-
-    function clearContactSelection() {
-        selectedContactId = null;
-        contactSearch.value = '';
-        contactDetailBtn.disabled = true;
-        removeClearPill(contactSearch);
-        getContactItems().forEach(i => {
-            i.classList.remove('selected');
-            setItemVisible(i, true);
-        });
-        applyOrgSearch(orgSearch.value);
-    }
-
-    // -- Search filtering -----------------------------------------------------
-
-    function applyOrgSearch(term) {
-        const t = term.toLowerCase();
-        getOrgItems().forEach(item => {
-            setItemVisible(item, item.textContent.toLowerCase().includes(t));
-        });
-    }
-
-    function applyContactSearch(term) {
-        const t = term.toLowerCase();
-        getContactItems().forEach(item => {
-            setItemVisible(item, item.textContent.toLowerCase().includes(t));
-        });
-    }
-
-    // -- Event listeners ------------------------------------------------------
-
-    orgListbox.addEventListener('click', e => {
-        const item = e.target.closest('.identity-item');
-        if (!item) return;
-        if (item.dataset.id === selectedOrgId) {
-            clearOrgSelection();
-        } else {
-            selectOrg(item);
-        }
+    initBidirectionalFilter({
+        selectionBoxId: 'identity-selection',
+        left: {
+            listboxId: 'org-listbox',
+            searchId:  'org-search',
+            addBtnId:  'org-add-btn',
+            entity:    'organizations',
+        },
+        right: {
+            listboxId: 'contact-listbox',
+            searchId:  'contact-search',
+            addBtnId:  'contact-add-btn',
+            entity:    'contacts',
+        },
     });
-
-    contactListbox.addEventListener('click', e => {
-        const item = e.target.closest('.identity-item');
-        if (!item) return;
-        if (item.dataset.id === selectedContactId) {
-            clearContactSelection();
-        } else {
-            selectContact(item);
-        }
-    });
-
-    orgSearch.addEventListener('input', e => {
-        if (selectedOrgId) clearOrgSelection();
-        applyOrgSearch(e.target.value);
-    });
-
-    contactSearch.addEventListener('input', e => {
-        if (selectedContactId) clearContactSelection();
-        applyContactSearch(e.target.value);
-    });
-
-    // Detail buttons — deferred
-    orgDetailBtn.addEventListener('click', () => {
-        // Future: open org detail panel for selectedOrgId
-    });
-
-    contactDetailBtn.addEventListener('click', () => {
-        // Future: open contact detail panel for selectedContactId
-    });
-
-    // Add buttons — deferred
-    document.getElementById('org-add-btn').addEventListener('click', () => {
-        // Future: open new org form
-    });
-
-    document.getElementById('contact-add-btn').addEventListener('click', () => {
-        // Future: open new contact form
-    });
-}());
 </script>

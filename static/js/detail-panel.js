@@ -80,11 +80,13 @@ function populateForm(record) {
   const typeField   = form.querySelector('[name="type_id"]');
   const statusField = form.querySelector('[name="status_id"]');
   const descField   = form.querySelector('[name="description"]');
+  const titleField  = form.querySelector('[name="title"]');
 
   if (nameField)   nameField.value   = record.name        ?? '';
   if (typeField)   typeField.value   = record.type_id     ?? '';
   if (statusField) statusField.value = record.status_id   ?? '';
   if (descField)   descField.value   = record.description ?? '';
+  if (titleField)  titleField.value  = record.title       ?? '';
 }
 
 // ---------------------------------------------------------------------------

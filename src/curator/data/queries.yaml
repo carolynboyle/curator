@@ -65,8 +65,8 @@ contact_emails:
     sql: >
       SELECT
           id,
-          email::text,
-          email_type::text
+          address::text,
+          label::text
       FROM identity.contact_emails
       WHERE contact_id = %s
       ORDER BY id
@@ -82,12 +82,12 @@ contact_phones:
     sql: >
       SELECT
           id,
-          phone_number::text,
-          description::text
+          number::text,
+          label::text
       FROM identity.contact_phones
       WHERE contact_id = %s
       ORDER BY id
-
+      
 # =============================================================================
 # CONTACT URLS
 # =============================================================================

@@ -29,13 +29,13 @@ buttons:
   save:
     label:   "<u>S</u>ave"
     type:    submit
-    class:   btn-secondary
+    class:   "btn-secondary btn-save"
     title:   "Save (Alt+S)"
 
   new:
     label:   "<u>N</u>ew"
     type:    button
-    class:   btn-secondary
+    class:   "btn-secondary btn-new"
     title:   "New (Alt+N)"
     data_attrs:
       action: new
@@ -43,7 +43,7 @@ buttons:
   discard:
     label:   "E<u>x</u>it"
     type:    button
-    class:   btn-secondary
+    class:   "btn-secondary btn-discard"
     title:   "Exit (Alt+X)"
     data_attrs:
       action: discard
