@@ -2,7 +2,10 @@
 curator.web.deps - FastAPI dependency injection.
 
 Provides database connection and config manager as FastAPI
-dependencies for use in route handlers.
+dependencies for use in route handlers. Also provides call_proc(),
+a shared helper for unwrapping api.* stored-procedure JSONB envelopes —
+used by every entity route module (projects.py, contacts.py,
+organizations.py) that calls into the api schema.
 
 The database connection is managed by dbkit, which reads connection
 parameters from ~/.config/dev-utils/config.yaml under the 'dbkit:' key.
@@ -26,6 +29,7 @@ Usage in middleware / non-route contexts (no Depends available):
     await db.__aexit__(None, None, None)
 """
 
+import json
 from typing import AsyncGenerator
 
 from dbkit.connection import AsyncDBConnection
@@ -96,3 +100,31 @@ async def get_db_direct() -> AsyncDBConnection:
     # could express, and is responsible for calling __aexit__() itself
     # once it's done. See module docstring's "Usage in middleware" section.
     return db
+
+
+# ---------------------------------------------------------------------------
+# Stored-procedure envelope helper
+# Moved here from crew.py (2026-07-01 changedoc) — shared by every route
+# module that calls an api.* proc. Not entity-specific, so it belongs in
+# shared infrastructure rather than any one route file. Renamed from
+# _call_proc to call_proc on the move: the leading underscore signaled
+# "module-private," which stopped being true the moment a second module
+# needed to import it.
+# ---------------------------------------------------------------------------
+
+async def call_proc(db: AsyncDBConnection, sql: str, params: tuple) -> dict:
+    """Call a stored proc that returns a single JSONB envelope and unwrap it.
+
+    Every api.* proc returns {"success": bool, "data": ..., "message": str}.
+    fetch_one() gives back a dict keyed by the proc's column name (e.g.
+    {"save_project": {...}}); this pulls out that single value and parses
+    it if dbkit returned it as a JSON string rather than an already-decoded
+    dict (encoding-dependent — see dbkit client_encoding note in handoff).
+
+    Returns the envelope dict: {"success": ..., "data": ..., "message": ...}
+    """
+    result = await db.fetch_one(sql, params)
+    envelope = list(result.values())[0]
+    if isinstance(envelope, str):
+        envelope = json.loads(envelope)
+    return envelope

@@ -1,23 +1,24 @@
 """
-Unit tests for curator.web.routes.crew
+Unit tests for curator.web.routes.projects
 
-Scope: pure-logic tests for the proc-calling pattern established this
-session — _call_proc's envelope unwrapping, and the save routes' guard
-clauses (empty name) that return before ever touching the database.
+Scope: the save routes' guard clauses (empty name) that return before
+ever touching the database, and the proc-rejection passthrough contract.
+Split out of test_routes_crew.py as part of the crew.py route split
+(2026-07-01) — projects.save_new_project / save_project moved to their
+own module, and _call_proc's envelope-unwrapping tests moved to
+test_deps.py alongside call_proc itself.
 
 These are unit tests, not integration tests: the database connection is
 mocked throughout. Nothing here makes a real connection to PostgreSQL.
 Integration tests against the real wcyj database are deferred until the
-Contacts/Tasks forms are designed and their procs exist (see
-curator_handoff notes from this session) — see tests/integration/ for
-where those will eventually live.
+Contacts/Tasks forms are designed and their procs exist — see
+tests/integration/ for where those will eventually live.
 
-Note: importing curator.web.routes.crew triggers module-level reads of
-queries.yaml and forms.yaml (via QueryBuilder/QueryLoader construction
-at import time) — these tests are not fully filesystem-isolated, only
-database-isolated. If those YAML files are ever missing or malformed,
-these tests will fail at import/collection time, not at the assertion
-they're actually about.
+Note: importing curator.web.routes.projects triggers no module-level
+YAML reads (unlike the old crew.py, which read queries.yaml/forms.yaml
+at import time for the /api/query endpoint and dashboard rendering —
+those stayed in crew.py). projects.py has no import-time filesystem
+dependency.
 """
 
 import json
@@ -26,12 +27,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from curator.web.routes import crew
+from curator.web.routes import projects
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 def make_mock_request(body: dict, user_id: int = 1) -> SimpleNamespace:
     """Build a minimal fake Request with just what the save routes read.
@@ -47,79 +44,6 @@ def make_mock_request(body: dict, user_id: int = 1) -> SimpleNamespace:
     )
 
 
-def make_mock_db_for_proc(envelope) -> SimpleNamespace:
-    """Build a fake db whose fetch_one() returns a single-key dict wrapping
-    the given envelope — matching the real shape dbkit returns for
-    `SELECT api.some_proc(...)` (e.g. {"save_project": {...}}).
-
-    envelope may be a dict (simulating dbkit already having decoded JSONB
-    to a Python dict) or a JSON string (simulating the case where it comes
-    back as a raw string and _call_proc must json.loads() it itself).
-    """
-    return SimpleNamespace(
-        fetch_one=AsyncMock(return_value={"some_proc_name": envelope})
-    )
-
-
-# ---------------------------------------------------------------------------
-# _call_proc — envelope unwrapping
-# ---------------------------------------------------------------------------
-
-class TestCallProc:
-    """_call_proc must correctly unwrap a proc's JSONB envelope regardless
-    of whether dbkit hands it back as an already-decoded dict or as a raw
-    JSON string — this ambiguity was flagged as unverified during the
-    original crew.py -> api schema migration this session and is exactly
-    the kind of thing that should be pinned down by a test rather than
-    left as an assumption.
-    """
-
-    @pytest.mark.asyncio
-    async def test_unwraps_dict_envelope(self):
-        """When dbkit already returns a decoded dict, _call_proc should
-        pass it through unchanged, not double-parse it."""
-        envelope = {"success": True, "data": {"id": 42}, "message": None}
-        db = make_mock_db_for_proc(envelope)
-
-        result = await crew._call_proc(db, "SELECT api.fake_proc(%s)", (1,))
-
-        assert result == envelope
-        assert result["success"] is True
-        assert result["data"]["id"] == 42
-
-    @pytest.mark.asyncio
-    async def test_unwraps_json_string_envelope(self):
-        """When dbkit returns the envelope as a raw JSON string (the
-        encoding-dependent case noted in _call_proc's docstring),
-        _call_proc must json.loads() it before returning."""
-        envelope_dict = {"success": False, "data": None, "message": "Not found."}
-        envelope_str = json.dumps(envelope_dict)
-        db = make_mock_db_for_proc(envelope_str)
-
-        result = await crew._call_proc(db, "SELECT api.fake_proc(%s)", (1,))
-
-        assert result == envelope_dict
-        assert result["success"] is False
-        assert result["message"] == "Not found."
-
-    @pytest.mark.asyncio
-    async def test_passes_sql_and_params_through_unchanged(self):
-        """_call_proc shouldn't alter the SQL or params it was given —
-        confirms it's a thin pass-through to fetch_one, not doing any
-        SQL construction of its own."""
-        db = make_mock_db_for_proc({"success": True, "data": None, "message": None})
-        sql = "SELECT api.save_project(%s, %s)"
-        params = ('{"name": "Test"}', 7)
-
-        await crew._call_proc(db, sql, params)
-
-        db.fetch_one.assert_awaited_once_with(sql, params)
-
-
-# ---------------------------------------------------------------------------
-# save_new_project — empty-name guard
-# ---------------------------------------------------------------------------
-
 class TestSaveNewProjectGuard:
     """The empty-name check in save_new_project is meant to short-circuit
     before any database call. These tests confirm that guard actually
@@ -134,7 +58,7 @@ class TestSaveNewProjectGuard:
                                       "status_id": None, "description": None})
         db = SimpleNamespace(fetch_one=AsyncMock())  # should never be called
 
-        response = await crew.save_new_project(request, db)
+        response = await projects.save_new_project(request, db)
 
         body = json.loads(response.body)
         assert body == {
@@ -152,7 +76,7 @@ class TestSaveNewProjectGuard:
                                       "status_id": None, "description": None})
         db = SimpleNamespace(fetch_one=AsyncMock())
 
-        response = await crew.save_new_project(request, db)
+        response = await projects.save_new_project(request, db)
 
         body = json.loads(response.body)
         assert body["success"] is False
@@ -167,16 +91,12 @@ class TestSaveNewProjectGuard:
                                       "description": None})
         db = SimpleNamespace(fetch_one=AsyncMock())
 
-        response = await crew.save_new_project(request, db)
+        response = await projects.save_new_project(request, db)
 
         body = json.loads(response.body)
         assert body["success"] is False
         db.fetch_one.assert_not_awaited()
 
-
-# ---------------------------------------------------------------------------
-# save_project (update route) — same empty-name guard
-# ---------------------------------------------------------------------------
 
 class TestSaveProjectGuard:
     """Same guard, same reasoning, applied to the update route — kept as
@@ -191,7 +111,7 @@ class TestSaveProjectGuard:
                                       "status_id": None, "description": None})
         db = SimpleNamespace(fetch_one=AsyncMock())
 
-        response = await crew.save_project(project_id=22, request=request, db=db)
+        response = await projects.save_project(project_id=22, request=request, db=db)
 
         body = json.loads(response.body)
         assert body == {
@@ -202,15 +122,11 @@ class TestSaveProjectGuard:
         db.fetch_one.assert_not_awaited()
 
 
-# ---------------------------------------------------------------------------
-# save_new_project / save_project — proc rejection passthrough
-# ---------------------------------------------------------------------------
-
 class TestProcRejectionPassthrough:
     """Confirms the route correctly forwards a proc's full rejection
-    envelope (including the new "data" field added for the conflicting_id
+    envelope (including the "data" field used for the conflicting_id
     feature) without dropping or reshaping any of it. This is the bug
-    class that caused the silent duplicate-name failure earlier this
+    class that caused the silent duplicate-name failure in an earlier
     session (saveForm() couldn't tell success from failure because the
     route's response shape was inconsistent) — a regression here should
     fail loudly, not silently.
@@ -229,15 +145,14 @@ class TestProcRejectionPassthrough:
             "message": "A project with that name already exists.",
         }
 
-        # First fetch_one call (inside _call_proc) returns the rejection.
+        # First fetch_one call (inside call_proc) returns the rejection.
         # _resolve_type_status_names won't call fetch_one at all here since
         # both type_id and status_id are None in this payload.
         db = SimpleNamespace(fetch_one=AsyncMock(return_value={
             "save_project": rejection_envelope
         }))
 
-        print("DIAGNOSTIC: db =", db, "type:", type(db))
-        response = await crew.save_new_project(request, db)
+        response = await projects.save_new_project(request, db)
 
         body = json.loads(response.body)
         assert body["success"] is False
@@ -268,14 +183,14 @@ class TestProcRejectionPassthrough:
         }
 
         # fetch_one is called twice in the success path:
-        #   1. inside _call_proc, for the SELECT api.save_project(...) call
+        #   1. inside call_proc, for the SELECT api.save_project(...) call
         #   2. inside _fetch_project_for_display, for the re-fetch by id
         db = SimpleNamespace(fetch_one=AsyncMock(side_effect=[
             {"save_project": save_envelope},
             display_record,
         ]))
 
-        response = await crew.save_new_project(request, db)
+        response = await projects.save_new_project(request, db)
 
         body = json.loads(response.body)
         assert "success" not in body

@@ -11,8 +11,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from curator.web.middleware import SessionMiddleware
-from curator.web.routes import landing, crew
-from curator.web.routes import auth
+from curator.web.routes import auth, landing, crew, projects, contacts, organizations
 
 # ---------------------------------------------------------------------------
 # App
@@ -47,6 +46,9 @@ app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 app.include_router(auth.router)
 app.include_router(landing.router)
 app.include_router(crew.router)
+app.include_router(projects.router)
+app.include_router(contacts.router)
+app.include_router(organizations.router)
 
 
 # ---------------------------------------------------------------------------
