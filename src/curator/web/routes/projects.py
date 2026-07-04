@@ -10,33 +10,26 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 
 from dbkit.connection import AsyncDBConnection
-from curator.web.deps import get_db, call_proc
+from curator.web.deps import get_db, call_proc, call_proc_and_refetch, _fetch_json_scalar
 
 router = APIRouter()
 
 
 async def _fetch_project_for_display(db: AsyncDBConnection, project_id: int) -> dict:
-    """Fetch a project with joined type and status names for display.
+    """Fetch a project via api.get_project_detail() for the detail panel.
 
-    Returns dict with id, name, slug, description, type, status,
-    type_id, status_id keys.
+    Returns dict with id, name, description, type_id, status_id keys —
+    the columns in projects.v_project_detail — or None if not found.
+
+    No longer returns joined type/status *name* strings (the old direct
+    query's `type`/`status` columns) or `slug`: v_project_detail is a
+    whitelist of editable fields only. Nothing downstream reads those —
+    detail-panel.js's populateForm() only maps name/type_id/status_id/
+    description/title.
     """
-    sql = """
-        SELECT
-            p.id,
-            p.name::text,
-            p.slug::text,
-            p.description::text,
-            p.type_id,
-            p.status_id,
-            ps.name::text  AS status,
-            pt.name::text  AS type
-        FROM projects.projects p
-        LEFT JOIN projects.project_status ps ON ps.id = p.status_id
-        LEFT JOIN projects.project_type   pt ON pt.id = p.type_id
-        WHERE p.id = %s
-    """
-    return await db.fetch_one(sql, (project_id,))
+    return await _fetch_json_scalar(
+        db, "SELECT api.get_project_detail(%s)", (project_id,)
+    )
 
 
 async def _resolve_type_status_names(
@@ -165,25 +158,14 @@ async def save_new_project(
         "status": status_name,
     }
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_project(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_project_for_display,
+        None,
+        "Insert succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    new_id = envelope["data"]["id"]
-    record = await _fetch_project_for_display(db, new_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Insert succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.post("/crew/projects/{project_id}/save")
@@ -223,24 +205,14 @@ async def save_project(
         "status": status_name,
     }
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_project(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_project_for_display,
+        project_id,
+        "Save succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    record = await _fetch_project_for_display(db, project_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Save succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.delete("/crew/projects/{project_id}")

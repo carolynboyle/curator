@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 
 from dbkit.connection import AsyncDBConnection
-from curator.web.deps import get_db, call_proc
+from curator.web.deps import get_db, call_proc, call_proc_and_refetch, _fetch_json_scalar
 
 router = APIRouter()
 
@@ -54,20 +54,15 @@ async def _fetch_contacts(db: AsyncDBConnection) -> list:
 
 
 async def _fetch_contact_for_display(db: AsyncDBConnection, contact_id: int) -> dict:
-    """Fetch a single contact for the detail panel.
+    """Fetch a contact via api.get_contact_detail() for the detail panel.
 
-    Returns dict with id, name, title, notes keys.
+    Returns dict with id, name, title, notes keys — matches the old
+    direct query's shape exactly, since identity.v_contact_detail has no
+    extra joined columns to lose — or None if not found.
     """
-    sql = """
-        SELECT
-            c.id,
-            c.name::text,
-            c.title::text,
-            c.notes::text
-        FROM identity.contacts c
-        WHERE c.id = %s
-    """
-    return await db.fetch_one(sql, (contact_id,))
+    return await _fetch_json_scalar(
+        db, "SELECT api.get_contact_detail(%s)", (contact_id,)
+    )
 
 
 # -- Single contact fetch (for detail panel) -----------------------------------
@@ -112,25 +107,14 @@ async def save_new_contact(
 
     payload = {"name": name, "title": title, "notes": notes}
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_contact(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_contact_for_display,
+        None,
+        "Insert succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    new_id = envelope["data"]["id"]
-    record = await _fetch_contact_for_display(db, new_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Insert succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.post("/crew/contacts/{contact_id}/save")
@@ -158,24 +142,14 @@ async def save_contact(
 
     payload = {"id": contact_id, "name": name, "title": title, "notes": notes}
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_contact(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_contact_for_display,
+        contact_id,
+        "Save succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    record = await _fetch_contact_for_display(db, contact_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Save succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.delete("/crew/contacts/{contact_id}")

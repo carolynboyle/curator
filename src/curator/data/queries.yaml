@@ -26,7 +26,7 @@ tasks:
           t.priority_id,
           p.name::text  AS priority,
           t.sort_order,
-          t.created_at
+          t.created_at::text
       FROM projects.tasks t
       LEFT JOIN projects.task_status ts ON ts.id = t.status_id
       LEFT JOIN projects.priority    p  ON p.id  = t.priority_id
@@ -47,7 +47,7 @@ tasks:
           t.priority_id,
           p.name::text  AS priority,
           t.sort_order,
-          t.created_at
+          t.created_at::text
       FROM projects.tasks t
       LEFT JOIN projects.task_status ts ON ts.id = t.status_id
       LEFT JOIN projects.priority    p  ON p.id  = t.priority_id

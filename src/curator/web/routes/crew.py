@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader
 from viewkit.query_builder import QueryBuilder
@@ -88,19 +89,27 @@ async def run_query(
 
     Query parameters:
         params: comma-separated string of positional SQL params
+
+    Response is passed through jsonable_encoder() rather than returned
+    as a plain dict — this endpoint serves whatever queries.yaml defines,
+    present and future, and jsonable_encoder() handles types plain
+    json.dumps() can't (datetime, Decimal, UUID) without every query
+    author needing to remember an explicit ::text cast. queries.yaml
+    should still cast consistently (see its own convention) — this is a
+    backstop, not a replacement for that.
     """
     params_list = params.split(",") if params else []
     try:
-        sql = _query_loader.build(entity, query_name)
+        sql = _query_loader.sql(entity, query_name)
         rows = await db.fetch_all(sql, params_list)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return JSONResponse({"records": [dict(r) for r in rows]})
+    return JSONResponse(jsonable_encoder({"records": [dict(r) for r in rows]}))
 
 
 # -- Dashboard ----------------------------------------------------------------
 
-async def _render_crew_dashboard_html(
+async def _render_crew_dashboard_html(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     role: str,
     role_meta: dict,
     config: ConfigManager,
@@ -115,6 +124,16 @@ async def _render_crew_dashboard_html(
     calls. The two were previously one function; separated because they
     are genuinely different jobs (serve JSON vs. render a full page) that
     happened to share a route.
+
+    Takes 6 parameters (one over pylint's default threshold of 5). All 6
+    are genuinely needed — role/role_meta/search describe the current
+    request context, config/db/records are runtime dependencies.
+    Restructuring into a context object would add indirection without
+    improving clarity. Left as-is by design, with the disable directive
+    on the function that actually has 6 parameters — it used to sit as a
+    prose-only comment above crew_dashboard (5 parameters, never needed
+    it) and never suppressed anything, since pylint only responds to the
+    real disable-comment syntax, not an explanation that reads like one.
     """
     lookups = await _fetch_lookups(db)
 
@@ -148,11 +167,6 @@ async def _render_crew_dashboard_html(
 
 
 @router.get("/crew")
-# _render_crew_dashboard_html takes 6 parameters (one over pylint's default
-# threshold of 5). All 6 are genuinely needed — role/role_meta/search
-# describe the current request context, config/db/records are runtime
-# dependencies. Restructuring into a context object would add indirection
-# without improving clarity. Left as-is by design
 async def crew_dashboard(
     request: Request,
     role: str = Query("captain"),

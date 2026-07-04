@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 
 from dbkit.connection import AsyncDBConnection
-from curator.web.deps import get_db, call_proc
+from curator.web.deps import get_db, call_proc, call_proc_and_refetch, _fetch_json_scalar
 
 router = APIRouter()
 
@@ -44,19 +44,15 @@ async def _fetch_organizations(db: AsyncDBConnection) -> list:
 
 
 async def _fetch_organization_for_display(db: AsyncDBConnection, organization_id: int) -> dict:
-    """Fetch a single organization for the detail panel.
+    """Fetch an organization via api.get_organization_detail() for the
+    detail panel.
 
-    Returns dict with id, name, notes keys.
+    Returns dict with id, name, notes keys — matches the old direct
+    query's shape exactly — or None if not found.
     """
-    sql = """
-        SELECT
-            o.id,
-            o.name::text,
-            o.notes::text
-        FROM identity.organizations o
-        WHERE o.id = %s
-    """
-    return await db.fetch_one(sql, (organization_id,))
+    return await _fetch_json_scalar(
+        db, "SELECT api.get_organization_detail(%s)", (organization_id,)
+    )
 
 
 # -- Single organization fetch (for detail panel) ------------------------------
@@ -101,25 +97,14 @@ async def save_new_organization(
 
     payload = {"name": name, "notes": notes}
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_organization(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_organization_for_display,
+        None,
+        "Insert succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    new_id = envelope["data"]["id"]
-    record = await _fetch_organization_for_display(db, new_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Insert succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.post("/crew/organizations/{organization_id}/save")
@@ -146,24 +131,14 @@ async def save_organization(
 
     payload = {"id": organization_id, "name": name, "notes": notes}
 
-    envelope = await call_proc(
+    return await call_proc_and_refetch(
         db,
         "SELECT api.save_organization(%s, %s)",
         (json.dumps(payload), user_id),
+        _fetch_organization_for_display,
+        organization_id,
+        "Save succeeded but fetch failed",
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({
-            "success": False,
-            "message": envelope.get("message"),
-            "data": envelope.get("data"),
-        })
-
-    record = await _fetch_organization_for_display(db, organization_id)
-    if not record:
-        raise HTTPException(status_code=500, detail="Save succeeded but fetch failed")
-
-    return JSONResponse(dict(record))
 
 
 @router.delete("/crew/organizations/{organization_id}")

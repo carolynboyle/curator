@@ -177,17 +177,19 @@ class TestProcRejectionPassthrough:
             "message": None,
         }
         display_record = {
-            "id": 123, "name": "New Project", "slug": "new-project",
+            "id": 123, "name": "New Project",
             "description": None, "type_id": None, "status_id": None,
-            "status": None, "type": None,
         }
 
         # fetch_one is called twice in the success path:
         #   1. inside call_proc, for the SELECT api.save_project(...) call
-        #   2. inside _fetch_project_for_display, for the re-fetch by id
+        #   2. inside _fetch_project_for_display, for the
+        #      SELECT api.get_project_detail(...) re-fetch by id — wrapped
+        #      the same way call_proc's result is, since both go through
+        #      _fetch_json_scalar now.
         db = SimpleNamespace(fetch_one=AsyncMock(side_effect=[
             {"save_project": save_envelope},
-            display_record,
+            {"get_project_detail": display_record},
         ]))
 
         response = await projects.save_new_project(request, db)

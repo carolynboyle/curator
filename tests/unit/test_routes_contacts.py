@@ -23,7 +23,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
+from fastapi import HTTPException
 from curator.web.routes import contacts
 
 
@@ -128,11 +128,12 @@ class TestContactSuccessResponseShape:
 
         # fetch_one is called twice in the success path:
         #   1. inside call_proc, for the SELECT api.save_contact(...) call
-        #   2. inside _fetch_contact_for_display, for the re-fetch by id
+        #   2. inside _fetch_contact_for_display, for the
+        #      SELECT api.get_contact_detail(...) re-fetch by id
         db = AsyncMock()
         db.fetch_one = AsyncMock(side_effect=[
             {"save_contact": save_envelope},
-            display_record,
+            {"get_contact_detail": display_record},
         ])
 
         response = await contacts.save_new_contact(request=request, db=db)
@@ -151,10 +152,14 @@ class TestGetContactNotFound:
 
     @pytest.mark.asyncio
     async def test_missing_contact_raises_404(self):
-        from fastapi import HTTPException
+        """api.get_contact_detail() always returns one row (it's a
+        function call, not a table scan) — a miss means that row's
+        single column is NULL, not that fetch_one() itself returns None.
+        _fetch_json_scalar unwraps that to plain None either way, but the
+        mock needs to simulate the actual shape dbkit hands back."""
 
         db = AsyncMock()
-        db.fetch_one = AsyncMock(return_value=None)
+        db.fetch_one = AsyncMock(return_value={"get_contact_detail": None})
 
         with pytest.raises(HTTPException) as exc_info:
             await contacts.get_contact(contact_id=9999, db=db)

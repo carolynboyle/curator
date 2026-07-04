@@ -16,7 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
+from fastapi import HTTPException
 from curator.web.routes import organizations
 
 
@@ -141,7 +141,7 @@ class TestOrganizationSuccessResponseShape:
         db = AsyncMock()
         db.fetch_one = AsyncMock(side_effect=[
             {"save_organization": save_envelope},
-            display_record,
+            {"get_organization_detail": display_record},
         ])
 
         response = await organizations.save_new_organization(request=request, db=db)
@@ -155,10 +155,11 @@ class TestOrganizationSuccessResponseShape:
 class TestGetOrganizationNotFound:
     @pytest.mark.asyncio
     async def test_missing_organization_raises_404(self):
-        from fastapi import HTTPException
+        """Same reasoning as TestGetContactNotFound: api.get_organization_
+        detail() always returns one row whose column is NULL on a miss."""
 
         db = AsyncMock()
-        db.fetch_one = AsyncMock(return_value=None)
+        db.fetch_one = AsyncMock(return_value={"get_organization_detail": None})
 
         with pytest.raises(HTTPException) as exc_info:
             await organizations.get_organization(organization_id=9999, db=db)

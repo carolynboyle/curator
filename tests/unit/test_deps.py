@@ -82,3 +82,44 @@ class TestCallProc:
         await deps.call_proc(db, sql, params)
 
         db.fetch_one.assert_awaited_once_with(sql, params)
+
+
+class TestFetchJsonScalar:
+    """_fetch_json_scalar must handle a NULL column value (the
+    api.get_*_detail() "not found" case) by returning None cleanly,
+    not by crashing — this is new behavior TestCallProc never exercised,
+    since every api.*() proc call_proc wraps always returns a non-null
+    envelope.
+    """
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_null_column(self):
+        """Simulates api.get_project_detail(999999) — fetch_one() returns
+        a row whose single column is None, and _fetch_json_scalar should
+        pass that through as plain None, not attempt to unwrap or parse
+        it further."""
+        db = SimpleNamespace(
+            fetch_one=AsyncMock(return_value={"get_project_detail": None})
+        )
+
+        result = await deps._fetch_json_scalar( # pylint: disable=protected-access
+            db, "SELECT api.get_project_detail(%s)", (999999,)
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_returns_dict_for_populated_column(self):
+        """Simulates api.get_project_detail(23) finding a real row."""
+        record = {"id": 23, "name": "Real Project", "description": None,
+                  "type_id": None, "status_id": None}
+        db = SimpleNamespace(
+            fetch_one=AsyncMock(return_value={"get_project_detail": record})
+        )
+
+        result = await deps._fetch_json_scalar(
+            db, "SELECT api.get_project_detail(%s)", (23,)
+        )
+
+        assert result == record
+         
