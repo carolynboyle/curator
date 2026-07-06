@@ -5,14 +5,20 @@
   Replaces the hero image when a user clicks ⋯ on a datasheet row.
 
   Parameters:
-    - entity          (str)  — "projects", "contacts", or "organizations"
-    - record_id       (int)  — ID of the record being displayed
-    - record          (dict) — Full record data for form fields
-    - project_types   (list, optional) — Type lookup for projects
-    - project_statuses(list, optional) — Status lookup for projects
+    - entity    (str) — "projects", "contacts", or "organizations"
+    - record_id (int) — ID of the record being displayed (blank/'' for
+                        a new-record panel not yet opened)
 
-  Caller must set entity, record_id, and record before including.
-  Child datasheets (Tasks, Emails, etc.) are deferred — coming soon.
+  The details tab's field inputs are NOT rendered here anymore — see
+  detail-form-fields below. detail-panel.js fetches them from
+  /panel/{entity}/{id} (or /panel/{entity}/new) on every panel open,
+  fetch-and-swap style, so this template only needs entity/record_id to
+  set data attributes for JS to read. The panel is hidden behind the
+  hero image until an open action fires, so there's nothing visible to
+  lose by leaving detail-form-fields empty at initial page render.
+
+  Child datasheets (Tasks, Emails, etc.) are deferred — coming soon —
+  and unrelated to this fetch-and-swap change.
 #}
 
 <div class="detail-panel" data-entity="{{ entity }}" data-id="{{ record_id }}">
@@ -43,60 +49,10 @@
     <!-- ===== DETAILS TAB (always first) ===== -->
     <div class="detail-tab-panel active" data-tab="details">
       <form id="detail-form" class="detail-form" data-entity="{{ entity }}" data-id="{{ record_id }}">
-
-        {% if entity == "projects" %}
-          <div class="form-group">
-            <label for="detail-name">Name</label>
-            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
-          </div>
-
-          <div class="form-group">
-            <label for="detail-type">Type</label>
-            <select id="detail-type" name="type_id">
-              <option value="">—</option>
-              {% for type in project_types %}
-                <option value="{{ type.id }}" {% if record.type_id == type.id %}selected{% endif %}>
-                  {{ type.name }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="detail-status">Status</label>
-            <select id="detail-status" name="status_id">
-              <option value="">—</option>
-              {% for status in project_statuses %}
-                <option value="{{ status.id }}" {% if record.status_id == status.id %}selected{% endif %}>
-                  {{ status.name }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="detail-description">Description</label>
-            <textarea id="detail-description" name="description">{{ record.description or '' }}</textarea>
-          </div>
-
-        {% elif entity == "contacts" %}
-          <div class="form-group">
-            <label for="detail-name">Name</label>
-            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
-          </div>
-
-          <div class="form-group">
-            <label for="detail-title">Title</label>
-            <input type="text" id="detail-title" name="title" value="{{ record.title or '' }}" />
-          </div>
-
-        {% elif entity == "organizations" %}
-          <div class="form-group">
-            <label for="detail-name">Name</label>
-            <input type="text" id="detail-name" name="name" value="{{ record.name or '' }}" />
-          </div>
-        {% endif %}
-
+        <div id="detail-form-fields">
+          <!-- Populated by detail-panel.js fetching
+               /panel/{entity}/{id} or /panel/{entity}/new on open. -->
+        </div>
       </form>
     </div>
 

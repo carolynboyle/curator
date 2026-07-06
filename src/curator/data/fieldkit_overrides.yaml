@@ -1,0 +1,32 @@
+
+# fieldkit_overrides.yaml - shipped defaults for fieldkit's schema-driven
+# form field generation.
+#
+# Every *_id or integer column in a v_*_detail view MUST have an entry
+# here (or in the user override at ~/.config/curator/fieldkit_overrides.yaml)
+# or the app will refuse to start — see FieldSchemaError.
+#
+# Structure:
+#   <schema-qualified view name>:
+#     <column name>:
+#       control:  select | text | textarea | date | number | checkbox
+#       label:    Human-readable label (optional — defaults to Title Case)
+#       source:   Lookup name for select controls (not yet wired to
+#                 anything — api.get_lookup() doesn't exist yet)
+#       required: true/false (optional, default false)
+#
+# UNVERIFIED as of 2026-07-04 — confirmed only that type_id/status_id
+# are project fields. Check \d+ projects.v_project_detail in pgAdmin for
+# the full column list (including whether parent_id is present) before
+# relying on this file, and add any missing *_id entries for contacts/
+# organizations if their views turn out to have FK columns of their own.
+
+projects.v_project_detail:
+  type_id:
+    control: select
+    label: Type
+    source: project_types
+  status_id:
+    control: select
+    label: Status
+    source: project_statuses

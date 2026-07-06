@@ -1,16 +1,22 @@
 """Organization routes — CRUD for identity.organizations via
 api.save_organization / api.delete_organization.
-
+from  body = await request.json()
 Split out of crew.py's route monolith (2026-07-01 changedoc).
 """
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse, Response
-
+from fastapi import APIRouter, Depends, Request
 from dbkit.connection import AsyncDBConnection
-from curator.web.deps import get_db, call_proc, call_proc_and_refetch, _fetch_json_scalar
+from curator.web.deps import (
+    get_db,
+    call_proc_and_refetch,
+    delete_via_proc,
+    get_detail_or_404,
+    get_user_id,
+    require_name,
+    _fetch_json_scalar,
+)
 
 router = APIRouter()
 
@@ -63,10 +69,9 @@ async def get_organization(
     db: AsyncDBConnection = Depends(get_db),
 ):
     """Fetch a single organization as JSON for the detail panel."""
-    record = await _fetch_organization_for_display(db, organization_id)
-    if not record:
-        raise HTTPException(status_code=404, detail="Organization not found")
-    return JSONResponse(dict(record))
+    return await get_detail_or_404(
+        db, _fetch_organization_for_display, organization_id, "Organization not found"
+    )
 
 
 # -- Organization save routes ---------------------------------------------------
@@ -88,12 +93,17 @@ async def save_new_organization(
     """
     body = await request.json()
     name = (body.get("name") or "").strip()
-    notes = body.get("notes") or None
+    notes = body.get("notes") or None  # pylint: disable=duplicate-code
+    # Matches contacts.py's save routes: both entities have a "notes"
+    # field and call require_name/get_user_id in the same order.
+    # Coincidental overlap between unrelated field sets — not a shared
+    # concept worth extracting into a helper.
 
-    if not name:
-        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
+    rejection = require_name(name)
+    if rejection:
+        return rejection
 
-    user_id = request.state.user["user_id"] if request.state.user else None
+    user_id = get_user_id(request)
 
     payload = {"name": name, "notes": notes}
 
@@ -122,12 +132,17 @@ async def save_organization(
     """
     body = await request.json()
     name = (body.get("name") or "").strip()
-    notes = body.get("notes") or None
+    notes = body.get("notes") or None  # pylint: disable=duplicate-code
+    # Matches contacts.py's save routes: both entities have a "notes"
+    # field and call require_name/get_user_id in the same order.
+    # Coincidental overlap between unrelated field sets — not a shared
+    # concept worth extracting into a helper.
 
-    if not name:
-        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
+    rejection = require_name(name)
+    if rejection:
+        return rejection
 
-    user_id = request.state.user["user_id"] if request.state.user else None
+    user_id = get_user_id(request)
 
     payload = {"id": organization_id, "name": name, "notes": notes}
 
@@ -153,15 +168,7 @@ async def delete_organization(
     Returns {"success": false, "message": "..."} (200) on failure —
     e.g. not found, or blocked by dependent records (foreign key violation).
     """
-    user_id = request.state.user["user_id"] if request.state.user else None
-
-    envelope = await call_proc(
-        db,
-        "SELECT api.delete_organization(%s, %s)",
-        (organization_id, user_id),
+    user_id = get_user_id(request)
+    return await delete_via_proc(
+        db, "SELECT api.delete_organization(%s, %s)", (organization_id, user_id)
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({"success": False, "message": envelope.get("message")})
-
-    return Response(status_code=204)

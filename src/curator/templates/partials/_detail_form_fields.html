@@ -1,0 +1,72 @@
+{#
+  _detail_form_fields.html
+
+  Renders the field inputs for a single entity's detail form — driven
+  entirely by fieldkit's FieldDef list, no per-entity Jinja branching.
+  Fetched by GET /panel/{entity}/{id} (or /panel/{entity}/new) and
+  swapped into #detail-form-fields by detail-panel.js on every panel
+  open. Replaces the old approach of one static per-entity form baked
+  into _detail_panel.html at page load.
+
+  Parameters:
+    - fields  (list[FieldDef]) — from FieldKit.fields, in view column order
+    - record  (dict) — current field values, or {} for a new record
+    - options (dict) — source name -> list of {"value", "label"} dicts,
+                        from FieldKit.options; only consulted for
+                        field_type == "select"
+#}
+{% for field in fields %}
+  <div class="form-group">
+    <label for="detail-{{ field.name }}">{{ field.label }}</label>
+
+    {% if field.field_type == "text" %}
+      <input
+        type="text"
+        id="detail-{{ field.name }}"
+        name="{{ field.name }}"
+        value="{{ record.get(field.name) or '' }}"
+        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+      />
+
+    {% elif field.field_type == "textarea" %}
+      <textarea
+        id="detail-{{ field.name }}"
+        name="{{ field.name }}"
+        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+      >{{ record.get(field.name) or '' }}</textarea>
+
+    {% elif field.field_type == "select" %}
+      <select id="detail-{{ field.name }}" name="{{ field.name }}">
+        <option value="">—</option>
+        {% for opt in options.get(field.source, []) %}
+          <option
+            value="{{ opt.value }}"
+            {% if record.get(field.name) == opt.value %}selected{% endif %}
+          >
+            {{ opt.label }}
+          </option>
+        {% endfor %}
+      </select>
+
+    {% elif field.field_type == "date" %}
+      <input
+        type="date"
+        id="detail-{{ field.name }}"
+        name="{{ field.name }}"
+        value="{{ record.get(field.name) or '' }}"
+      />
+
+    {% elif field.field_type == "checkbox" %}
+      <input
+        type="checkbox"
+        id="detail-{{ field.name }}"
+        name="{{ field.name }}"
+        {% if record.get(field.name) %}checked{% endif %}
+      />
+    {% endif %}
+
+    {% if field.help_text %}
+      <small class="form-help">{{ field.help_text }}</small>
+    {% endif %}
+  </div>
+{% endfor %}

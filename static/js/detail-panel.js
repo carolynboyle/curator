@@ -12,6 +12,13 @@
  *
  * Hero image and detail panel occupy the same spot. Opening the panel
  * hides the hero (display:none) and shows the panel (display:flex).
+ *
+ * Field rendering is fetch-and-swap: opening a record fetches the
+ * whole panel body — tab bar, form, everything — from
+ * /panel/{entity}/{id} (or /panel/{entity}/new), built by fieldkit from
+ * the entity's actual schema, and swaps it into .detail-panel wholesale.
+ * There is no client-side knowledge of what fields or tabs any entity
+ * has; adding a new entity requires no JS change.
  */
 
 // ---------------------------------------------------------------------------
@@ -71,22 +78,30 @@ function focusName() {
   }
 }
 
-function populateForm(record) {
-  const form = getForm();
-  if (!form) return;
-  form.dataset.id = record.id ?? '';
+/**
+ * Fetch the full panel body HTML for one entity + record (or 'new')
+ * and swap it into .detail-panel — tab bar, form, everything. Swapping
+ * the whole thing (not just the field inputs) is what lets opening a
+ * different entity show the *right* tab set (e.g. contacts' Emails/
+ * Phones/URLs/Organizations, not projects' Tasks/Links/Contacts left
+ * over from whatever entity the page originally rendered with).
+ *
+ * Returns true on success, false on failure (network error, 404 —
+ * caller decides whether to proceed with showing the panel).
+ */
+async function fetchAndSwapPanel(entity, recordIdOrNew) {
+  const panel = getPanel();
+  if (!panel) return false;
 
-  const nameField   = form.querySelector('[name="name"]');
-  const typeField   = form.querySelector('[name="type_id"]');
-  const statusField = form.querySelector('[name="status_id"]');
-  const descField   = form.querySelector('[name="description"]');
-  const titleField  = form.querySelector('[name="title"]');
-
-  if (nameField)   nameField.value   = record.name        ?? '';
-  if (typeField)   typeField.value   = record.type_id     ?? '';
-  if (statusField) statusField.value = record.status_id   ?? '';
-  if (descField)   descField.value   = record.description ?? '';
-  if (titleField)  titleField.value  = record.title       ?? '';
+  try {
+    const res = await fetch(`/panel/${entity}/${recordIdOrNew}`);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    panel.innerHTML = await res.text();
+    return true;
+  } catch (err) {
+    console.error('Could not fetch panel content:', err);
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -184,46 +199,51 @@ function handleDiscard() {
 
 /**
  * Open detail panel for an existing record.
- * Fetches record from server and populates the form.
+ * Fetches the whole panel body from /panel/{entity}/{id} and swaps it
+ * in wholesale — tab bar included — rather than fetching JSON and
+ * manually populating known field names.
  */
 export async function openDetailPanel(entity, recordId) {
-  let record;
-  try {
-    const res = await fetch(`/crew/${entity}/${recordId}`);
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    record = await res.json();
-  } catch (err) {
-    console.error('Could not fetch record:', err);
-    return;
-  }
-
   const panel = getPanel();
-  const form  = getForm();
-  if (!panel || !form) return;
+  if (!panel) return;
+
+  const ok = await fetchAndSwapPanel(entity, recordId);
+  if (!ok) return;
 
   panel.dataset.entity = entity;
   panel.dataset.id     = recordId;
-  form.dataset.entity  = entity;
 
-  populateForm(record);
+  const form = getForm();
+  if (form) {
+    form.dataset.entity = entity;
+    form.dataset.id     = recordId;
+  }
+
   resetToDetailsTab();
   showPanel();
 }
 
 /**
  * Open detail panel in new-record mode.
- * Form is empty, save will POST to /crew/{entity}/save.
+ * Fetches the whole panel body from /panel/{entity}/new (empty values)
+ * and swaps it in. Save will POST to /crew/{entity}/save.
  */
-export function openNewRecordPanel(entity) {
+export async function openNewRecordPanel(entity) {
   const panel = getPanel();
-  const form  = getForm();
-  if (!panel || !form) return;
+  if (!panel) return;
+
+  const ok = await fetchAndSwapPanel(entity, 'new');
+  if (!ok) return;
 
   panel.dataset.entity = entity;
   panel.dataset.id     = '';
-  form.dataset.entity  = entity;
 
-  clearForm();
+  const form = getForm();
+  if (form) {
+    form.dataset.entity = entity;
+    form.dataset.id     = '';
+  }
+
   resetToDetailsTab();
   showPanel();
   focusName();

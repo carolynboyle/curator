@@ -4,8 +4,12 @@
  * Reusable two-listbox cross-filter pattern: two lists of records connected
  * by a relationship (many-to-many or one-to-many). Selecting an item in
  * either list filters the other to only related items. A shared selection
- * readout shows whichever item was last clicked. Double-click opens that
- * record's detail panel; each list has its own live-search input and an
+ * readout shows whichever item was last clicked, alongside a ⋯ button
+ * (same detail-icon pattern as the Projects datasheet) to open that
+ * item's detail panel. Double-click also attempts to open it directly —
+ * that handler is wired correctly but hasn't proven reliable in
+ * practice; the ⋯ button is the dependable path and doesn't require
+ * chasing that down. Each list has its own live-search input and an
  * "add new" button.
  *
  * Not specific to any entity pair — first consumer is Organizations ↔
@@ -30,6 +34,7 @@
  *
  *   initBidirectionalFilter({
  *     selectionBoxId: 'identity-selection',
+ *     detailBtnId:    'identity-detail-btn',
  *     left: {
  *       listboxId: 'org-listbox',
  *       searchId:  'org-search',
@@ -48,13 +53,16 @@
 /**
  * @param {Object} config
  * @param {string} config.selectionBoxId - id of the shared selection readout element
+ * @param {string} config.detailBtnId - id of the ⋯ button inside the readout
+ *   that opens the currently selected item's detail panel
  * @param {Object} config.left  - { listboxId, searchId, addBtnId, entity }
  * @param {Object} config.right - { listboxId, searchId, addBtnId, entity }
  */
 export function initBidirectionalFilter(config) {
-  const { selectionBoxId, left, right } = config;
+  const { selectionBoxId, detailBtnId, left, right } = config;
 
   const selectionBox = document.getElementById(selectionBoxId);
+  const detailBtn    = document.getElementById(detailBtnId);
 
   function makeSide(side, other) {
     return {
@@ -84,11 +92,20 @@ export function initBidirectionalFilter(config) {
   function showSelection(name) {
     selectionBox.textContent = name;
     selectionBox.classList.add('has-selection');
+    // Re-append here since textContent above wiped detailBtn out of the
+    // readout along with the placeholder span — restore it as a sibling.
+    if (detailBtn) selectionBox.appendChild(detailBtn);
   }
 
   function clearSelectionBox() {
     selectionBox.innerHTML = '<span class="identity-selection-placeholder">No selection</span>';
     selectionBox.classList.remove('has-selection');
+    // innerHTML above destroys detailBtn's original DOM node along with
+    // everything else in the readout — same restoration as showSelection.
+    if (detailBtn) {
+      detailBtn.style.display = 'none';
+      selectionBox.appendChild(detailBtn);
+    }
   }
 
   function selectItem(side, item) {
@@ -96,6 +113,12 @@ export function initBidirectionalFilter(config) {
     side.selectedId = item.dataset.id;
     item.classList.add('selected');
     showSelection(item.dataset.name);
+
+    if (detailBtn) {
+      detailBtn.dataset.entity = side.entity;
+      detailBtn.dataset.id     = item.dataset.id;
+      detailBtn.style.display  = '';
+    }
 
     const relatedIds = item.dataset.relatedIds
       ? item.dataset.relatedIds.split(',').filter(Boolean)
@@ -152,6 +175,13 @@ export function initBidirectionalFilter(config) {
         window.openNewRecordPanel(side.entity);
       });
     }
+  }
+
+  if (detailBtn) {
+    detailBtn.addEventListener('click', () => {
+      const { entity, id } = detailBtn.dataset;
+      if (entity && id) window.openDetailPanel(entity, id);
+    });
   }
 
   wireSide(leftSide);

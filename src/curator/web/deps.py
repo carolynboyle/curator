@@ -2,11 +2,16 @@
 curator.web.deps - FastAPI dependency injection.
 
 Provides database connection and config manager as FastAPI
-dependencies for use in route handlers. Also provides call_proc(),
-a shared helper for unwrapping api.* stored-procedure JSONB envelopes,
-and call_proc_and_refetch(), which wraps the common "save, then re-fetch
-the record" pattern shared by every entity's save routes (projects.py,
-contacts.py, organizations.py).
+dependencies for use in route handlers. Also provides shared helpers
+for the patterns repeated across every entity's routes
+(projects.py, contacts.py, organizations.py):
+
+    call_proc                - unwrap an api.* proc's JSONB envelope
+    call_proc_and_refetch    - save, then re-fetch and return the record
+    get_user_id              - pull user_id off request.state.user
+    require_name             - reject a blank "name" field
+    get_detail_or_404        - fetch-for-display, or raise 404
+    delete_via_proc          - call a delete proc, 204 or failure envelope
 
 The database connection is managed by dbkit, which reads connection
 parameters from ~/.config/dev-utils/config.yaml under the 'dbkit:' key.
@@ -34,8 +39,8 @@ import json
 from typing import AsyncGenerator, Callable, Optional
 
 from dbkit.connection import AsyncDBConnection
-from fastapi import Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 
 from curator.config import ConfigManager
 
@@ -207,3 +212,98 @@ async def call_proc_and_refetch(  # pylint: disable=too-many-arguments,too-many-
         raise HTTPException(status_code=500, detail=not_found_detail)
 
     return JSONResponse(dict(record))
+
+
+# ---------------------------------------------------------------------------
+# Route-pattern helpers
+# Extracted from contacts.py/organizations.py/projects.py (2026-07-04) —
+# each of these four patterns was identical or near-identical across all
+# three entities' routes. Missed by the earlier R0801-driven cleanup
+# pass since these are smaller than that pass's target, but the same
+# "one canonical implementation" reasoning applies.
+# ---------------------------------------------------------------------------
+
+def get_user_id(request: Request) -> Optional[int]:
+    """Return request.state.user["user_id"], or None if unauthenticated.
+
+    Identical one-liner previously repeated in every save/delete route
+    across contacts.py/organizations.py/projects.py (9 call sites).
+    """
+    return request.state.user["user_id"] if request.state.user else None
+
+
+def require_name(name: str) -> Optional[JSONResponse]:
+    """Return a rejection response if name is blank, else None.
+
+    Usage:
+        rejection = require_name(name)
+        if rejection:
+            return rejection
+
+    Identical guard previously repeated in every save-new/save-edit
+    route across contacts.py/organizations.py/projects.py (6 call sites).
+    """
+    if not name:
+        return JSONResponse({
+            "success": False,
+            "message": "Name is required.",
+            "data": None,
+        })
+    return None
+
+
+async def get_detail_or_404(
+    db: AsyncDBConnection,
+    fetch_fn: Callable,
+    record_id: int,
+    not_found_detail: str,
+) -> JSONResponse:
+    """Fetch a single record for the detail panel, or raise 404.
+
+    Extracted from get_contact/get_organization/get_project — identical
+    shape in all three, differing only in which fetch_fn and 404 message
+    to use.
+
+    Args:
+        db:               Open connection.
+        fetch_fn:         The entity's _fetch_x_for_display function,
+                           called as fetch_fn(db, record_id).
+        record_id:        ID to fetch.
+        not_found_detail: HTTPException detail message if not found.
+
+    Returns:
+        JSONResponse wrapping the record.
+
+    Raises:
+        HTTPException(404): if fetch_fn returns a falsy value.
+    """
+    record = await fetch_fn(db, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=not_found_detail)
+    return JSONResponse(dict(record))
+
+
+async def delete_via_proc(
+    db: AsyncDBConnection,
+    proc_sql: str,
+    proc_params: tuple,
+) -> Response:
+    """Call a delete proc and return 204, or the failure envelope.
+
+    Extracted from delete_contact/delete_organization/delete_project —
+    identical shape in all three, differing only in the proc SQL string
+    and params.
+
+    Args:
+        db:          Open connection.
+        proc_sql:    The "SELECT api.delete_x(%s, %s)" string.
+        proc_params: Params for that call (typically entity_id, user_id).
+
+    Returns:
+        Response(204) on success, or a JSONResponse with the failure
+        envelope ({"success": false, "message": ...}) on failure.
+    """
+    envelope = await call_proc(db, proc_sql, proc_params)
+    if not envelope.get("success"):
+        return JSONResponse({"success": False, "message": envelope.get("message")})
+    return Response(status_code=204)

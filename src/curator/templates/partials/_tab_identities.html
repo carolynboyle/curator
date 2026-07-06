@@ -14,9 +14,23 @@
 
 <!-- Shared selection readout — fills with whichever org or contact was
      just clicked. Full-width sibling above the two-column grid so it
-     works identically at any viewport width; no breakpoint variant needed. -->
+     works identically at any viewport width; no breakpoint variant needed.
+
+     The ⋯ button reuses the same detail-icon pattern already working on
+     the Projects datasheet (see _projects_table.html) — click a row to
+     select it, then click ⋯ to open its detail panel. Added as an
+     alternative to double-click, which is wired correctly but wasn't
+     reliably firing; rather than chase that down, this reuses a pattern
+     already known to work. Hidden until something is selected — see
+     bidirectional-filter.js's selectItem()/clearSelection(). -->
 <div class="identity-selection" id="identity-selection">
     <span class="identity-selection-placeholder">No selection</span>
+    <button
+        class="detail-icon"
+        id="identity-detail-btn"
+        title="Open details"
+        style="display:none; margin-left: 0.5rem;"
+    >⋯</button>
 </div>
 
 <div class="identity-panels">
@@ -76,6 +90,7 @@
 
     initBidirectionalFilter({
         selectionBoxId: 'identity-selection',
+        detailBtnId:    'identity-detail-btn',
         left: {
             listboxId: 'org-listbox',
             searchId:  'org-search',

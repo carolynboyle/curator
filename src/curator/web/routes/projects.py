@@ -6,11 +6,17 @@ Split out of crew.py's route monolith (2026-07-01 changedoc).
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse, Response
-
+from fastapi import APIRouter, Depends, Request
 from dbkit.connection import AsyncDBConnection
-from curator.web.deps import get_db, call_proc, call_proc_and_refetch, _fetch_json_scalar
+from curator.web.deps import (
+    get_db,
+    call_proc_and_refetch,
+    delete_via_proc,
+    get_detail_or_404,
+    get_user_id,
+    require_name,
+    _fetch_json_scalar,
+)
 
 router = APIRouter()
 
@@ -63,47 +69,35 @@ async def _fetch_records(db: AsyncDBConnection, role: str, search: str) -> list:
     """Fetch role-filtered projects, optionally filtered by search term.
 
     Returns list of dicts with id, name, type, type_id, status, status_id.
+
+    One query handles both the filtered and unfiltered case: when search
+    is empty, "%s = ''" is true and every row matches regardless of the
+    ILIKE clause; when search is non-empty, that first comparison is
+    false and the ILIKE clause does the actual filtering. Avoids
+    duplicating the SELECT/JOIN body for a difference that's really just
+    one WHERE condition.
     """
     view_name = f"projects.{role}_view"
 
-    if search:
-        sql = f"""
-            SELECT
-                p.id,
-                p.name::text,
-                p.slug::text,
-                p.description::text,
-                ps.name::text  AS status,
-                pt.name::text  AS type,
-                p.type_id,
-                p.status_id
-            FROM {view_name} p
-            LEFT JOIN projects.project_status ps ON ps.id = p.status_id
-            LEFT JOIN projects.project_type   pt ON pt.id = p.type_id
-            WHERE p.name ILIKE %s
-            ORDER BY p.name
-        """
-        rows = await db.fetch_all(sql, (f"%{search}%",))
-    else:
-        sql = f"""
-            SELECT
-                p.id,
-                p.name::text,
-                p.slug::text,
-                p.description::text,
-                ps.name::text  AS status,
-                pt.name::text  AS type,
-                p.type_id,
-                p.status_id
-            FROM {view_name} p
-            LEFT JOIN projects.project_status ps ON ps.id = p.status_id
-            LEFT JOIN projects.project_type   pt ON pt.id = p.type_id
-            ORDER BY p.name
-        """
-        rows = await db.fetch_all(sql)
+    sql = f"""
+        SELECT
+            p.id,
+            p.name::text,
+            p.slug::text,
+            p.description::text,
+            ps.name::text  AS status,
+            pt.name::text  AS type,
+            p.type_id,
+            p.status_id
+        FROM {view_name} p
+        LEFT JOIN projects.project_status ps ON ps.id = p.status_id
+        LEFT JOIN projects.project_type   pt ON pt.id = p.type_id
+        WHERE %s = '' OR p.name ILIKE %s
+        ORDER BY p.name
+    """
+    rows = await db.fetch_all(sql, (search, f"%{search}%"))
 
     return [dict(r) for r in rows]
-
 
 # -- Single project fetch (for detail panel) ----------------------------------
 
@@ -113,10 +107,9 @@ async def get_project(
     db: AsyncDBConnection = Depends(get_db),
 ):
     """Fetch a single project as JSON for the detail panel."""
-    record = await _fetch_project_for_display(db, project_id)
-    if not record:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return JSONResponse(dict(record))
+    return await get_detail_or_404(
+        db, _fetch_project_for_display, project_id, "Project not found"
+    )
 
 
 # -- Project save routes ------------------------------------------------------
@@ -144,12 +137,13 @@ async def save_new_project(
     status_id = body.get("status_id") or None
     description = body.get("description") or None
 
-    if not name:
-        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
+    rejection = require_name(name)
+    if rejection:
+        return rejection
 
     type_name, status_name = await _resolve_type_status_names(db, type_id, status_id)
 
-    user_id = request.state.user["user_id"] if request.state.user else None
+    user_id = get_user_id(request)
 
     payload = {
         "name": name,
@@ -190,12 +184,13 @@ async def save_project(
     status_id = body.get("status_id") or None
     description = body.get("description") or None
 
-    if not name:
-        return JSONResponse({"success": False, "message": "Name is required.", "data": None})
+    rejection = require_name(name)
+    if rejection:
+        return rejection
 
     type_name, status_name = await _resolve_type_status_names(db, type_id, status_id)
 
-    user_id = request.state.user["user_id"] if request.state.user else None
+    user_id = get_user_id(request)
 
     payload = {
         "id": project_id,
@@ -227,15 +222,7 @@ async def delete_project(
     Returns {"success": false, "message": "..."} (200) on failure —
     e.g. not found, or blocked by dependent records (foreign key violation).
     """
-    user_id = request.state.user["user_id"] if request.state.user else None
-
-    envelope = await call_proc(
-        db,
-        "SELECT api.delete_project(%s, %s)",
-        (project_id, user_id),
+    user_id = get_user_id(request)
+    return await delete_via_proc(
+        db, "SELECT api.delete_project(%s, %s)", (project_id, user_id)
     )
-
-    if not envelope.get("success"):
-        return JSONResponse({"success": False, "message": envelope.get("message")})
-
-    return Response(status_code=204)
