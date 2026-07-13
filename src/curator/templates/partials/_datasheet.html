@@ -1,163 +1,41 @@
 {#
   _datasheet.html
-  
-  Reusable Tabulator datasheet grid.
-  
-  This partial renders just the Tabulator instance. It is always used as
-  a child of _datasheet_with_header.html (which provides the + button,
-  search, and controls).
-  
+
+  Reusable Tabulator child-datasheet grid.
+
+  Always used as a child of _datasheet_with_header.html (which provides
+  the + Add button, search, and controls). Renders a mount point div and
+  a small module script that imports initDatasheet() from datasheet.js —
+  same pattern as _tab_identities.html → bidirectional-filter.js.
+
+  The full Tabulator init, save, delete, and Escape-key logic lives in
+  datasheet.js, not here. This file's only job is passing Jinja-rendered
+  config values (which only exist at template-render time) into a call
+  to that module.
+
   Parameters:
-    - container_id (str): DOM id for Tabulator to mount to (required)
-    - entity (str): QueryLoader entity name (e.g., "tasks", "contact_emails")
-    - query_name (str): QueryLoader query name (e.g., "for_project")
-    - query_params (str): Comma-separated bind parameters (e.g., "123")
-    - columns (list): Column definitions for Tabulator
-    - save_url (str): POST endpoint for saving row edits
-    - add_url (str, optional): POST endpoint for adding new rows
-  
-  Example usage (from _datasheet_with_header.html):
-    
-    {% include '_datasheet.html' with
-        container_id='tasks-datasheet',
-        entity='tasks',
-        query_name='for_project',
-        query_params=record.id,
-        columns=[
-          { "title": "Name", "field": "name", "width": 200, "editor": "input" },
-          { "title": "Status", "field": "status_id", "width": 100 }
-        ],
-        save_url='/crew/tasks/save'
-    %}
+    - container_id  (str)  — DOM id for Tabulator to mount to (required)
+    - entity        (str)  — QueryLoader entity name (e.g. "tasks")
+    - query_name    (str)  — QueryLoader query name (e.g. "for_project")
+    - query_params  (str)  — Comma-separated bind parameters (e.g. "123")
+    - columns       (list) — Tabulator column definitions
+    - parent_field  (str)  — Explicit FK column name for new-row inserts
+                             (e.g. "project_id" for tasks, "contact_id"
+                             for contact_emails). Never guessed from entity
+                             name. Pass '' if this datasheet has no parent.
 #}
 
 <div id="{{ container_id }}" style="height: 100%;"></div>
 
-<script>
-window.addEventListener('load', function () {
+<script type="module">
+import { initDatasheet } from '/static/js/datasheet.js';
 
-  const container = document.getElementById('{{ container_id }}');
-  const entity = '{{ entity }}';
-  const queryName = '{{ query_name }}';
-  const queryParams = '{{ query_params }}';
-  const ajaxUrl = `/api/query/${entity}/${queryName}?params=${queryParams}`;
-
-  const columns = {{ columns | tojson }};
-
-  // -------------------------------------------------------------------------
-  // Save a row to the server via generic entity endpoint
-  // -------------------------------------------------------------------------
-  async function saveRow(row) {
-    const data = row.getData();
-    const isNew = !data.id;
-
-    // Don't save a new row with no content — just delete it
-    const firstEditable = columns.find(c => c.editor);
-    if (isNew && firstEditable && !data[firstEditable.field]) {
-      row.delete();
-      return true;
-    }
-
-    const url = isNew
-      ? `/api/${entity}/save`
-      : `/api/${entity}/${data.id}/save`;
-
-    // Only send editable columns
-    const editableFields = columns
-      .filter(c => c.editor && c.field !== 'id')
-      .map(c => c.field);
-
-    const payload = {};
-    editableFields.forEach(f => { payload[f] = data[f] ?? null; });
-
-    // For new rows, also include the parent foreign key if present
-    // (e.g. contact_id, project_id — passed in via query_params)
-    {% if query_params %}
-    if (isNew) {
-      const paramKey = '{{ entity }}'.replace(/s$/, '_id').replace('contact_email', 'contact').replace('contact_phone', 'contact');
-      if (paramKey && !payload[paramKey]) {
-        payload[paramKey] = {{ query_params }};
-      }
-    }
-    {% endif %}
-
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-      alert(err.detail || 'Save failed');
-      return false;
-    }
-
-    const saved = await resp.json();
-    row.update(saved);
-    return true;
-  }
-
-  // -------------------------------------------------------------------------
-  // Delete a row from the server
-  // -------------------------------------------------------------------------
-  async function deleteRow(row) {
-    const id = row.getData().id;
-    if (!id) { row.delete(); return; }
-
-    if (!confirm('Delete this row?')) return;
-
-    const resp = await fetch(`/api/${entity}/${id}`, { method: 'DELETE' });
-    if (resp.ok) {
-      row.delete();
-    } else {
-      alert('Delete failed');
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Tabulator init — uses global Tabulator loaded by base.html via CDN
-  // -------------------------------------------------------------------------
-  const table = new Tabulator(container, {
-    height: '100%',
-    layout: 'fitColumns',
-    ajaxURL: ajaxUrl,
-    ajaxConfig: { headers: { 'Accept': 'application/json' } },
-    ajaxResponse: (url, params, response) => response.records || [],
-    editTriggerEvent: 'dblclick',
-    columns: columns,
-
-    // Auto-save when a cell edit is confirmed (Enter or click away)
-    cellEdited: async function(cell) {
-      await saveRow(cell.getRow());
-    },
-
-    rowContextMenu: [
-      {
-        label: 'Delete row',
-        action: (e, row) => deleteRow(row),
-      }
-    ],
-
-    dataLoadError: (error) => {
-      console.error(`Failed to load ${entity}/${queryName}:`, error);
-    },
-  });
-
-  // Esc — delete empty new row, or cancel
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      // Find any unsaved new row and remove it
-      const newRow = table.getRows().find(r => !r.getData().id);
-      if (newRow) {
-        newRow.delete();
-      }
-    }
-  });
-
-  // Store reference on window for parent access (e.g. refresh after external save)
-  window[`tabulator_${container.id}`] = table;
-  window[`refresh_${container.id}`] = () => table.setData(ajaxUrl);
-
+initDatasheet({
+    containerId:  '{{ container_id }}',
+    entity:       '{{ entity }}',
+    queryName:    '{{ query_name }}',
+    queryParams:  '{{ query_params }}',
+    columns:      {{ columns | tojson }},
+    parentField:  '{{ parent_field | default("") }}',
 });
 </script>

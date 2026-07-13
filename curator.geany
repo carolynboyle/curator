@@ -27,14 +27,15 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=0
-FILE_NAME_0=1943;HTML;0;EUTF-8;1;1;0;%2Fhome%2Fcarolyn%2Fprojects%2Fcurator%2Fsrc%2Fcurator%2Ftemplates%2Fpartials%2F_tab_identities.html;0;4
+current_page=1
+FILE_NAME_0=24191;Markdown;0;EUTF-8;1;1;0;%2Fhome%2Fcarolyn%2Fprojects%2Fcurator%2Fdocs%2Fchange%2Fapplied%2FCHANGEDOC_TASKS_UI_WIRING_BACKEND.md;0;4
+FILE_NAME_1=0;None;0;EUTF-8;1;1;0;%2Fhome%2Fcarolyn%2Fprojects%2Fcurator%2Fdocs%2Fscratch%2Fscratch.txt;0;4
 
 [VTE]
-last_dir=/home/carolyn
+last_dir=/home/carolyn/projects/curator/docs/scratch
 
 [prjorg]
-expanded_paths=/home/carolyn/projects/curator/docs/change;/home/carolyn/projects/curator/src/curator/templates/partials;/home/carolyn/projects/curator/static/js;
+expanded_paths=/home/carolyn/projects/curator/docs/change;/home/carolyn/projects/curator/docs/scratch;/home/carolyn/projects/curator/src/curator/data;/home/carolyn/projects/curator/src/curator/templates/partials;
 source_patterns=*.c;*.C;*.cpp;*.cxx;*.c++;*.cc;*.m;
 header_patterns=*.h;*.H;*.hpp;*.hxx;*.h++;*.hh;
 ignored_dirs_patterns=.*;CVS;

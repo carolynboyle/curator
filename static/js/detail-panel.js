@@ -128,27 +128,31 @@ async function saveForm() {
     : `/crew/${entity}/${recordId}/save`;
 
   try {
-    const res = await fetch(url, {
+    const res  = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    const body = await res.json();
 
-    if (res.ok) {
-      const saved = await res.json();
-      // Update form id to the newly saved record's id
-      form.dataset.id = saved.id;
-      const panel = getPanel();
-      if (panel) panel.dataset.id = saved.id;
-      return saved;
-    } else {
-      // crew.py returns {"success": false, "message": "..."} on proc
-      // rejection (duplicate name, not found, etc.) — read message, not
-      // detail, or this always falls back to the generic string below.
-      const err = await res.json().catch(() => ({ message: res.statusText }));
-      alert(err.message || 'Save failed');
+    // FOUND BUG (fixed here): this used to check res.ok, but crew.py's
+    // proc-backed save routes return failures as {"success": false,
+    // "message": "...", "data": ...} at HTTP 200 — not a non-2xx status.
+    // res.ok was always true, so a rejected save (duplicate name, etc.)
+    // was silently treated as successful: form.dataset.id got set to
+    // undefined (saved.id on a failure body), and the caller proceeded
+    // as if the record had saved. The only reliable check is
+    // body.success !== false, matching datasheet.js's saveRow().
+    if (body.success === false) {
+      alert(body.message || 'Save failed');
       return null;
     }
+
+    // Update form id to the newly saved record's id
+    form.dataset.id = body.id;
+    const panel = getPanel();
+    if (panel) panel.dataset.id = body.id;
+    return body;
   } catch (err) {
     console.error('Save error:', err);
     alert('Save error: ' + err.message);

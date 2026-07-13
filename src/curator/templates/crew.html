@@ -17,9 +17,7 @@
         {% endwith %}
 
         <div id="detail-panel-container">
-            {% with entity='projects', record_id=0, record={}, project_types=project_types, project_statuses=project_statuses %}
-                {% include "partials/_detail_panel.html" %}
-            {% endwith %}
+            {% include "partials/_detail_panel.html" %}
         </div>
     </div>
 

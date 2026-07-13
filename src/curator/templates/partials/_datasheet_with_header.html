@@ -1,28 +1,33 @@
 {#
   _datasheet_with_header.html
-  
+
   Reusable datasheet component with header controls.
-  
+
   Includes:
     - Header bar with [+ Add] button, search input, clear button
-    - Calls _datasheet.html for the actual grid
-  
-  This is the standard way to use Tabulator in Curator. Always use this
-  instead of _datasheet.html directly.
-  
+    - Calls _datasheet.html for the actual Tabulator grid
+
+  This is the standard way to use Tabulator child datasheets in Curator.
+  Always use this instead of _datasheet.html directly.
+
   Parameters (passed via {% with %} block):
-    - add_button_label (str): Label for the + button (e.g., "+ Task")
-    - add_url (str, optional): POST endpoint for adding new rows
-    - container_id (str): DOM id for Tabulator to mount to (required)
-    - entity (str): QueryLoader entity name (e.g., "tasks")
-    - query_name (str): QueryLoader query name (e.g., "for_project")
-    - query_params (str): Comma-separated bind parameters
-    - columns (list): Column definitions for Tabulator
-    - save_url (str): POST endpoint for saving row edits
+    - add_button_label (str)  — Label for the + button (e.g. "+ Task")
+    - add_url          (str, optional) — URL for the + Add button; if
+                         absent the button is not rendered. Wiring the
+                         button's click handler is deferred — see
+                         CHANGEDOC_DATASHEET_JS_EXTRACTION.md.
+    - container_id     (str)  — DOM id for Tabulator to mount to (required)
+    - entity           (str)  — QueryLoader entity name (e.g. "tasks")
+    - query_name       (str)  — QueryLoader query name (e.g. "for_project")
+    - query_params     (str)  — Comma-separated bind parameters
+    - columns          (list) — Tabulator column definitions
+    - parent_field     (str)  — Explicit FK column name for new-row inserts
+                         (e.g. "project_id" for tasks). Never guessed.
+                         Pass '' if this datasheet has no parent FK.
 #}
 
 <div class="datasheet-container">
-  
+
   <!-- Header with controls -->
   <div class="datasheet-header">
     {% if add_url %}
@@ -49,17 +54,13 @@
         query_name=query_name,
         query_params=query_params,
         columns=columns,
-        save_url=save_url
+        parent_field=parent_field|default('')
     %}
         {% include 'partials/_datasheet.html' %}
     {% endwith %}
   </div>
 
 </div>
-
-<script type="module">
-  {# Search and clear button handlers (deferred — implement with full detail panel JS) #}
-</script>
 
 <style>
   .datasheet-container {

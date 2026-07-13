@@ -1,96 +1,27 @@
 {#
   _detail_panel.html
 
-  Detail panel — displays a record's details in a tabbed interface.
-  Replaces the hero image when a user clicks ⋯ on a datasheet row.
+  Genuinely empty shell for the detail panel container — no entity,
+  no record data. This is the ONE render of this file that happens via
+  crew.html at initial page load, and it's invisible: the panel sits
+  hidden behind the hero image until someone clicks ⋯ or + Add. From
+  that point on, panel.py is the sole renderer of real content —
+  /panel/{entity}/{id} (or .../new) returns _detail_panel_content.html
+  fully populated, and detail-panel.js's fetchAndSwapPanel() replaces
+  this div's entire innerHTML with it.
 
-  Parameters:
-    - entity    (str) — "projects", "contacts", or "organizations"
-    - record_id (int) — ID of the record being displayed (blank/'' for
-                        a new-record panel not yet opened)
-
-  The details tab's field inputs are NOT rendered here anymore — see
-  detail-form-fields below. detail-panel.js fetches them from
-  /panel/{entity}/{id} (or /panel/{entity}/new) on every panel open,
-  fetch-and-swap style, so this template only needs entity/record_id to
-  set data attributes for JS to read. The panel is hidden behind the
-  hero image until an open action fires, so there's nothing visible to
-  lose by leaving detail-form-fields empty at initial page render.
-
-  Child datasheets (Tasks, Emails, etc.) are deferred — coming soon —
-  and unrelated to this fetch-and-swap change.
+  Previously received entity='projects'/record_id=0/record={}/
+  project_types/project_statuses from crew.html — all vestigial.
+  project_types/project_statuses aren't referenced anywhere in
+  _detail_panel_content.html (fieldkit replaced that raw-lookup
+  approach), and entity/record_id were rendering a fake "projects"
+  panel nobody ever saw before panel.py overwrote it on first open.
+  Removed outright rather than defended against with fallback values —
+  a second code path capable of rendering this content, even one that's
+  invisible, is exactly the duplication fieldkit's design was meant to
+  eliminate.
 #}
 
-<div class="detail-panel" data-entity="{{ entity }}" data-id="{{ record_id }}">
-
-  <!-- Tab navigation -->
-  <div class="detail-tabs">
-    <button class="detail-tab-button active" data-tab="details">Details</button>
-
-    {% if entity == "projects" %}
-      <button class="detail-tab-button" data-tab="tasks">Tasks</button>
-      <button class="detail-tab-button" data-tab="links">Links</button>
-      <button class="detail-tab-button" data-tab="contacts">Contacts</button>
-    {% elif entity == "contacts" %}
-      <button class="detail-tab-button" data-tab="emails">Emails</button>
-      <button class="detail-tab-button" data-tab="phones">Phones</button>
-      <button class="detail-tab-button" data-tab="urls">URLs</button>
-      <button class="detail-tab-button" data-tab="organizations">Organizations</button>
-    {% elif entity == "organizations" %}
-      <button class="detail-tab-button" data-tab="contacts">Contacts</button>
-    {% endif %}
-
-    <button class="detail-close-button" aria-label="Close detail panel">×</button>
-  </div>
-
-  <!-- Tab content container -->
-  <div class="detail-tab-panels">
-
-    <!-- ===== DETAILS TAB (always first) ===== -->
-    <div class="detail-tab-panel active" data-tab="details">
-      <form id="detail-form" class="detail-form" data-entity="{{ entity }}" data-id="{{ record_id }}">
-        <div id="detail-form-fields">
-          <!-- Populated by detail-panel.js fetching
-               /panel/{entity}/{id} or /panel/{entity}/new on open. -->
-        </div>
-      </form>
-    </div>
-
-    <!-- ===== CHILD TABS (deferred) ===== -->
-    {% if entity == "projects" %}
-      <div class="detail-tab-panel" data-tab="tasks">
-        <p class="tab-placeholder">Tasks — coming soon</p>
-      </div>
-      <div class="detail-tab-panel" data-tab="links">
-        <p class="tab-placeholder">Links — coming soon</p>
-      </div>
-      <div class="detail-tab-panel" data-tab="contacts">
-        <p class="tab-placeholder">Contacts — coming soon</p>
-      </div>
-
-    {% elif entity == "contacts" %}
-      <div class="detail-tab-panel" data-tab="emails">
-        <p class="tab-placeholder">Emails — coming soon</p>
-      </div>
-      <div class="detail-tab-panel" data-tab="phones">
-        <p class="tab-placeholder">Phones — coming soon</p>
-      </div>
-      <div class="detail-tab-panel" data-tab="urls">
-        <p class="tab-placeholder">URLs — coming soon</p>
-      </div>
-      <div class="detail-tab-panel" data-tab="organizations">
-        <p class="tab-placeholder">Organizations — coming soon</p>
-      </div>
-
-    {% elif entity == "organizations" %}
-      <div class="detail-tab-panel" data-tab="contacts">
-        <p class="tab-placeholder">Contacts — coming soon</p>
-      </div>
-    {% endif %}
-
-  </div>
-
-  <!-- Action buttons: sticky footer — actions and container_class from route -->
-  {% include 'partials/_form_actions.html' %}
-
+<div class="detail-panel" data-entity="" data-id="">
+  {% include "partials/_detail_panel_content.html" %}
 </div>

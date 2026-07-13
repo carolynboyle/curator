@@ -1,0 +1,101 @@
+{#
+  _detail_panel_content.html
+
+  The actual rendered content of a detail panel for one entity + record:
+  tab navigation, the Details tab (fieldkit-driven form), the
+  currently-placeholder child tabs, and the action button bar.
+
+  panel.py is the ONLY renderer of this template with real data — every
+  /panel/{entity}/{id} (or .../new) request re-renders this exact
+  content, and detail-panel.js's fetchAndSwapPanel() replaces
+  .detail-panel's entire innerHTML with the result. _detail_panel.html's
+  own initial-page-load render includes this template with nothing —
+  invisible, immediately overwritten on first open — which is why the
+  defaults below exist.
+
+  Parameters (all optional — panel.py always supplies them; only
+  _detail_panel.html's invisible initial render omits them):
+    - entity          (str)  — "projects", "contacts", or "organizations"
+    - record_id       (int|str) — blank/'' for a new-record panel
+    - record          (dict, optional) — current field values, defaults {}
+    - fields          (list[FieldDef], optional) — from FieldKit.fields,
+                      defaults []
+    - options         (dict, optional) — FieldKit.options, source name ->
+                      list of {"value","label"} dicts, defaults {}
+    - actions         (list, optional) — from formkit.FormActions, for
+                      _form_actions.html, defaults []
+    - container_class (str, optional) — for _form_actions.html
+#}
+{% set fields = fields|default([]) %}
+{% set options = options|default({}) %}
+{% set record = record|default({}) %}
+{% set actions = actions|default([]) %}
+
+<!-- Tab navigation -->
+<div class="detail-tabs">
+  <button class="detail-tab-button active" data-tab="details">Details</button>
+
+  {% if entity == "projects" %}
+    <button class="detail-tab-button" data-tab="tasks">Tasks</button>
+    <button class="detail-tab-button" data-tab="links">Links</button>
+    <button class="detail-tab-button" data-tab="contacts">Contacts</button>
+  {% elif entity == "contacts" %}
+    <button class="detail-tab-button" data-tab="emails">Emails</button>
+    <button class="detail-tab-button" data-tab="phones">Phones</button>
+    <button class="detail-tab-button" data-tab="urls">URLs</button>
+    <button class="detail-tab-button" data-tab="organizations">Organizations</button>
+  {% elif entity == "organizations" %}
+    <button class="detail-tab-button" data-tab="contacts">Contacts</button>
+  {% endif %}
+
+  <button class="detail-close-button" aria-label="Close detail panel">×</button>
+</div>
+
+<!-- Tab content container -->
+<div class="detail-tab-panels">
+
+  <!-- ===== DETAILS TAB (always first) ===== -->
+  <div class="detail-tab-panel active" data-tab="details">
+    <form id="detail-form" class="detail-form" data-entity="{{ entity }}" data-id="{{ record_id }}">
+      <div id="detail-form-fields">
+        {% include "partials/_detail_form_fields.html" %}
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== CHILD TABS (deferred) ===== -->
+  {% if entity == "projects" %}
+    <div class="detail-tab-panel" data-tab="tasks">
+      <p class="tab-placeholder">Tasks — coming soon</p>
+    </div>
+    <div class="detail-tab-panel" data-tab="links">
+      <p class="tab-placeholder">Links — coming soon</p>
+    </div>
+    <div class="detail-tab-panel" data-tab="contacts">
+      <p class="tab-placeholder">Contacts — coming soon</p>
+    </div>
+
+  {% elif entity == "contacts" %}
+    <div class="detail-tab-panel" data-tab="emails">
+      <p class="tab-placeholder">Emails — coming soon</p>
+    </div>
+    <div class="detail-tab-panel" data-tab="phones">
+      <p class="tab-placeholder">Phones — coming soon</p>
+    </div>
+    <div class="detail-tab-panel" data-tab="urls">
+      <p class="tab-placeholder">URLs — coming soon</p>
+    </div>
+    <div class="detail-tab-panel" data-tab="organizations">
+      <p class="tab-placeholder">Organizations — coming soon</p>
+    </div>
+
+  {% elif entity == "organizations" %}
+    <div class="detail-tab-panel" data-tab="contacts">
+      <p class="tab-placeholder">Contacts — coming soon</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Action buttons: sticky footer -->
+{% include 'partials/_form_actions.html' %}

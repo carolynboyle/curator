@@ -30,3 +30,26 @@ projects.v_project_detail:
     control: select
     label: Status
     source: project_statuses
+
+projects.v_task_detail:
+  project_id:
+    control: hidden
+    # Pre-filled from context (the parent Project) via the query param
+    # panel_new() forwards into the record dict — e.g.
+    # /panel/tasks/new?project_id=12. Never user-editable; a subtask's
+    # panel always opens from its parent task/project, never a bare
+    # form the person fills in project_id on themselves.
+  parent_id:
+    control: hidden
+    # Same reasoning as project_id. Empty ('') for a top-level task.
+    # Subtask creation (pre-filling parent_id from the parent task) is
+    # part of the Subtasks feature — deferred, see
+    # nested_master_detail_design.md's "Deferred" section.
+  status_id:
+    control: select
+    label: Status
+    source: task_statuses
+  priority_id:
+    control: select
+    label: Priority
+    source: priorities

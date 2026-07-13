@@ -1,0 +1,3 @@
+curl -i -c cookies.txt -X POST http://localhost:8080/auth/login \
+  --data-urlencode "username=carolyn" \
+  --data-urlencode "password=changethislater"

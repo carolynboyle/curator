@@ -16,57 +16,72 @@
                         field_type == "select"
 #}
 {% for field in fields %}
-  <div class="form-group">
-    <label for="detail-{{ field.name }}">{{ field.label }}</label>
+  {% if field.field_type == "hidden" %}
+    {# No wrapping .form-group / label / help_text — a hidden field has
+       nothing to display. Rendering the bare <input type="hidden">
+       still submits it as part of the form's FormData, which is all
+       it needs to do. #}
+    <input
+      type="hidden"
+      id="detail-{{ field.name }}"
+      name="{{ field.name }}"
+      value="{{ record.get(field.name) or '' }}"
+    />
 
-    {% if field.field_type == "text" %}
-      <input
-        type="text"
-        id="detail-{{ field.name }}"
-        name="{{ field.name }}"
-        value="{{ record.get(field.name) or '' }}"
-        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
-      />
+  {% else %}
+    <div class="form-group">
+      <label for="detail-{{ field.name }}">{{ field.label }}</label>
 
-    {% elif field.field_type == "textarea" %}
-      <textarea
-        id="detail-{{ field.name }}"
-        name="{{ field.name }}"
-        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
-      >{{ record.get(field.name) or '' }}</textarea>
+      {% if field.field_type == "text" %}
+        <input
+          type="text"
+          id="detail-{{ field.name }}"
+          name="{{ field.name }}"
+          value="{{ record.get(field.name) or '' }}"
+          {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+        />
 
-    {% elif field.field_type == "select" %}
-      <select id="detail-{{ field.name }}" name="{{ field.name }}">
-        <option value="">—</option>
-        {% for opt in options.get(field.source, []) %}
-          <option
-            value="{{ opt.value }}"
-            {% if record.get(field.name) == opt.value %}selected{% endif %}
-          >
-            {{ opt.label }}
-          </option>
-        {% endfor %}
-      </select>
+      {% elif field.field_type == "textarea" %}
+        <textarea
+          id="detail-{{ field.name }}"
+          name="{{ field.name }}"
+          {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+        >{{ record.get(field.name) or '' }}</textarea>
 
-    {% elif field.field_type == "date" %}
-      <input
-        type="date"
-        id="detail-{{ field.name }}"
-        name="{{ field.name }}"
-        value="{{ record.get(field.name) or '' }}"
-      />
+      {% elif field.field_type == "select" %}
+        <select id="detail-{{ field.name }}" name="{{ field.name }}">
+          <option value="">—</option>
+          {% for opt in options.get(field.source, []) %}
+            <option
+              value="{{ opt.value }}"
+              {% if record.get(field.name) == opt.value %}selected{% endif %}
+            >
+              {{ opt.label }}
+            </option>
+          {% endfor %}
+        </select>
 
-    {% elif field.field_type == "checkbox" %}
-      <input
-        type="checkbox"
-        id="detail-{{ field.name }}"
-        name="{{ field.name }}"
-        {% if record.get(field.name) %}checked{% endif %}
-      />
-    {% endif %}
+      {% elif field.field_type == "date" %}
+        <input
+          type="date"
+          id="detail-{{ field.name }}"
+          name="{{ field.name }}"
+          value="{{ record.get(field.name) or '' }}"
+        />
 
-    {% if field.help_text %}
-      <small class="form-help">{{ field.help_text }}</small>
-    {% endif %}
-  </div>
+      {% elif field.field_type == "checkbox" %}
+        <input
+          type="checkbox"
+          id="detail-{{ field.name }}"
+          name="{{ field.name }}"
+          {% if record.get(field.name) %}checked{% endif %}
+        />
+      {% endif %}
+
+      {% if field.help_text %}
+        <small class="form-help">{{ field.help_text }}</small>
+      {% endif %}
+    </div>
+  {% endif %}
 {% endfor %}
+

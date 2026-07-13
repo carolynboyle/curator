@@ -25,14 +25,13 @@ tasks:
           ts.name::text AS status,
           t.priority_id,
           p.name::text  AS priority,
-          t.sort_order,
           t.created_at::text
       FROM projects.tasks t
       LEFT JOIN projects.task_status ts ON ts.id = t.status_id
       LEFT JOIN projects.priority    p  ON p.id  = t.priority_id
       WHERE t.project_id = %s
         AND t.parent_id IS NULL
-      ORDER BY t.sort_order, t.created_at
+      ORDER BY t.created_at
 
   # Fetch sub-tasks for a parent task
   for_task:
@@ -46,13 +45,12 @@ tasks:
           ts.name::text AS status,
           t.priority_id,
           p.name::text  AS priority,
-          t.sort_order,
           t.created_at::text
       FROM projects.tasks t
       LEFT JOIN projects.task_status ts ON ts.id = t.status_id
       LEFT JOIN projects.priority    p  ON p.id  = t.priority_id
       WHERE t.parent_id = %s
-      ORDER BY t.sort_order, t.created_at
+      ORDER BY t.created_at
 
 # =============================================================================
 # CONTACT EMAILS

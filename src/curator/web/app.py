@@ -7,14 +7,12 @@ and registers route modules. Imported by uvicorn as the ASGI entry point.
 
 from contextlib import asynccontextmanager
 from pathlib import Path
-
-from dbkit.connection import AsyncDBConnection
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
+from dbkit.connection import AsyncDBConnection
 from curator.web.fieldkit import FieldKit
 from curator.web.middleware import SessionMiddleware
-from curator.web.routes import auth, landing, crew, panel, projects, contacts, organizations
+
 
 # ---------------------------------------------------------------------------
 # Fieldkit cache — entity name -> schema-qualified view name.
@@ -27,10 +25,15 @@ from curator.web.routes import auth, landing, crew, panel, projects, contacts, o
 # code change happening at the same time.
 # ---------------------------------------------------------------------------
 
+from curator.web.routes import (
+    auth, landing, crew, panel, projects, contacts, organizations, tasks,
+)
+
 _FIELDKIT_VIEWS = {
     "projects": "projects.v_project_detail",
     "contacts": "identity.v_contact_detail",
     "organizations": "identity.v_organization_detail",
+    "tasks": "projects.v_task_detail",
 }
 
 
@@ -96,7 +99,7 @@ app.include_router(panel.router)
 app.include_router(projects.router)
 app.include_router(contacts.router)
 app.include_router(organizations.router)
-
+app.include_router(tasks.router)
 
 # ---------------------------------------------------------------------------
 # Health check
