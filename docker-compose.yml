@@ -1,0 +1,38 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-wcyj}
+      POSTGRES_USER:     ${POSTGRES_USER:-steward}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-steward} -d ${POSTGRES_DB:-wcyj}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # dbkit connection (checked before config file)
+      DBKIT_HOST:   db
+      DBKIT_PORT:   5432
+      DBKIT_DBNAME: ${POSTGRES_DB:-wcyj}
+      DBKIT_USER:   web_app_user
+      PGPASSWORD:   ${WEB_APP_USER_PASSWORD}
+      # App config
+      CURATOR_ENV:  production
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+volumes:
+  db_data:
