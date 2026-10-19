@@ -29,6 +29,7 @@ from curator.web.routes.contacts import _fetch_contact_for_display
 from curator.web.routes.organizations import _fetch_organization_for_display
 from curator.web.routes.projects import _fetch_project_for_display
 from curator.web.routes.tasks import _fetch_task_for_display
+from curator.web.routes.seanchai import _fetch_record_for_display, _fetch_search_for_display
 
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates"
 _FORMS_PATH = Path(__file__).parent.parent.parent / "data" / "forms.yaml"
@@ -45,6 +46,8 @@ _FETCH_FUNCTIONS = {
     "contacts": _fetch_contact_for_display,
     "organizations": _fetch_organization_for_display,
     "tasks": _fetch_task_for_display,
+    "records": _fetch_record_for_display,
+    "searches": _fetch_search_for_display,
 }
 
 

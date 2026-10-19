@@ -26,7 +26,7 @@ from curator.web.middleware import SessionMiddleware
 # ---------------------------------------------------------------------------
 
 from curator.web.routes import (
-    auth, landing, crew, panel, projects, contacts, organizations, tasks,
+    auth, landing, crew, panel, projects, contacts, organizations, tasks, seanchai,
 )
 
 _FIELDKIT_VIEWS = {
@@ -34,6 +34,8 @@ _FIELDKIT_VIEWS = {
     "contacts": "identity.v_contact_detail",
     "organizations": "identity.v_organization_detail",
     "tasks": "projects.v_task_detail",
+    "records": "seanchai.v_record_detail",
+    "searches": "seanchai.v_search_detail",
 }
 
 
@@ -100,6 +102,7 @@ app.include_router(projects.router)
 app.include_router(contacts.router)
 app.include_router(organizations.router)
 app.include_router(tasks.router)
+app.include_router(seanchai.router)
 
 # ---------------------------------------------------------------------------
 # Health check

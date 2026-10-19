@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Research — Seanchaí{% endblock %}
+
+{% block content %}
+<section class="seanchai-section">
+
+    <div class="page-header">
+        <h1>Seanchaí Research</h1>
+        <p class="page-subtitle">Primary source records and FamilySearch search log</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-records">Records</button>
+        <button class="tab-btn" data-tab="tab-searches">Searches</button>
+    </div>
+
+    <!-- Tab Panels -->
+    <div id="tab-records" class="tab-panel active">
+        {% include "partials/_records_table.html" %}
+    </div>
+
+    <div id="tab-searches" class="tab-panel">
+        {% include "partials/_searches_table.html" %}
+    </div>
+
+    <!-- Detail panel container (same structure as crew.html) -->
+    <div id="detail-panel-container">
+        {% include "partials/_detail_panel.html" %}
+    </div>
+
+</section>
+
+<!-- Embed lookup data for Tabulator editors -->
+<script>
+    window.recordTypes    = {{ record_types    | tojson }};
+    window.recordStatuses = {{ record_statuses | tojson }};
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(this.dataset.tab).classList.add('active');
+            this.classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

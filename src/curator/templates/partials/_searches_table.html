@@ -1,0 +1,466 @@
+<div class="crew-content">
+    <div class="datasheet-toolbar">
+        <button class="add-icon" id="add-search-btn" title="Add search">+ Add Search</button>
+    </div>
+    <div id="searches-grid"></div>
+</div>
+
+<script>
+window.addEventListener('load', function () {
+
+    // -------------------------------------------------------------------------
+    // Dirty row tracking
+    // -------------------------------------------------------------------------
+    let dirtyRow = null;
+    let originalValues = {};
+    let pendingAction = null;
+
+    function snapshot(row) {
+        const d = row.getData();
+        return {
+            search_id:    d.search_id,
+            search_terms: d.search_terms,
+            county_scope: d.county_scope,
+            year_filter:  d.year_filter,
+            result_count: d.result_count,
+            status:       d.status,
+        };
+    }
+
+    function isDirty(row) {
+        if (!dirtyRow) return false;
+        const d = row.getData();
+        return (
+            String(d.search_id    || '') !== String(originalValues.search_id    || '') ||
+            String(d.search_terms || '') !== String(originalValues.search_terms || '') ||
+            String(d.county_scope || '') !== String(originalValues.county_scope || '') ||
+            String(d.year_filter  || '') !== String(originalValues.year_filter  || '') ||
+            String(d.result_count || '') !== String(originalValues.result_count || '') ||
+            String(d.status       || '') !== String(originalValues.status       || '')
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Row selection
+    // -------------------------------------------------------------------------
+    let selectedRows = new Set();
+
+    function setRowSelected(row, selected) {
+        const el = row.getElement();
+        if (selected) {
+            selectedRows.add(row);
+            el.classList.add('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = true;
+        } else {
+            selectedRows.delete(row);
+            el.classList.remove('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = false;
+        }
+        updateSelectAllCheckbox();
+    }
+
+    function updateSelectAllCheckbox() {
+        const allCb = document.getElementById('select-all-searches-checkbox');
+        if (!allCb) return;
+        const rows = table.getRows();
+        const allChecked = rows.length > 0 && rows.every(r => selectedRows.has(r));
+        allCb.checked = allChecked;
+        allCb.indeterminate = !allChecked && selectedRows.size > 0;
+    }
+
+    function clearSelection() {
+        selectedRows.forEach(row => {
+            const el = row.getElement();
+            el.classList.remove('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = false;
+        });
+        selectedRows.clear();
+        updateSelectAllCheckbox();
+    }
+
+    // -------------------------------------------------------------------------
+    // Clipboard copy
+    // -------------------------------------------------------------------------
+    function copySelectionToClipboard() {
+        if (selectedRows.size === 0) return;
+        const lines = [];
+        table.getRows().forEach(row => {
+            if (!selectedRows.has(row)) return;
+            const d = row.getData();
+            const srchId   = d.search_id    || '';
+            const terms    = d.search_terms || '';
+            const county   = d.county_scope || '';
+            const yearF    = d.year_filter  || '';
+            const results  = d.result_count !== null && d.result_count !== undefined ? String(d.result_count) : '';
+            const status   = d.status       || '';
+            lines.push([srchId, terms, county, yearF, results, status].join('\t'));
+        });
+        const text = lines.join('\n');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(() => _execCommandCopy(text));
+        } else {
+            _execCommandCopy(text);
+        }
+    }
+
+    function _execCommandCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (err) { /* nothing we can do */ }
+        document.body.removeChild(ta);
+    }
+
+    // -------------------------------------------------------------------------
+    // Save/Discard dialog
+    // -------------------------------------------------------------------------
+    const dialog = document.getElementById('datasheet-dialog');
+
+    dialog.querySelector('.ds-dialog-save').addEventListener('click', () => {
+        dialog.close();
+        if (pendingAction) { pendingAction.onSave(); pendingAction = null; }
+    });
+
+    dialog.querySelector('.ds-dialog-discard').addEventListener('click', () => {
+        dialog.close();
+        if (pendingAction) { pendingAction.onDiscard(); pendingAction = null; }
+    });
+
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.close();
+            if (pendingAction) { pendingAction.onDiscard(); pendingAction = null; }
+        }
+    });
+
+    function showDialog(onSave, onDiscard) {
+        pendingAction = { onSave, onDiscard };
+        dialog.showModal();
+    }
+
+    // -------------------------------------------------------------------------
+    // Save a row to the server
+    // -------------------------------------------------------------------------
+    async function saveRow(row) {
+        const data = row.getData();
+        const isNew = !data.id;
+
+        // Don't save a new row with no search_terms — just delete it
+        if (isNew && !data.search_terms) {
+            row.delete();
+            dirtyRow = null;
+            originalValues = {};
+            return true;
+        }
+
+        const url = isNew
+            ? `/seanchai/searches/save`
+            : `/seanchai/searches/${data.id}/save`;
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                search_id:    data.search_id    || null,
+                search_terms: data.search_terms || null,
+                county_scope: data.county_scope || null,
+                year_filter:  data.year_filter  || null,
+                result_count: data.result_count !== '' && data.result_count !== null ? data.result_count : null,
+                status:       data.status       || null,
+            }),
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+            alert(err.detail || 'Save failed');
+            return false;
+        }
+
+        const saved = await resp.json();
+        if (saved.success === false) {
+            alert(saved.message || 'Save failed');
+            return false;
+        }
+        row.update(saved);
+
+        dirtyRow = null;
+        originalValues = {};
+        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // Attempt to leave a dirty row
+    // -------------------------------------------------------------------------
+    function attemptLeave(row, onProceed) {
+        if (!dirtyRow || !isDirty(row)) {
+            if (dirtyRow) dirtyRow.update(originalValues);
+            dirtyRow = null;
+            originalValues = {};
+            onProceed();
+            return;
+        }
+        showDialog(
+            async () => { const saved = await saveRow(dirtyRow); if (saved) onProceed(); },
+            () => {
+                if (dirtyRow) dirtyRow.update(originalValues);
+                dirtyRow = null;
+                originalValues = {};
+                onProceed();
+            }
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Tabulator init — searches have no FK lookups; status is a plain string
+    // -------------------------------------------------------------------------
+    const table = new Tabulator('#searches-grid', {
+        ajaxURL: '/seanchai/searches',
+        ajaxConfig: { headers: { 'Accept': 'application/json' } },
+        filterMode: 'local',
+        ajaxResponse: function(url, params, response) {
+            return response.records || response;
+        },
+        layout: 'fitColumns',
+        height: 'auto',
+        placeholder: 'No searches found.',
+        editTriggerEvent: 'dblclick',
+
+        cellEditing: function(cell) {
+            const row = cell.getRow();
+            if (dirtyRow && dirtyRow !== row) {
+                cell.cancelEdit();
+                attemptLeave(dirtyRow, () => {
+                    dirtyRow = row;
+                    originalValues = snapshot(row);
+                    setTimeout(() => cell.edit(), 50);
+                });
+                return;
+            }
+            if (!dirtyRow) {
+                dirtyRow = row;
+                originalValues = snapshot(row);
+            }
+        },
+
+        cellEdited: async function(cell) {
+            const row = cell.getRow();
+            dirtyRow = row;
+            await saveRow(row);
+            row.reformat();
+        },
+
+        rowClick: function(e, row) {
+            if (e.target.classList.contains('row-checkbox')) return;
+            if (e.target.classList.contains('detail-icon')) return;
+            if (dirtyRow && dirtyRow !== row) {
+                attemptLeave(dirtyRow, () => {});
+                return;
+            }
+            if (selectedRows.has(row)) {
+                setRowSelected(row, false);
+            } else {
+                setRowSelected(row, true);
+            }
+        },
+
+        columns: [
+            // Checkbox column
+            {
+                field: 'select',
+                title: '<input type="checkbox" id="select-all-searches-checkbox" title="Select all">',
+                width: 32,
+                minWidth: 32,
+                resizable: false,
+                headerSort: false,
+                cssClass: 'col-select',
+                headerClick: function() {
+                    const allCb = document.getElementById('select-all-searches-checkbox');
+                    if (allCb && allCb.checked) {
+                        clearSelection();
+                    } else {
+                        table.getRows().forEach(r => setRowSelected(r, true));
+                        copySelectionToClipboard();
+                    }
+                },
+                formatter: function() {
+                    return '<input type="checkbox" class="row-checkbox" title="Select row">';
+                },
+                cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    const row = cell.getRow();
+                    if (selectedRows.has(row)) {
+                        setRowSelected(row, false);
+                    } else {
+                        setRowSelected(row, true);
+                    }
+                },
+            },
+
+            // Search ID
+            {
+                field: 'search_id',
+                title: 'ID',
+                editor: 'input',
+                width: 90,
+                minWidth: 70,
+                resizable: true,
+            },
+
+            // Search terms — primary data column
+            {
+                field: 'search_terms',
+                title: 'Search Terms',
+                editor: 'input',
+                headerFilter: 'input',
+                headerFilterPlaceholder: 'Search...',
+                headerFilterLiveFilter: true,
+                headerFilterFunc: 'like',
+                widthGrow: 3,
+            },
+
+            // County scope
+            {
+                field: 'county_scope',
+                title: 'County',
+                editor: 'input',
+                width: 120,
+                minWidth: 80,
+            },
+
+            // Year filter (e.g. 1820-1860, pre-1850)
+            {
+                field: 'year_filter',
+                title: 'Year Filter',
+                editor: 'input',
+                width: 110,
+                minWidth: 80,
+            },
+
+            // Result count
+            {
+                field: 'result_count',
+                title: 'Results',
+                editor: 'number',
+                editorParams: { min: 0 },
+                width: 80,
+                minWidth: 60,
+                hozAlign: 'right',
+            },
+
+            // Status (plain string — no FK)
+            {
+                field: 'status',
+                title: 'Status',
+                editor: 'input',
+                width: 100,
+                minWidth: 80,
+            },
+
+            // Detail icon column
+            {
+                field: 'detail',
+                title: '',
+                width: 36,
+                minWidth: 36,
+                resizable: false,
+                headerSort: false,
+                cssClass: 'col-detail',
+                formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    const disabled = id ? '' : 'style="opacity:0.3;cursor:default"';
+                    const title = id ? 'Search details' : 'Save record first';
+                    return `<button class="detail-icon" title="${title}" ${disabled}>⋯</button>`;
+                },
+                cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    const id = cell.getRow().getData().id;
+                    if (!id) return;
+                    window.openDetailPanel('searches', id);
+                },
+            },
+        ],
+    });
+
+    // + Add Search button
+    document.getElementById('add-search-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.openNewRecordPanel('searches');
+    });
+
+    // Expose grid refresh so detail-panel.js can reload after Save & New
+    window._refreshSearchesGrid = () => {
+        table.setData('/seanchai/searches');
+    };
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', async (e) => {
+        // Ctrl+C / Cmd+C — copy selected rows as TSV
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedRows.size > 0) {
+            e.preventDefault();
+            copySelectionToClipboard();
+        }
+
+        // Delete — hard-delete (searches are log entries, no history value)
+        if (e.key === 'Delete' && selectedRows.size > 0) {
+            e.preventDefault();
+            const rows = [...selectedRows];
+            const count = rows.length;
+            const terms = rows.map(r => r.getData().search_terms || 'Untitled').join(', ');
+            const msg = count === 1
+                ? `Delete "${terms}"? This cannot be undone.`
+                : `Delete ${count} searches (${terms})? This cannot be undone.`;
+            if (!confirm(msg)) return;
+
+            for (const row of rows) {
+                const id = row.getData().id;
+                if (!id) { row.delete(); selectedRows.delete(row); continue; }
+                const resp = await fetch(`/seanchai/searches/${id}`, { method: 'DELETE' });
+                if (resp.ok) {
+                    row.delete();
+                    selectedRows.delete(row);
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+                    alert(`Failed to delete "${row.getData().search_terms}": ${err.detail || err.message}`);
+                }
+            }
+            updateSelectAllCheckbox();
+        }
+
+        // Escape — discard dirty row or clear selection
+        if (e.key === 'Escape') {
+            if (dirtyRow) {
+                e.preventDefault();
+                const data = dirtyRow.getData();
+                const isNew = !data.id;
+                if (isNew) {
+                    dirtyRow.delete();
+                    dirtyRow = null;
+                    originalValues = {};
+                } else {
+                    attemptLeave(dirtyRow, () => {});
+                }
+            } else if (selectedRows.size > 0) {
+                clearSelection();
+            }
+        }
+    });
+
+    // Click outside grid — dirty check + clear selection
+    document.addEventListener('click', (e) => {
+        const grid = document.getElementById('searches-grid');
+        if (grid.contains(e.target)) return;
+        if (dialog.contains(e.target)) return;
+        if (dirtyRow) attemptLeave(dirtyRow, () => {});
+        clearSelection();
+    });
+
+});
+</script>

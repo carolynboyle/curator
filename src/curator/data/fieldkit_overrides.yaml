@@ -53,3 +53,21 @@ projects.v_task_detail:
     control: select
     label: Priority
     source: priorities
+
+seanchai.v_record_detail:
+  record_type_id:
+    control: select
+    label: Type
+    source: record_types
+  record_status_id:
+    control: select
+    label: Status
+    source: record_statuses
+  display_order:
+    control: number
+    label: Display Order
+
+seanchai.v_search_detail:
+  result_count:
+    control: number
+    label: Result Count
