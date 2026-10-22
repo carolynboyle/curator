@@ -18,7 +18,8 @@
  * /panel/{entity}/{id} (or /panel/{entity}/new), built by fieldkit from
  * the entity's actual schema, and swaps it into .detail-panel wholesale.
  * There is no client-side knowledge of what fields or tabs any entity
- * has; adding a new entity requires no JS change.
+ * has. Adding a new /crew entity requires no JS change; an entity whose
+ * routes live elsewhere needs one line in ENTITY_ROUTES.
  */
 
 // ---------------------------------------------------------------------------
@@ -105,6 +106,30 @@ async function fetchAndSwapPanel(entity, recordIdOrNew) {
 }
 
 // ---------------------------------------------------------------------------
+// Per-entity routing
+//
+// Most entities live under /crew/{entity}/... and the projects grid is
+// the one to refresh after a save. Entities that live elsewhere (the
+// seanchaí ledger) are listed here with their own save base URL and the
+// window-level refresh hook their grid registers. Anything not listed
+// falls back to the /crew default, so existing entities are unaffected.
+// ---------------------------------------------------------------------------
+
+const ENTITY_ROUTES = {
+  records:  { base: '/seanchai/records',  refresh: '_refreshRecordsGrid' },
+  searches: { base: '/seanchai/searches', refresh: '_refreshSearchesGrid' },
+};
+
+function saveBaseFor(entity) {
+  return ENTITY_ROUTES[entity]?.base ?? `/crew/${entity}`;
+}
+
+function refreshGridFor(entity) {
+  const hook = ENTITY_ROUTES[entity]?.refresh ?? '_refreshProjectsGrid';
+  if (typeof window[hook] === 'function') window[hook]();
+}
+
+// ---------------------------------------------------------------------------
 // Save to server
 // Returns the saved record on success, null on failure.
 // ---------------------------------------------------------------------------
@@ -123,9 +148,10 @@ async function saveForm() {
   const formData = new FormData(form);
   const data     = Object.fromEntries(formData);
 
-  const url = isNew
-    ? `/crew/${entity}/save`
-    : `/crew/${entity}/${recordId}/save`;
+  const base = saveBaseFor(entity);
+  const url  = isNew
+    ? `${base}/save`
+    : `${base}/${recordId}/save`;
 
   try {
     const res  = await fetch(url, {
@@ -170,7 +196,7 @@ async function handleSave() {
   try {
     const saved = await saveForm();
     if (saved) {
-      if (window._refreshProjectsGrid) window._refreshProjectsGrid();
+      refreshGridFor(getForm()?.dataset.entity);
       hidePanel();
     }
   } finally {
@@ -184,10 +210,11 @@ async function handleNew() {
   try {
     const saved = await saveForm();
     if (!saved) return;
+    const entity = getForm()?.dataset.entity;
     clearForm();
     resetToDetailsTab();
     focusName();
-    if (window._refreshProjectsGrid) window._refreshProjectsGrid();
+    refreshGridFor(entity);
   } finally {
     _saving = false;
   }
@@ -230,7 +257,8 @@ export async function openDetailPanel(entity, recordId) {
 /**
  * Open detail panel in new-record mode.
  * Fetches the whole panel body from /panel/{entity}/new (empty values)
- * and swaps it in. Save will POST to /crew/{entity}/save.
+ * and swaps it in. Save will POST to {base}/save — /crew/{entity} by
+ * default, or the entity's entry in ENTITY_ROUTES.
  */
 export async function openNewRecordPanel(entity) {
   const panel = getPanel();

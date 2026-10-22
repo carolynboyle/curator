@@ -155,3 +155,17 @@
   resize: vertical;
   min-height: 4rem;
 }
+
+/* Read-only fields (fieldkit override readonly: true) — visibly not
+   editable: page background instead of input background, no focus ring. */
+.form-group input[readonly],
+.form-group textarea[readonly] {
+  background: var(--color-bg);
+  cursor: default;
+}
+
+.form-group input[readonly]:focus,
+.form-group textarea[readonly]:focus {
+  border-color: var(--color-input-border);
+  box-shadow: none;
+}

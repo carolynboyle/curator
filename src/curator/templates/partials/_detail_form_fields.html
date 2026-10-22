@@ -39,6 +39,18 @@
           name="{{ field.name }}"
           value="{{ record.get(field.name) or '' }}"
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+          {% if field.readonly %}readonly tabindex="-1"{% endif %}
+        />
+
+      {% elif field.field_type == "number" %}
+        {# record.get(...) is not "or ''" here: 0 is a real value. #}
+        <input
+          type="number"
+          id="detail-{{ field.name }}"
+          name="{{ field.name }}"
+          value="{{ record.get(field.name) if record.get(field.name) is not none else '' }}"
+          {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+          {% if field.readonly %}readonly tabindex="-1"{% endif %}
         />
 
       {% elif field.field_type == "textarea" %}
@@ -46,6 +58,7 @@
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+          {% if field.readonly %}readonly tabindex="-1"{% endif %}
         >{{ record.get(field.name) or '' }}</textarea>
 
       {% elif field.field_type == "select" %}
@@ -67,6 +80,7 @@
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
           value="{{ record.get(field.name) or '' }}"
+          {% if field.readonly %}readonly tabindex="-1"{% endif %}
         />
 
       {% elif field.field_type == "checkbox" %}

@@ -3,6 +3,15 @@
 Logged 2026-10-22 during initial data import work. Neither issue blocks import;
 both must be resolved before the records form is usable for adding new records.
 
+**Status: resolved on branch `seanchai-form-fixes` (2026-10-22)**, together
+with steward `10f_seanchai_autonumber.sql`. Also fixed in the same pass:
+`number` controls had no template branch (no input rendered); the detail
+panel posted seanchaí saves to `/crew/...` (404) and only refreshed the
+projects grid; and `api.get_record_detail` / `api.get_search_detail`
+omitted `id`, so inserts failed in `call_proc_and_refetch`. Searches get
+the same treatment (`SRCH-NNN`). A record's ID is not renumbered if its
+type changes later.
+
 ---
 
 ## 1. `record_id` must be auto-generated, not manually entered

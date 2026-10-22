@@ -9,11 +9,14 @@
 # Structure:
 #   <schema-qualified view name>:
 #     <column name>:
-#       control:  select | text | textarea | date | number | checkbox
+#       control:  select | text | textarea | date | number | checkbox | hidden
 #       label:    Human-readable label (optional — defaults to Title Case)
 #       source:   Lookup name for select controls (not yet wired to
 #                 anything — api.get_lookup() doesn't exist yet)
 #       required: true/false (optional, default false)
+#       readonly: true/false (optional, default false) — shown but not
+#                 editable; applies to text, textarea, number and date
+#       placeholder: Hint text shown in an empty input (optional)
 #
 # UNVERIFIED as of 2026-07-04 — confirmed only that type_id/status_id
 # are project fields. Check \d+ projects.v_project_detail in pgAdmin for
@@ -58,8 +61,23 @@ seanchai.v_record_detail:
   record_id:
     control: text
     label: Record ID
-    # Human-entered ledger key (e.g. PR-001), a varchar, not an FK. Named
-    # *_id so fieldkit requires an explicit control for it.
+    readonly: true
+    placeholder: Assigned on save
+    # Ledger key (e.g. PR-001), a varchar, not an FK. Named *_id so
+    # fieldkit requires an explicit control for it. Assigned by
+    # api.save_record on insert (<type code>-NNN, see steward
+    # 10f_seanchai_autonumber.sql) and never renumbered, so it is
+    # display-only here.
+  type_code:
+    control: hidden
+    # Derived from record_type_id by the view join; the Type dropdown
+    # already shows it, and api.save_record ignores it.
+  record_type:
+    control: hidden
+    # Same — derived name for record_type_id.
+  status:
+    control: hidden
+    # Same — derived name for record_status_id (the Status dropdown).
   record_type_id:
     control: select
     label: Type
@@ -76,7 +94,10 @@ seanchai.v_search_detail:
   search_id:
     control: text
     label: Search ID
-    # Human-entered ledger key (e.g. SRCH-001), a varchar, not an FK.
+    readonly: true
+    placeholder: Assigned on save
+    # Ledger key (e.g. SRCH-001), a varchar, not an FK. Assigned by
+    # api.save_search on insert (SRCH-NNN) — display-only here.
   result_count:
     control: number
     label: Result Count

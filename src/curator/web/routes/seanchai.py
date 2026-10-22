@@ -179,12 +179,13 @@ async def save_new_record(
 ):
     """Insert a new seanchaí record via api.save_record().
 
-    Accepts JSON body: {record_id, subject, record_type_id, record_status_id,
+    Accepts JSON body: {subject, record_type_id, record_status_id,
     display_order, year, county, state, source_citation, source_url, notes}.
+    Any record_id in the body is ignored — the proc assigns it.
 
     Returns the new record as JSON on success (200).
     Returns {"success": false, "message": "...", "data": ...} on failure.
-    api.save_record() enforces record_id uniqueness and required FK existence.
+    api.save_record() assigns record_id and requires record_type_id.
     Only the subject check is duplicated here — the proc handles the rest.
     """
     body = await request.json()
@@ -195,8 +196,9 @@ async def save_new_record(
         return rejection
 
     user_id = get_user_id(request)
+    # record_id is deliberately not forwarded: api.save_record assigns
+    # <type code>-NNN on insert (steward 10f_seanchai_autonumber.sql).
     payload = {
-        "record_id":        body.get("record_id") or None,
         "subject":          subject,
         "record_type_id":   body.get("record_type_id") or None,
         "record_status_id": body.get("record_status_id") or None,
@@ -306,8 +308,9 @@ async def save_new_search(
 ):
     """Insert a new seanchaí search via api.save_search().
 
-    Accepts JSON body: {search_id, search_terms, county_scope, year_filter,
+    Accepts JSON body: {search_terms, county_scope, year_filter,
     result_count, status, notes, searched_at}.
+    Any search_id in the body is ignored — the proc assigns SRCH-NNN.
 
     Returns the new search as JSON on success (200).
     Returns {"success": false, "message": "...", "data": ...} on failure.
@@ -320,8 +323,9 @@ async def save_new_search(
         return rejection
 
     user_id = get_user_id(request)
+    # search_id is deliberately not forwarded: api.save_search assigns
+    # SRCH-NNN on insert (steward 10f_seanchai_autonumber.sql).
     payload = {
-        "search_id":    body.get("search_id") or None,
         "search_terms": search_terms,
         "county_scope": body.get("county_scope") or None,
         "year_filter":  body.get("year_filter") or None,
