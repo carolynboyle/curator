@@ -55,6 +55,11 @@ projects.v_task_detail:
     source: priorities
 
 seanchai.v_record_detail:
+  record_id:
+    control: text
+    label: Record ID
+    # Human-entered ledger key (e.g. PR-001), a varchar, not an FK. Named
+    # *_id so fieldkit requires an explicit control for it.
   record_type_id:
     control: select
     label: Type
@@ -68,6 +73,10 @@ seanchai.v_record_detail:
     label: Display Order
 
 seanchai.v_search_detail:
+  search_id:
+    control: text
+    label: Search ID
+    # Human-entered ledger key (e.g. SRCH-001), a varchar, not an FK.
   result_count:
     control: number
     label: Result Count
