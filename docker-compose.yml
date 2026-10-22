@@ -27,8 +27,11 @@ services:
       DBKIT_HOST:   db
       DBKIT_PORT:   5432
       DBKIT_DBNAME: ${POSTGRES_DB:-wcyj}
-      DBKIT_USER:   web_app_user
-      PGPASSWORD:   ${WEB_APP_USER_PASSWORD}
+      # The app connects as steward (the DB steward), matching how it ran
+      # before containerizing: list/read routes query views directly, which
+      # web_app_user has no grants for. Writes still go through api.*.
+      DBKIT_USER:   ${POSTGRES_USER:-steward}
+      PGPASSWORD:   ${POSTGRES_PASSWORD}
       # App config
       CURATOR_ENV:  production
     ports:
