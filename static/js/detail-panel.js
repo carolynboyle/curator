@@ -6,9 +6,9 @@
  * - Opening detail panel for new records (+ Add button)
  * - Closing panel on × / Alt+X / Escape
  * - Tab switching
- * - Save (Alt+S) — save and close
+ * - Save (Alt+S) — save and close (or save task and keep panel open)
  * - New  (Alt+N) — save current, open a fresh pre-filled form
- * - Discard (Alt+X) — discard and close
+ * - Discard (Alt+X) — discard and close (or discard task form)
  * - Add (Alt+A) — open a new record from anywhere on the page
  *
  * Hero image and detail panel occupy the same spot. Opening the panel
@@ -21,6 +21,11 @@
  * There is no client-side knowledge of what fields or tabs any entity
  * has. Adding a new /crew entity requires no JS change; an entity whose
  * routes live elsewhere needs one line in ENTITY_ROUTES.
+ *
+ * Nested task form: the Tasks tab contains a Tabulator list and, below it,
+ * a #task-form-container div. When that container is visible, getForm()
+ * returns #task-form (the task form inside it) instead of #detail-form,
+ * and Save/New/Discard operate on the task context rather than the project.
  */
 
 // ---------------------------------------------------------------------------
@@ -31,7 +36,19 @@ function getPanel() {
   return document.querySelector('#detail-panel-container .detail-panel');
 }
 
+/**
+ * Return whichever form is currently active.
+ *
+ * When #task-form-container is visible, the user is editing a task inside
+ * the Tasks tab — return #task-form so Save/New/Discard act on the task.
+ * Otherwise return #detail-form (the project/contact/etc. form as usual).
+ */
 function getForm() {
+  const taskContainer = document.getElementById('task-form-container');
+  if (taskContainer && !taskContainer.hidden) {
+    const taskForm = taskContainer.querySelector('#task-form');
+    if (taskForm) return taskForm;
+  }
   return document.getElementById('detail-form');
 }
 
@@ -98,6 +115,11 @@ function focusFirstField() {
  * Phones/URLs/Organizations, not projects' Tasks/Links/Contacts left
  * over from whatever entity the page originally rendered with).
  *
+ * After swapping innerHTML, any <script> tags in the fetched HTML are
+ * re-created as new DOM elements — this is required because innerHTML
+ * assignment does not execute embedded scripts. Replacing a script node
+ * with a new one of the same content causes the browser to run it.
+ *
  * Returns true on success, false on failure (network error, 404 —
  * caller decides whether to proceed with showing the panel).
  *
@@ -117,9 +139,55 @@ async function fetchAndSwapPanel(entity, recordIdOrNew, params = {}) {
     const res = await fetch(`/panel/${entity}/${recordIdOrNew}${qs ? '?' + qs : ''}`);
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     panel.innerHTML = await res.text();
+
+    // Re-execute any <script> tags injected via innerHTML (they don't run
+    // automatically). Replacing each old node with a fresh script element
+    // causes the browser to parse and execute it, including type="module".
+    panel.querySelectorAll('script').forEach(oldScript => {
+      const newScript = document.createElement('script');
+      [...oldScript.attributes].forEach(attr =>
+        newScript.setAttribute(attr.name, attr.value)
+      );
+      newScript.textContent = oldScript.textContent;
+      oldScript.replaceWith(newScript);
+    });
+
     return true;
   } catch (err) {
     console.error('Could not fetch panel content:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch the lightweight task form fragment and render it inside
+ * #task-form-container in the Tasks tab.
+ *
+ * taskIdOrNew: the task's numeric id, or the string 'new'
+ * projectId:   the current project's id (for pre-filling hidden project_id)
+ */
+async function fetchAndSwapTaskForm(taskIdOrNew, projectId = '') {
+  const container = document.getElementById('task-form-container');
+  if (!container) return false;
+
+  const qs = (taskIdOrNew === 'new' && projectId)
+    ? `?project_id=${encodeURIComponent(projectId)}`
+    : '';
+
+  try {
+    const res = await fetch(`/panel/tasks/${taskIdOrNew}/nested${qs}`);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    container.innerHTML = await res.text();
+    container.hidden = false;
+
+    // Focus the first editable field in the task form
+    const firstInput = container.querySelector(
+      'input:not([type=hidden]):not([readonly]), select, textarea:not([readonly])'
+    );
+    if (firstInput) firstInput.focus();
+    return true;
+  } catch (err) {
+    console.error('Could not fetch task form:', err);
     return false;
   }
 }
@@ -132,11 +200,16 @@ async function fetchAndSwapPanel(entity, recordIdOrNew, params = {}) {
 // seanchaí ledger) are listed here with their own save base URL and the
 // window-level refresh hook their grid registers. Anything not listed
 // falls back to the /crew default, so existing entities are unaffected.
+//
+// tasks: /crew/tasks for saves; refresh hook is the task Tabulator inside
+// the Tasks tab. handleSave() handles the task-specific post-save behavior
+// (refresh task list, hide task form) directly rather than via refreshGridFor.
 // ---------------------------------------------------------------------------
 
 const ENTITY_ROUTES = {
   records:  { base: '/seanchai/records',  refresh: '_refreshRecordsGrid' },
   searches: { base: '/seanchai/searches', refresh: '_refreshSearchesGrid' },
+  tasks:    { base: '/crew/tasks',        refresh: 'refresh_tasks-datasheet' },
 };
 
 function saveBaseFor(entity) {
@@ -213,10 +286,22 @@ async function handleSave() {
   if (_saving) return;
   _saving = true;
   try {
+    const form   = getForm();
+    const isTask = form?.id === 'task-form';
+
     const saved = await saveForm();
     if (saved) {
-      refreshGridFor(getForm()?.dataset.entity);
-      hidePanel();
+      if (isTask) {
+        // Refresh the task list and hide the task form.
+        // The project panel stays open — only the nested form closes.
+        const refresh = window['refresh_tasks-datasheet'];
+        if (typeof refresh === 'function') refresh();
+        const container = document.getElementById('task-form-container');
+        if (container) container.hidden = true;
+      } else {
+        refreshGridFor(form?.dataset.entity);
+        hidePanel();
+      }
     }
   } finally {
     _saving = false;
@@ -227,20 +312,39 @@ async function handleNew() {
   if (_saving) return;
   _saving = true;
   try {
+    const form   = getForm();
+    const isTask = form?.id === 'task-form';
+
     const saved = await saveForm();
     if (!saved) return;
-    const entity = getForm()?.dataset.entity;
-    // Re-open a fresh blank panel rather than clearing inputs in place, so
-    // the page's defaults (e.g. the dashboard's crew role on a new
-    // project) are pre-filled again instead of being blanked.
-    await openNewRecordPanel(entity);
-    refreshGridFor(entity);
+
+    if (isTask) {
+      // Refresh the task list and open a blank new task form
+      const refresh = window['refresh_tasks-datasheet'];
+      if (typeof refresh === 'function') refresh();
+      const panel     = getPanel();
+      const projectId = panel?.dataset.id ?? '';
+      await fetchAndSwapTaskForm('new', projectId);
+    } else {
+      const entity = form?.dataset.entity;
+      // Re-open a fresh blank panel rather than clearing inputs in place, so
+      // the page's defaults (e.g. the dashboard's crew role on a new
+      // project) are pre-filled again instead of being blanked.
+      await openNewRecordPanel(entity);
+      refreshGridFor(entity);
+    }
   } finally {
     _saving = false;
   }
 }
 
 function handleDiscard() {
+  // If the task form is open, close just that — keep the project panel open.
+  const taskContainer = document.getElementById('task-form-container');
+  if (taskContainer && !taskContainer.hidden) {
+    taskContainer.hidden = true;
+    return;
+  }
   hidePanel();
 }
 
@@ -334,7 +438,7 @@ export function initDetailPanel() {
 
     if (e.target.classList.contains('detail-close-button')) handleDiscard();
 
-    // btn-save is type="submit" with form="detail-form" (see forms.yaml) so
+    // btn-save is type="submit" with form="detail-form" (or "task-form") so
     // clicking it also triggers native form submission. Without preventDefault
     // here, the browser's native GET-to-current-URL submission races the
     // fetch() in handleSave() and wins, since nothing else stops it.
@@ -370,11 +474,11 @@ export function initDetailPanel() {
 
     if (!panelOpen) return;
 
-    // Alt+S — Save and close
+    // Alt+S — Save and close (or save task and keep panel open)
     if (e.altKey && e.code === 'KeyS') { e.preventDefault(); handleSave(); }
     // Alt+N — Save and new
     if (e.altKey && e.code === 'KeyN') { e.preventDefault(); handleNew(); }
-    // Alt+X or Escape — Discard and close
+    // Alt+X or Escape — Discard and close (or discard task form)
     if ((e.altKey && e.code === 'KeyX') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
   });
 
@@ -384,7 +488,7 @@ export function initDetailPanel() {
   // Without this, Enter-to-submit falls back to a GET on the current URL
   // with form fields as query params, identical to the btn-save race bug.
   document.addEventListener('submit', (e) => {
-    if (e.target.id === 'detail-form') {
+    if (e.target.id === 'detail-form' || e.target.id === 'task-form') {
       e.preventDefault();
       handleSave();
     }
@@ -394,9 +498,10 @@ export function initDetailPanel() {
 // ---------------------------------------------------------------------------
 // Expose for non-module scripts (e.g. _projects_table.html)
 // ---------------------------------------------------------------------------
-window.openDetailPanel    = openDetailPanel;
-window.openNewRecordPanel = openNewRecordPanel;
-window.closeDetailPanel   = closeDetailPanel;
+window.openDetailPanel      = openDetailPanel;
+window.openNewRecordPanel   = openNewRecordPanel;
+window.closeDetailPanel     = closeDetailPanel;
+window.fetchAndSwapTaskForm = fetchAndSwapTaskForm;
 
 // Initialize
 if (document.readyState === 'loading') {

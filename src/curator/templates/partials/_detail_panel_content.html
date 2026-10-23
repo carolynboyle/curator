@@ -65,9 +65,80 @@
 
   <!-- ===== CHILD TABS (deferred) ===== -->
   {% if entity == "projects" %}
+
+    <!-- ===== TASKS TAB ===== -->
+    <!--
+      Architecture: nested master-detail inside the project panel.
+
+      Layout (flex column, top to bottom):
+        1. Context bar  — project name + "+ Task" button
+        2. Task list    — Tabulator in a fixed-height container
+        3. Task form    — #task-form-container, hidden until a row or
+                          "+ Task" is clicked; fetched from
+                          /panel/tasks/{id}/nested or /panel/tasks/new/nested
+                          by detail-panel.js's fetchAndSwapTaskForm()
+
+      The inline <script type="module"> is intentionally NOT a separate
+      file: it's project-id-specific (uses {{ record_id }}) and only ever
+      lives inside this tab. It's also why fetchAndSwapPanel() in
+      detail-panel.js re-executes scripts after innerHTML swap — browser
+      does not run scripts set via innerHTML.
+
+      Row-click handler wires after initDatasheet() so the Tabulator
+      instance is already in window['tabulator_tasks-datasheet'].
+
+      Save / New / Discard / Alt+S / Alt+N / Alt+X / Escape are all
+      handled by detail-panel.js — its getForm() returns #task-form when
+      #task-form-container is visible, making the existing keyboard and
+      button handlers task-context-aware with no additional JS needed here.
+    -->
     <div class="detail-tab-panel" data-tab="tasks">
-      <p class="tab-placeholder">Tasks — coming soon</p>
+      <div class="tasks-context-bar">
+        <span class="tasks-context-name">{{ record.get('name', '') }}</span>
+        <button type="button" class="task-add-button">+ Task</button>
+      </div>
+      <div class="tasks-datasheet-body">
+        <div id="tasks-datasheet"></div>
+      </div>
+      <div id="task-form-container" hidden></div>
+
+      <script type="module">
+        import { initDatasheet } from '/static/js/datasheet.js';
+
+        const projectId = '{{ record_id }}';
+
+        initDatasheet({
+          containerId:   'tasks-datasheet',
+          entity:        'tasks',
+          queryName:     'for_project',
+          queryParams:   projectId,
+          columns: [
+            { title: 'Description', field: 'description', widthGrow: 3 },
+            { title: 'Status',      field: 'status',      width: 130 },
+            { title: 'Priority',    field: 'priority',    width: 100 },
+          ],
+          parentField: 'project_id',
+        });
+
+        // Wire row-click: open the task's nested form fragment.
+        // The Tabulator instance is set synchronously by initDatasheet()
+        // so it's available immediately after the call above.
+        const tabu = window['tabulator_tasks-datasheet'];
+        if (tabu) {
+          tabu.on('rowClick', (_e, row) => {
+            const id = row.getData().id;
+            if (id) window.fetchAndSwapTaskForm(id, projectId);
+          });
+        }
+
+        // "+ Task" button: open a blank new task form.
+        document.querySelector('.task-add-button')
+          ?.addEventListener('click', () => {
+            window.fetchAndSwapTaskForm('new', projectId);
+          });
+      </script>
     </div>
+
     <div class="detail-tab-panel" data-tab="links">
       <p class="tab-placeholder">Links — coming soon</p>
     </div>

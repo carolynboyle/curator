@@ -1,0 +1,48 @@
+{#
+  _task_form_fragment.html
+
+  Lightweight task form fragment for inline task editing inside the Tasks tab
+  of a project's detail panel.
+
+  Rendered by panel.py's _render_task_fragment() → panel_task_new_nested()
+  and panel_task_nested(). Fetched by detail-panel.js's fetchAndSwapTaskForm()
+  and swapped into #task-form-container without touching the project panel.
+
+  Unlike _detail_panel_content.html, this renders NO tab bar and NO outer
+  panel wrapper — just the form and its own action buttons. That's intentional:
+  the task form sits below the Tasks-tab Tabulator list, not in place of the
+  whole project panel.
+
+  Form id is "task-form" (not "detail-form") so detail-panel.js's getForm()
+  returns it when #task-form-container is visible, routing Save/New/Discard
+  to task-specific behavior (refresh task list, hide task form) rather than
+  project behavior (refresh project grid, close project panel).
+
+  The form_actions buttons use form="{{ action.form_id }}" where form_id
+  is "task-form", so the Save button's native submit targets this form.
+  keyboard shortcuts (Alt+S, Alt+N, Alt+X / Escape) are handled by the
+  same keydown listener in detail-panel.js — getForm() makes them
+  context-aware automatically.
+
+  Parameters (all supplied by _render_task_fragment; optional only so
+  template doesn't crash if called empty during testing):
+    - record_id   (int|str)  — task id, or '' for a new task
+    - record      (dict)     — current field values, defaults {}
+    - fields      (list)     — from FieldKit.fields for "tasks"
+    - options     (dict)     — FieldKit.options for "tasks"
+    - actions     (list)     — from FormActions.to_dicts(detail_panel_actions(form_id="task-form"))
+    - container_class (str)  — CSS class for the action bar wrapper
+#}
+{% set fields = fields|default([]) %}
+{% set options = options|default({}) %}
+{% set record = record|default({}) %}
+{% set actions = actions|default([]) %}
+
+<div class="task-form-panel">
+  <form id="task-form" class="detail-form" data-entity="tasks" data-id="{{ record_id }}">
+    <div id="task-form-fields">
+      {% include "partials/_detail_form_fields.html" %}
+    </div>
+  </form>
+  {% include 'partials/_form_actions.html' %}
+</div>

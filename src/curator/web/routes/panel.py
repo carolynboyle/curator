@@ -85,6 +85,62 @@ def _render_panel_content(
     )
 
 
+def _render_task_fragment(
+    request: Request, record: dict, record_id
+) -> HTMLResponse:
+    """Render the lightweight task form fragment for the nested Tasks tab.
+
+    Unlike _render_panel_content(), which renders the full panel body
+    (tab bar, all tabs, action buttons), this renders only a minimal
+    task form + its own action buttons — swapped into #task-form-container
+    inside the Tasks tab without touching the project panel around it.
+
+    The fragment uses form id="task-form" (not "detail-form") so
+    detail-panel.js's getForm() can distinguish task context from project
+    context and branch Save/New/Discard behavior accordingly.
+    """
+    kit = request.app.state.fieldkit["tasks"]
+    actions = FormActions.to_dicts(
+        FormActions.detail_panel_actions(form_id="task-form")
+    )
+    template = env.get_template("partials/_task_form_fragment.html")
+    return HTMLResponse(
+        template.render(
+            record_id=record_id,
+            record=record,
+            fields=kit.fields,
+            options=kit.options,
+            actions=actions,
+            container_class="detail-panel-actions",
+        )
+    )
+
+
+# /panel/tasks/new/nested and /panel/tasks/{task_id}/nested must be declared
+# before /panel/{entity}/new and /panel/{entity}/{record_id} — more-specific
+# literal paths before the parameterized catch-all, otherwise FastAPI would
+# try to parse "tasks" as the record_id int and 422.
+
+@router.get("/panel/tasks/new/nested")
+async def panel_task_new_nested(request: Request):
+    """Render a blank task form fragment for inline creation inside the Tasks tab."""
+    record = dict(request.query_params)
+    return _render_task_fragment(request, record, "")
+
+
+@router.get("/panel/tasks/{task_id}/nested")
+async def panel_task_nested(
+    task_id: int,
+    request: Request,
+    db: AsyncDBConnection = Depends(get_db),
+):
+    """Render an existing task's form fragment for inline editing inside the Tasks tab."""
+    record = await _fetch_task_for_display(db, task_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return _render_task_fragment(request, record, task_id)
+
+
 # /panel/{entity}/new must be declared before /panel/{entity}/{record_id}
 # — same route-ordering rule as the save routes (literal before
 # parameterized), otherwise FastAPI tries to parse "new" as an int and
