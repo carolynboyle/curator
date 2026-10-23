@@ -9,6 +9,7 @@
  * - Save (Alt+S) — save and close
  * - New  (Alt+N) — save current, clear form, focus Name
  * - Discard (Alt+X) — discard and close
+ * - Add (Alt+A) — open a new record from anywhere on the page
  *
  * Hero image and detail panel occupy the same spot. Opening the panel
  * hides the hero (display:none) and shows the panel (display:flex).
@@ -340,16 +341,35 @@ export function initDetailPanel() {
   });
 
   // Keyboard shortcuts
+  //
+  // Alt+letter shortcuts match on e.code (the physical key), not e.key
+  // (the character produced). On macOS, Option+S produces "ß", Option+N
+  // a dead key, Option+A "å", etc., so e.key === 's' never matched there.
   document.addEventListener('keydown', (e) => {
     const panel = getPanel();
-    if (!panel?.classList.contains('active')) return;
+    const panelOpen = panel?.classList.contains('active');
+
+    // Alt+A — Add new record, from anywhere on the page.
+    // Panel closed: clicks whichever "+ Add" button is currently visible
+    // (so on the seanchaí page it follows the active Records/Searches tab).
+    // Panel open: same as Alt+N — save the current record, then new.
+    if (e.altKey && e.code === 'KeyA') {
+      e.preventDefault();
+      if (panelOpen) { handleNew(); return; }
+      const addBtn = [...document.querySelectorAll('.add-icon')]
+        .find(b => b.offsetParent !== null);
+      if (addBtn) addBtn.click();
+      return;
+    }
+
+    if (!panelOpen) return;
 
     // Alt+S — Save and close
-    if (e.altKey && e.key === 's') { e.preventDefault(); handleSave(); }
+    if (e.altKey && e.code === 'KeyS') { e.preventDefault(); handleSave(); }
     // Alt+N — Save and new
-    if (e.altKey && e.key === 'n') { e.preventDefault(); handleNew(); }
+    if (e.altKey && e.code === 'KeyN') { e.preventDefault(); handleNew(); }
     // Alt+X or Escape — Discard and close
-    if ((e.altKey && e.key === 'x') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
+    if ((e.altKey && e.code === 'KeyX') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
   });
 
   // Safety net: catch any native form submission (e.g. pressing Enter in a
