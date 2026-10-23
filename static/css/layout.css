@@ -28,13 +28,28 @@ main.curator-main {
 }
 
 /* -- Landing page layout --------------------------------------------------- */
+/* Two columns: illustration + title on the left (a little wider), crew
+   cards stacked on the right. One column below 900px — see Responsive. */
 
 .landing {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+    gap: var(--spacing-2xl);
     align-items: center;
-    text-align: center;
     padding: var(--spacing-xl) 0;
+}
+
+.landing-intro {
+    text-align: center;
+}
+
+.landing .hero-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
 .landing h1 {
@@ -45,20 +60,33 @@ main.curator-main {
 .landing .subtitle {
     color: var(--color-text-light);
     font-size: 1.1rem;
-    margin-bottom: var(--spacing-lg);
+    margin: 0;
 }
 
-.landing .hero-image {
-    width: 220px;
-    height: 220px;
-    object-fit: contain;
-    margin-bottom: var(--spacing-xl);
-}
-
-/* Cards must break out of the centered column to use full width */
+/* Cards as a vertical stack of full-width bars, text left-aligned */
 .landing .crew-cards {
-    width: 100%;
-    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin: 0;
+}
+
+.landing .crew-card {
+    align-items: flex-start;
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.landing .crew-card:hover {
+    transform: translateX(4px);
+}
+
+.landing .crew-card h2 {
+    font-size: 1.15rem;
+}
+
+.landing .crew-card p {
+    font-size: 0.9rem;
 }
 
 /* -- Crew dashboard layout ------------------------------------------------- */
@@ -88,9 +116,16 @@ main.curator-main {
     .landing h1 {
         font-size: 1.5rem;
     }
+}
+
+@media (max-width: 900px) {
+    .landing {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+    }
 
     .landing .hero-image {
-        width: 160px;
-        height: 160px;
+        max-width: 560px;
+        margin: 0 auto var(--spacing-lg);
     }
 }
