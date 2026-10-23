@@ -71,12 +71,30 @@ function clearForm() {
   form.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
 }
 
-function focusName() {
-  const nameField = document.getElementById('detail-name');
-  if (nameField) {
-    nameField.focus();
-    nameField.select();
-  }
+/**
+ * Bring the panel into view and put the cursor in the form.
+ *
+ * The panel renders below its grid, so on a long list (the seanchaí
+ * ledger) opening it used to give no visible feedback. This scrolls the
+ * panel to the top of the viewport, then focuses the Name field if the
+ * entity has one (projects, contacts — unchanged behaviour), otherwise
+ * the first field the user can actually type in (skips hidden and
+ * read-only inputs, e.g. seanchaí's auto-assigned Record ID).
+ */
+function focusFirstField() {
+  const panel = getPanel();
+  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const form = getForm();
+  if (!form) return;
+
+  const target = form.querySelector('#detail-name') ?? form.querySelector(
+    'input:not([type=hidden]):not([readonly]), select, textarea:not([readonly])'
+  );
+  if (!target) return;
+
+  target.focus({ preventScroll: true });
+  if (typeof target.select === 'function' && target.tagName !== 'SELECT') target.select();
 }
 
 /**
@@ -213,7 +231,7 @@ async function handleNew() {
     const entity = getForm()?.dataset.entity;
     clearForm();
     resetToDetailsTab();
-    focusName();
+    focusFirstField();
     refreshGridFor(entity);
   } finally {
     _saving = false;
@@ -252,6 +270,7 @@ export async function openDetailPanel(entity, recordId) {
 
   resetToDetailsTab();
   showPanel();
+  focusFirstField();
 }
 
 /**
@@ -278,7 +297,7 @@ export async function openNewRecordPanel(entity) {
 
   resetToDetailsTab();
   showPanel();
-  focusName();
+  focusFirstField();
 }
 
 /**
