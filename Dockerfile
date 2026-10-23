@@ -2,25 +2,21 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for psycopg (binary mode, no build needed) and general hygiene
+# git: pip installs dbkit and viewkit from git+https (see pyproject.toml)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency manifest first so layer is cached unless deps change
-COPY pyproject.toml ./
+# README.md: pyproject.toml names it as the package readme
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+# static/: CSS, JS and images, served from /app/static (see web/app.py)
+COPY static/ ./static/
 
-# Install the app and its dependencies.
-# pip installs from git+https for dbkit/viewkit; the proxy CA bundle is
-# pre-configured in the build environment via REQUESTS_CA_BUNDLE / SSL_CERT_FILE.
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir -e .
 
-# Copy application source
-COPY src/ ./src/
-COPY src/curator/data/ ./src/curator/data/
-
-# Non-root user for runtime
 RUN addgroup --system curator && adduser --system --ingroup curator curator
 USER curator
 
