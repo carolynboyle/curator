@@ -1,6 +1,6 @@
 """Seanchaí research ledger routes.
 
-GET  /seanchai/                         → HTML page (Records + Searches tabs)
+GET  /seanchai/                         → redirect to /crew?role=seanchai
 GET  /seanchai/records                  → JSON list (Tabulator ajax source)
 GET  /seanchai/searches                 → JSON list (Tabulator ajax source)
 
@@ -20,11 +20,9 @@ literals first and doesn't attempt to parse "save" as an integer.
 """
 
 import json
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from jinja2 import Environment, FileSystemLoader
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from dbkit.connection import AsyncDBConnection
 from curator.web.deps import (
@@ -37,9 +35,6 @@ from curator.web.deps import (
 )
 
 router = APIRouter()
-
-TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates"
-_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 
 # =============================================================================
@@ -109,22 +104,10 @@ def _require_search_terms(search_terms: str):
 # =============================================================================
 
 @router.get("/seanchai/")
-async def seanchai_page(
-    db: AsyncDBConnection = Depends(get_db),
-):
-    """Render the Seanchaí main page (Records + Searches tabs).
-
-    Loads record_types and record_statuses via api.* functions (web_app_user
-    has no direct SELECT grants on seanchai.* views — see 07c_seanchai_list_api.sql
-    and the comments in seanchai-curator-implementation-plan.md).
-    """
-    record_types = await _fetch_json_scalar(db, "SELECT api.list_record_types()", ())
-    record_statuses = await _fetch_json_scalar(db, "SELECT api.list_record_statuses()", ())
-    template = _env.get_template("seanchai.html")
-    return HTMLResponse(template.render(
-        record_types=record_types or [],
-        record_statuses=record_statuses or [],
-    ))
+async def seanchai_page():
+    """The research ledger now lives on the Seanchaí's crew dashboard
+    (Records and Searches tabs). Redirect so existing bookmarks work."""
+    return RedirectResponse("/crew?role=seanchai", status_code=307)
 
 
 # =============================================================================

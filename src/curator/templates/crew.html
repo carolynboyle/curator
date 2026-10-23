@@ -9,7 +9,7 @@
     <div class="hero-detail-stack">
         {% with
             role=role,
-            hero_image=role + ".png",
+            hero_image=hero_image,
             title=role_title,
             show_back=true
         %}
@@ -44,6 +44,17 @@
 <script>
     window.projectTypes    = {{ project_types    | tojson }};
     window.projectStatuses = {{ project_statuses | tojson }};
+
+    // Research-ledger lookups (Seanchaí dashboard's Records grid)
+    window.recordTypes    = {{ record_types    | tojson }};
+    window.recordStatuses = {{ record_statuses | tojson }};
+
+    // Values pre-filled into new records on this dashboard (detail panel
+    // + Add / Alt+A / Save & New, and new rows typed into the projects
+    // grid). A project created here belongs to this dashboard's crew role.
+    window.newRecordDefaults = {
+        projects: { crew_role_id: {{ crew_role_id | tojson }} },
+    };
 
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {

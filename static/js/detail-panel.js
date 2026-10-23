@@ -7,7 +7,7 @@
  * - Closing panel on × / Alt+X / Escape
  * - Tab switching
  * - Save (Alt+S) — save and close
- * - New  (Alt+N) — save current, clear form, focus Name
+ * - New  (Alt+N) — save current, open a fresh pre-filled form
  * - Discard (Alt+X) — discard and close
  * - Add (Alt+A) — open a new record from anywhere on the page
  *
@@ -64,14 +64,6 @@ function resetToDetailsTab() {
   if (detailsTab) detailsTab.classList.add('active');
 }
 
-function clearForm() {
-  const form = getForm();
-  if (!form) return;
-  form.dataset.id = '';
-  form.querySelectorAll('input, textarea').forEach(el => el.value = '');
-  form.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-}
-
 /**
  * Bring the panel into view and put the cursor in the form.
  *
@@ -108,13 +100,21 @@ function focusFirstField() {
  *
  * Returns true on success, false on failure (network error, 404 —
  * caller decides whether to proceed with showing the panel).
+ *
+ * `params` (optional) become query parameters; /panel/{entity}/new
+ * forwards them into the blank record, pre-filling matching fields.
  */
-async function fetchAndSwapPanel(entity, recordIdOrNew) {
+async function fetchAndSwapPanel(entity, recordIdOrNew, params = {}) {
   const panel = getPanel();
   if (!panel) return false;
 
+  const clean = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  );
+  const qs = new URLSearchParams(clean).toString();
+
   try {
-    const res = await fetch(`/panel/${entity}/${recordIdOrNew}`);
+    const res = await fetch(`/panel/${entity}/${recordIdOrNew}${qs ? '?' + qs : ''}`);
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     panel.innerHTML = await res.text();
     return true;
@@ -230,9 +230,10 @@ async function handleNew() {
     const saved = await saveForm();
     if (!saved) return;
     const entity = getForm()?.dataset.entity;
-    clearForm();
-    resetToDetailsTab();
-    focusFirstField();
+    // Re-open a fresh blank panel rather than clearing inputs in place, so
+    // the page's defaults (e.g. the dashboard's crew role on a new
+    // project) are pre-filled again instead of being blanked.
+    await openNewRecordPanel(entity);
     refreshGridFor(entity);
   } finally {
     _saving = false;
@@ -279,12 +280,17 @@ export async function openDetailPanel(entity, recordId) {
  * Fetches the whole panel body from /panel/{entity}/new (empty values)
  * and swaps it in. Save will POST to {base}/save — /crew/{entity} by
  * default, or the entity's entry in ENTITY_ROUTES.
+ *
+ * Pre-fill: the page may set window.newRecordDefaults[entity] (crew.html
+ * sets projects.crew_role_id to the dashboard's role); `params` passed
+ * here override those.
  */
-export async function openNewRecordPanel(entity) {
+export async function openNewRecordPanel(entity, params = {}) {
   const panel = getPanel();
   if (!panel) return;
 
-  const ok = await fetchAndSwapPanel(entity, 'new');
+  const defaults = window.newRecordDefaults?.[entity] ?? {};
+  const ok = await fetchAndSwapPanel(entity, 'new', { ...defaults, ...params });
   if (!ok) return;
 
   panel.dataset.entity = entity;

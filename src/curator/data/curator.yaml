@@ -38,6 +38,9 @@ crew:
     - name: "scribe"
       title: "The Scribe"
       description: "Writing projects and documentation"
+    - name: "seanchai"
+      title: "The Seanchaí"
+      description: "Family history research and the memoir"
 
 plugin:
   name: "The Curator"

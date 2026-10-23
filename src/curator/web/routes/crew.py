@@ -12,7 +12,7 @@ from viewkit.query_loader import QueryLoader
 from dbkit.connection import AsyncDBConnection
 from curator.config import ConfigManager
 from curator.formkit import FormActions
-from curator.web.deps import get_config, get_db
+from curator.web.deps import _fetch_json_scalar, get_config, get_db
 from curator.web.routes.contacts import _fetch_contacts
 from curator.web.routes.organizations import _fetch_organizations
 from curator.web.routes.projects import _fetch_records
@@ -51,7 +51,18 @@ _ROLE_TABS = {
     "envoy": [
         {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
     ],
+    # The Seanchaí: projects plus the research ledger. The ledger tabs
+    # reuse the grids that used to live on the standalone /seanchai/ page
+    # (which now redirects here). Their element ids (tab-records,
+    # tab-searches) are what those grids' scripts expect.
+    "seanchai": [
+        {"id": "projects", "label": "Projects", "template": "_tab_projects.html"},
+        {"id": "records",  "label": "Records",  "template": "_records_table.html"},
+        {"id": "searches", "label": "Searches", "template": "_searches_table.html"},
+    ],
 }
+
+_IMG_DIR = Path(__file__).parent.parent.parent.parent.parent / "static" / "img"
 _DEFAULT_TABS = [
     {"id": "projects", "label": "Projects", "template": "_tab_projects.html"}
 ]
@@ -137,6 +148,26 @@ async def _render_crew_dashboard_html(  # pylint: disable=too-many-arguments,too
     """
     lookups = await _fetch_lookups(db)
 
+    # The role's own id — new projects created on this dashboard belong to
+    # it (window.newRecordDefaults in crew.html).
+    role_rows = await db.fetch_all(
+        "SELECT id FROM identity.crew_role WHERE name = %s", (role,)
+    )
+    crew_role_id = role_rows[0]["id"] if role_rows else None
+
+    # Research-ledger lookups for the Seanchaí's Records grid
+    if role == "seanchai":
+        record_types = await _fetch_json_scalar(db, "SELECT api.list_record_types()", ())
+        record_statuses = await _fetch_json_scalar(
+            db, "SELECT api.list_record_statuses()", ()
+        )
+    else:
+        record_types = []
+        record_statuses = []
+
+    # Crew illustration; falls back to the Curator's until the role has one
+    hero_image = f"{role}.png" if (_IMG_DIR / f"{role}.png").exists() else "curator.png"
+
     # Fetch captain-only data
     if role == "captain":
         contacts = await _fetch_contacts(db)
@@ -151,6 +182,10 @@ async def _render_crew_dashboard_html(  # pylint: disable=too-many-arguments,too
     data = {
         "role": role,
         "role_title": role_meta["title"] if role_meta else role.title(),
+        "crew_role_id": crew_role_id,
+        "hero_image": hero_image,
+        "record_types": record_types or [],
+        "record_statuses": record_statuses or [],
         "theme": config.get("ui", "theme"),
         "records": records,
         "search": search,

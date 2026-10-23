@@ -123,7 +123,7 @@ async def save_new_project(
 ):
     """Insert a new project via api.save_project().
 
-    Accepts JSON body: {name, type_id, status_id, description}
+    Accepts JSON body: {name, type_id, status_id, description, crew_role_id}
     Returns the new project record as JSON on success (200).
     Returns {"success": false, "message": "...", "data": ...} (200) on
     failure — e.g. missing name, duplicate name. The message is
@@ -147,10 +147,15 @@ async def save_new_project(
 
     payload = {
         "name": name,
-        "description": description,
         "type": type_name,
         "status": status_name,
+        # Owning crew role; api.save_project defaults to the Captain
+        "crew_role_id": body.get("crew_role_id") or None,
     }
+    # Only send description when the caller sent it — the grid doesn't,
+    # and an absent key leaves the stored value alone.
+    if "description" in body:
+        payload["description"] = description
 
     return await call_proc_and_refetch(
         db,
@@ -170,7 +175,8 @@ async def save_project(
 ):
     """Save edits to an existing project via api.save_project().
 
-    Accepts JSON body: {name, type_id, status_id, description}
+    Accepts JSON body: {name, type_id, status_id, description, crew_role_id}
+    — description and crew_role_id are optional and left unchanged if absent.
     Returns the updated project record as JSON on success (200).
     Returns {"success": false, "message": "...", "data": ...} (200) on
     failure — e.g. missing name, duplicate name, project not found. data
@@ -195,10 +201,16 @@ async def save_project(
     payload = {
         "id": project_id,
         "name": name,
-        "description": description,
         "type": type_name,
         "status": status_name,
     }
+    # Only send fields the caller sent: api.save_project leaves absent
+    # fields unchanged. The projects grid sends name/type/status only;
+    # sending description=None from there used to blank it.
+    if "description" in body:
+        payload["description"] = description
+    if body.get("crew_role_id"):
+        payload["crew_role_id"] = body["crew_role_id"]
 
     return await call_proc_and_refetch(
         db,

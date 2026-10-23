@@ -1,0 +1,49 @@
+/* =============================================================================
+   Seanchaí Workspace — Plum #6b2d5c
+   ============================================================================= */
+
+.crew-card.seanchai {
+    background-color: #6b2d5c;
+    color: #ffffff;
+}
+
+.crew-card.seanchai h2 { color: #ffffff; }
+
+.crew-card.seanchai p { color: rgba(255,255,255,0.85); }
+
+.crew-card.seanchai:hover {
+    background-color: #561f49;
+    border-color: #8a4a7a;
+}
+
+.crew-section.seanchai .crew-header {
+    background-color: #6b2d5c;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.seanchai .crew-header h1 { color: #ffffff; }
+
+.crew-section.seanchai .crew-header .btn-back {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.seanchai .crew-header .btn-back:hover { color: #ffffff; }
+
+.crew-section.seanchai .records-table thead {
+    background-color: #561f49;
+    color: #ffffff;
+}
+
+.crew-section.seanchai .records-table tbody tr:hover { background-color: #faf5f9; }
+
+.crew-section.seanchai .records-table a { color: #8a4a7a; }
+
+.crew-section.seanchai .badge {
+    background-color: #f1e4ee;
+    color: #561f49;
+}

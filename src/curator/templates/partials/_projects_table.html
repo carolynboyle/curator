@@ -160,6 +160,11 @@ window.addEventListener('load', function () {
                 name:      data.name,
                 type_id:   data.type_id   || null,
                 status_id: data.status_id || null,
+                // New rows belong to this dashboard's crew role (crew.html);
+                // existing rows keep their owner (key omitted).
+                ...(isNew ? {
+                    crew_role_id: window.newRecordDefaults?.projects?.crew_role_id ?? null,
+                } : {}),
             }),
         });
 
