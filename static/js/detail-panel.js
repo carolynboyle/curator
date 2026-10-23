@@ -5,11 +5,12 @@
  * - Opening detail panel for existing records (⋯ button)
  * - Opening detail panel for new records (+ Add button)
  * - Closing panel on × / Alt+X / Escape
- * - Tab switching
- * - Save (Alt+S) — save and close (or save task and keep panel open)
+ * - Tab switching (Tasks tab loads its list lazily on first activate)
+ * - Save (Alt+S) — save and close; for tasks, swap back to project panel
  * - New  (Alt+N) — save current, open a fresh pre-filled form
- * - Discard (Alt+X) — discard and close (or discard task form)
+ * - Discard (Alt+X / Escape) — discard and close; for tasks, swap back to project
  * - Add (Alt+A) — open a new record from anywhere on the page
+ * - Alt+T — open/close the floating task-list popup (projects context)
  *
  * Hero image and detail panel occupy the same spot. Opening the panel
  * hides the hero (display:none) and shows the panel (display:flex).
@@ -22,10 +23,12 @@
  * has. Adding a new /crew entity requires no JS change; an entity whose
  * routes live elsewhere needs one line in ENTITY_ROUTES.
  *
- * Nested task form: the Tasks tab contains a Tabulator list and, below it,
- * a #task-form-container div. When that container is visible, getForm()
- * returns #task-form (the task form inside it) instead of #detail-form,
- * and Save/New/Discard operate on the task context rather than the project.
+ * Task full-panel swap: clicking a task in the list (or the popup) replaces
+ * the entire panel with the task edit form via fetchAndSwapPanel('tasks', id).
+ * Before swapping, openTaskPanel() stores panel.dataset.returnEntity and
+ * panel.dataset.returnId so handleSave()/handleDiscard() know to swap back
+ * to the project when done (returnToProject()). The Tasks tab is re-activated
+ * automatically and its list reloaded after a save.
  */
 
 // ---------------------------------------------------------------------------
@@ -38,17 +41,10 @@ function getPanel() {
 
 /**
  * Return whichever form is currently active.
- *
- * When #task-form-container is visible, the user is editing a task inside
- * the Tasks tab — return #task-form so Save/New/Discard act on the task.
- * Otherwise return #detail-form (the project/contact/etc. form as usual).
+ * With the full-panel-swap approach, both project and task editing use
+ * #detail-form — no special casing needed.
  */
 function getForm() {
-  const taskContainer = document.getElementById('task-form-container');
-  if (taskContainer && !taskContainer.hidden) {
-    const taskForm = taskContainer.querySelector('#task-form');
-    if (taskForm) return taskForm;
-  }
   return document.getElementById('detail-form');
 }
 
@@ -82,6 +78,20 @@ function resetToDetailsTab() {
 }
 
 /**
+ * Activate a named tab inside panel without a user click.
+ * Used by returnToProject() to switch to the Tasks tab after task save/discard.
+ */
+function activateTab(panel, tabName) {
+  if (!panel) return;
+  panel.querySelectorAll('.detail-tab-button').forEach(b => b.classList.remove('active'));
+  panel.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+  const btn  = panel.querySelector(`.detail-tab-button[data-tab="${tabName}"]`);
+  const pane = panel.querySelector(`.detail-tab-panel[data-tab="${tabName}"]`);
+  if (btn)  btn.classList.add('active');
+  if (pane) pane.classList.add('active');
+}
+
+/**
  * Bring the panel into view and put the cursor in the form.
  *
  * The panel renders below its grid, so on a long list (the seanchaí
@@ -105,6 +115,17 @@ function focusFirstField() {
 
   target.focus({ preventScroll: true });
   if (typeof target.select === 'function' && target.tagName !== 'SELECT') target.select();
+}
+
+/**
+ * Escape text for safe innerHTML insertion.
+ */
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**
@@ -159,37 +180,180 @@ async function fetchAndSwapPanel(entity, recordIdOrNew, params = {}) {
   }
 }
 
-/**
- * Fetch the lightweight task form fragment and render it inside
- * #task-form-container in the Tasks tab.
- *
- * taskIdOrNew: the task's numeric id, or the string 'new'
- * projectId:   the current project's id (for pre-filling hidden project_id)
- */
-async function fetchAndSwapTaskForm(taskIdOrNew, projectId = '') {
-  const container = document.getElementById('task-form-container');
-  if (!container) return false;
+// ---------------------------------------------------------------------------
+// Task list rendering
+// ---------------------------------------------------------------------------
 
-  const qs = (taskIdOrNew === 'new' && projectId)
-    ? `?project_id=${encodeURIComponent(projectId)}`
-    : '';
+/**
+ * Fetch the task list for a project and render it as a <ul> listbox
+ * inside `container`. Called lazily when the Tasks tab is first activated,
+ * or by returnToProject() after a task save to show the refreshed list.
+ *
+ * Handles both a raw JSON array response and `{data: [...]}` / `{records: [...]}`.
+ */
+export async function loadTaskList(projectId, container) {
+  if (!container || !projectId) return;
+  container.innerHTML = '<p class="task-list-empty">Loading…</p>';
 
   try {
-    const res = await fetch(`/panel/tasks/${taskIdOrNew}/nested${qs}`);
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    container.innerHTML = await res.text();
-    container.hidden = false;
-
-    // Focus the first editable field in the task form
-    const firstInput = container.querySelector(
-      'input:not([type=hidden]):not([readonly]), select, textarea:not([readonly])'
+    const res = await fetch(
+      `/api/query/tasks/for_project?params=${encodeURIComponent(projectId)}`
     );
-    if (firstInput) firstInput.focus();
-    return true;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const tasks = Array.isArray(data) ? data : (data.data ?? data.records ?? []);
+
+    if (tasks.length === 0) {
+      container.innerHTML = '<p class="task-list-empty">No tasks yet.</p>';
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'task-list';
+
+    tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'task-list-item';
+      li.dataset.id = task.id;
+      li.innerHTML = `
+        <span class="task-description" title="${escapeHtml(task.description)}">${escapeHtml(task.description || '(no description)')}</span>
+        <span class="task-badges">
+          ${task.status   ? `<span class="task-badge">${escapeHtml(task.status)}</span>`   : ''}
+          ${task.priority ? `<span class="task-badge">${escapeHtml(task.priority)}</span>` : ''}
+        </span>
+      `;
+      li.addEventListener('click', () => openTaskPanel(task.id, projectId));
+      ul.appendChild(li);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(ul);
   } catch (err) {
-    console.error('Could not fetch task form:', err);
-    return false;
+    console.error('Could not load task list:', err);
+    container.innerHTML = '<p class="task-list-empty">Could not load tasks.</p>';
   }
+}
+
+// ---------------------------------------------------------------------------
+// Task panel swap (full panel → task form → back)
+// ---------------------------------------------------------------------------
+
+/**
+ * Replace the entire panel body with a task's edit form (full panel swap).
+ *
+ * Before swapping, stores returnEntity/returnId on the panel so that
+ * handleSave() and handleDiscard() know to swap back to the project when done.
+ *
+ * taskIdOrNew — numeric task id, or the string 'new'
+ * projectId   — the project this task belongs to
+ */
+async function openTaskPanel(taskIdOrNew, projectId) {
+  const panel = getPanel();
+  if (!panel) return;
+
+  // Store return context before the swap overwrites panel HTML
+  panel.dataset.returnEntity = 'projects';
+  panel.dataset.returnId     = String(projectId);
+
+  const params = (taskIdOrNew === 'new' && projectId) ? { project_id: projectId } : {};
+  const ok = await fetchAndSwapPanel('tasks', taskIdOrNew, params);
+  if (!ok) return;
+
+  panel.dataset.entity = 'tasks';
+  panel.dataset.id     = taskIdOrNew === 'new' ? '' : String(taskIdOrNew);
+
+  closeTaskPopup();
+  focusFirstField();
+}
+
+/**
+ * Swap the panel back to the project after a task save or discard.
+ *
+ * forceReload: true  — always reload the task list (after a save)
+ *              false — reload only if the list hasn't been fetched yet
+ */
+async function returnToProject(entity, id, { forceReload = true } = {}) {
+  const panel = getPanel();
+  if (!panel) return;
+
+  const ok = await fetchAndSwapPanel(entity, id);
+  if (!ok) return;
+
+  panel.dataset.entity = entity;
+  panel.dataset.id     = String(id);
+  delete panel.dataset.returnEntity;
+  delete panel.dataset.returnId;
+
+  activateTab(panel, 'tasks');
+
+  // Reload the task list so it reflects any changes made
+  const tasksPane     = panel.querySelector('.detail-tab-panel[data-tab="tasks"]');
+  const listContainer = tasksPane?.querySelector('.task-list-container');
+  if (listContainer && (forceReload || !listContainer.querySelector('ul'))) {
+    loadTaskList(id, listContainer);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Floating task popup
+// ---------------------------------------------------------------------------
+
+/** Active document-level click handler — stored so closeTaskPopup can remove it. */
+let _popupClickHandler = null;
+
+function _removePopupClickHandler() {
+  if (_popupClickHandler) {
+    document.removeEventListener('click', _popupClickHandler, true);
+    _popupClickHandler = null;
+  }
+}
+
+/**
+ * Open (or toggle closed) the floating task-list popup anchored inside the panel.
+ * Alt+T and the "↗ Tasks" button in the tab bar both call this.
+ */
+function openTaskPopup(projectId) {
+  // Toggle: if already open, close it
+  if (document.getElementById('task-popup')) { closeTaskPopup(); return; }
+
+  const panel = getPanel();
+  if (!panel) return;
+
+  const popup = document.createElement('div');
+  popup.id        = 'task-popup';
+  popup.className = 'task-popup';
+  popup.innerHTML = `
+    <div class="task-popup-header">
+      <span class="task-popup-title">Tasks</span>
+      <button type="button" class="task-popup-add">+ New Task</button>
+    </div>
+    <div class="task-popup-body"></div>
+  `;
+  panel.appendChild(popup);
+
+  popup.querySelector('.task-popup-add').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openTaskPanel('new', projectId);
+  });
+
+  loadTaskList(projectId, popup.querySelector('.task-popup-body'));
+
+  // Close on any click outside the popup or its trigger button
+  _popupClickHandler = (e) => {
+    const p       = document.getElementById('task-popup');
+    const trigger = document.querySelector('.task-popup-trigger');
+    if (!p) { _removePopupClickHandler(); return; }
+    if (!p.contains(e.target) && !(trigger && trigger.contains(e.target))) {
+      closeTaskPopup();
+    }
+  };
+  // Defer so the click that opened the popup doesn't immediately close it
+  setTimeout(() => document.addEventListener('click', _popupClickHandler, true), 0);
+}
+
+function closeTaskPopup() {
+  document.getElementById('task-popup')?.remove();
+  _removePopupClickHandler();
 }
 
 // ---------------------------------------------------------------------------
@@ -200,16 +364,12 @@ async function fetchAndSwapTaskForm(taskIdOrNew, projectId = '') {
 // seanchaí ledger) are listed here with their own save base URL and the
 // window-level refresh hook their grid registers. Anything not listed
 // falls back to the /crew default, so existing entities are unaffected.
-//
-// tasks: /crew/tasks for saves; refresh hook is the task Tabulator inside
-// the Tasks tab. handleSave() handles the task-specific post-save behavior
-// (refresh task list, hide task form) directly rather than via refreshGridFor.
 // ---------------------------------------------------------------------------
 
 const ENTITY_ROUTES = {
   records:  { base: '/seanchai/records',  refresh: '_refreshRecordsGrid' },
   searches: { base: '/seanchai/searches', refresh: '_refreshSearchesGrid' },
-  tasks:    { base: '/crew/tasks',        refresh: 'refresh_tasks-datasheet' },
+  tasks:    { base: '/crew/tasks',        refresh: null }, // handled by returnToProject
 };
 
 function saveBaseFor(entity) {
@@ -218,7 +378,7 @@ function saveBaseFor(entity) {
 
 function refreshGridFor(entity) {
   const hook = ENTITY_ROUTES[entity]?.refresh ?? '_refreshProjectsGrid';
-  if (typeof window[hook] === 'function') window[hook]();
+  if (hook && typeof window[hook] === 'function') window[hook]();
 }
 
 // ---------------------------------------------------------------------------
@@ -287,21 +447,25 @@ async function handleSave() {
   _saving = true;
   try {
     const form   = getForm();
-    const isTask = form?.id === 'task-form';
+    const isTask = form?.dataset.entity === 'tasks';
+    const panel  = getPanel();
 
     const saved = await saveForm();
-    if (saved) {
-      if (isTask) {
-        // Refresh the task list and hide the task form.
-        // The project panel stays open — only the nested form closes.
-        const refresh = window['refresh_tasks-datasheet'];
-        if (typeof refresh === 'function') refresh();
-        const container = document.getElementById('task-form-container');
-        if (container) container.hidden = true;
+    if (!saved) return;
+
+    if (isTask) {
+      const returnEntity = panel?.dataset.returnEntity;
+      const returnId     = panel?.dataset.returnId;
+      if (returnEntity && returnId) {
+        // Swap back to project and show refreshed task list
+        await returnToProject(returnEntity, returnId, { forceReload: true });
       } else {
-        refreshGridFor(form?.dataset.entity);
+        // Standalone task (no return context) — just close
         hidePanel();
       }
+    } else {
+      refreshGridFor(form?.dataset.entity);
+      hidePanel();
     }
   } finally {
     _saving = false;
@@ -313,18 +477,16 @@ async function handleNew() {
   _saving = true;
   try {
     const form   = getForm();
-    const isTask = form?.id === 'task-form';
+    const isTask = form?.dataset.entity === 'tasks';
+    const panel  = getPanel();
 
     const saved = await saveForm();
     if (!saved) return;
 
     if (isTask) {
-      // Refresh the task list and open a blank new task form
-      const refresh = window['refresh_tasks-datasheet'];
-      if (typeof refresh === 'function') refresh();
-      const panel     = getPanel();
-      const projectId = panel?.dataset.id ?? '';
-      await fetchAndSwapTaskForm('new', projectId);
+      // Save task, then open a blank new task form for the same project
+      const projectId = panel?.dataset.returnId ?? '';
+      await openTaskPanel('new', projectId);
     } else {
       const entity = form?.dataset.entity;
       // Re-open a fresh blank panel rather than clearing inputs in place, so
@@ -338,13 +500,23 @@ async function handleNew() {
   }
 }
 
-function handleDiscard() {
-  // If the task form is open, close just that — keep the project panel open.
-  const taskContainer = document.getElementById('task-form-container');
-  if (taskContainer && !taskContainer.hidden) {
-    taskContainer.hidden = true;
-    return;
+async function handleDiscard() {
+  const form   = getForm();
+  const isTask = form?.dataset.entity === 'tasks';
+  const panel  = getPanel();
+
+  if (isTask) {
+    const returnEntity = panel?.dataset.returnEntity;
+    const returnId     = panel?.dataset.returnId;
+    if (returnEntity && returnId) {
+      // Swap back to project — nothing was saved, so no need to force-reload
+      // the list (but do load it lazily if it hasn't appeared yet)
+      await returnToProject(returnEntity, returnId, { forceReload: false });
+      return;
+    }
   }
+
+  closeTaskPopup();
   hidePanel();
 }
 
@@ -367,6 +539,8 @@ export async function openDetailPanel(entity, recordId) {
 
   panel.dataset.entity = entity;
   panel.dataset.id     = recordId;
+  delete panel.dataset.returnEntity;
+  delete panel.dataset.returnId;
 
   const form = getForm();
   if (form) {
@@ -399,6 +573,8 @@ export async function openNewRecordPanel(entity, params = {}) {
 
   panel.dataset.entity = entity;
   panel.dataset.id     = '';
+  delete panel.dataset.returnEntity;
+  delete panel.dataset.returnId;
 
   const form = getForm();
   if (form) {
@@ -415,6 +591,7 @@ export async function openNewRecordPanel(entity, params = {}) {
  * Close the detail panel and restore the hero image.
  */
 export function closeDetailPanel() {
+  closeTaskPopup();
   hidePanel();
 }
 
@@ -423,7 +600,7 @@ export function closeDetailPanel() {
 // ---------------------------------------------------------------------------
 
 export function initDetailPanel() {
-  // Tab switching
+  // Tab switching + lazy task list loading
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('detail-tab-button')) {
       const panel = e.target.closest('.detail-panel');
@@ -435,6 +612,14 @@ export function initDetailPanel() {
       const tabPanel = panel.querySelector(`.detail-tab-panel[data-tab="${targetTab}"]`);
       if (tabPanel) {
         tabPanel.classList.add('active');
+
+        // Lazy-load task list on first visit to the Tasks tab
+        if (targetTab === 'tasks') {
+          const listContainer = tabPanel.querySelector('.task-list-container');
+          const projectId     = listContainer?.dataset.projectId;
+          if (listContainer && projectId) loadTaskList(projectId, listContainer);
+        }
+
         // Tabulator initialises while the tab has display:none, so it measures
         // 0px height and renders nothing. Force a redraw once the tab is visible
         // and the browser has laid it out (setTimeout defers past the paint).
@@ -447,18 +632,25 @@ export function initDetailPanel() {
       }
     }
 
+    // Floating task-list popup toggle
+    if (e.target.classList.contains('task-popup-trigger')) {
+      const projectId = e.target.dataset.projectId || getPanel()?.dataset.id;
+      if (projectId) openTaskPopup(projectId);
+      return;
+    }
+
     if (e.target.classList.contains('detail-close-button')) handleDiscard();
 
-    // btn-save is type="submit" with form="detail-form" (or "task-form") so
-    // clicking it also triggers native form submission. Without preventDefault
-    // here, the browser's native GET-to-current-URL submission races the
-    // fetch() in handleSave() and wins, since nothing else stops it.
+    // btn-save is type="submit" with form="detail-form" so clicking it also
+    // triggers native form submission. Without preventDefault here, the
+    // browser's native GET-to-current-URL submission races the fetch() in
+    // handleSave() and wins, since nothing else stops it.
     if (e.target.classList.contains('btn-save')) {
       e.preventDefault();
       handleSave();
     }
-    if (e.target.classList.contains('btn-new'))             handleNew();
-    if (e.target.classList.contains('btn-discard'))         handleDiscard();
+    if (e.target.classList.contains('btn-new'))     handleNew();
+    if (e.target.classList.contains('btn-discard')) handleDiscard();
   });
 
   // Keyboard shortcuts
@@ -467,7 +659,7 @@ export function initDetailPanel() {
   // (the character produced). On macOS, Option+S produces "ß", Option+N
   // a dead key, Option+A "å", etc., so e.key === 's' never matched there.
   document.addEventListener('keydown', (e) => {
-    const panel = getPanel();
+    const panel     = getPanel();
     const panelOpen = panel?.classList.contains('active');
 
     // Alt+A — Add new record, from anywhere on the page.
@@ -485,21 +677,36 @@ export function initDetailPanel() {
 
     if (!panelOpen) return;
 
-    // Alt+S — Save and close (or save task and keep panel open)
-    if (e.altKey && e.code === 'KeyS') { e.preventDefault(); handleSave(); }
+    // Alt+S — Save and close (or save task and return to project)
+    if (e.altKey && e.code === 'KeyS') { e.preventDefault(); handleSave(); return; }
     // Alt+N — Save and new
-    if (e.altKey && e.code === 'KeyN') { e.preventDefault(); handleNew(); }
-    // Alt+X or Escape — Discard and close (or discard task form)
-    if ((e.altKey && e.code === 'KeyX') || e.key === 'Escape') { e.preventDefault(); handleDiscard(); }
+    if (e.altKey && e.code === 'KeyN') { e.preventDefault(); handleNew(); return; }
+
+    // Alt+T — Toggle floating task popup (projects context, or while editing a task)
+    if (e.altKey && e.code === 'KeyT') {
+      e.preventDefault();
+      const projectId = panel?.dataset.entity === 'tasks'
+        ? panel?.dataset.returnId
+        : panel?.dataset.id;
+      if (projectId) openTaskPopup(projectId);
+      return;
+    }
+
+    // Alt+X or Escape — Discard; if popup open, close popup first
+    if ((e.altKey && e.code === 'KeyX') || e.key === 'Escape') {
+      e.preventDefault();
+      if (document.getElementById('task-popup')) { closeTaskPopup(); return; }
+      handleDiscard();
+    }
   });
 
   // Safety net: catch any native form submission (e.g. pressing Enter in a
   // text input, which submits the nearest form by default browser behavior)
   // that isn't already intercepted by the btn-save click handler above.
   // Without this, Enter-to-submit falls back to a GET on the current URL
-  // with form fields as query params, identical to the btn-save race bug.
+  // with form fields as query params.
   document.addEventListener('submit', (e) => {
-    if (e.target.id === 'detail-form' || e.target.id === 'task-form') {
+    if (e.target.id === 'detail-form') {
       e.preventDefault();
       handleSave();
     }
@@ -507,12 +714,13 @@ export function initDetailPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// Expose for non-module scripts (e.g. _projects_table.html)
+// Expose for non-module scripts (e.g. _projects_table.html, inline scripts)
 // ---------------------------------------------------------------------------
-window.openDetailPanel      = openDetailPanel;
-window.openNewRecordPanel   = openNewRecordPanel;
-window.closeDetailPanel     = closeDetailPanel;
-window.fetchAndSwapTaskForm = fetchAndSwapTaskForm;
+window.openDetailPanel    = openDetailPanel;
+window.openNewRecordPanel = openNewRecordPanel;
+window.closeDetailPanel   = closeDetailPanel;
+window.openTaskPanel      = openTaskPanel;
+window.loadTaskList       = loadTaskList;
 
 // Initialize
 if (document.readyState === 'loading') {
