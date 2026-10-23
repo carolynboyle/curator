@@ -54,6 +54,10 @@
       <button class="task-popup-trigger"
               data-project-id="{{ record_id }}"
               title="Task list (Alt+T)">↗ Tasks</button>
+    {% elif entity == "tasks" %}
+      <button class="task-popup-trigger"
+              data-project-id="{{ record.get('project_id', '') }}"
+              title="Task list (Alt+T)">↗ Tasks</button>
     {% endif %}
     <button class="detail-close-button" aria-label="Close detail panel">×</button>
   </div>

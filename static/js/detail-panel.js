@@ -634,7 +634,9 @@ export function initDetailPanel() {
 
     // Floating task-list popup toggle
     if (e.target.classList.contains('task-popup-trigger')) {
-      const projectId = e.target.dataset.projectId || getPanel()?.dataset.id;
+      const _panel = getPanel();
+      const projectId = e.target.dataset.projectId
+        || (_panel?.dataset.entity === 'tasks' ? _panel?.dataset.returnId : _panel?.dataset.id);
       if (projectId) openTaskPopup(projectId);
       return;
     }
