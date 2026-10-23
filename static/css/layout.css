@@ -28,28 +28,33 @@ main.curator-main {
 }
 
 /* -- Landing page layout --------------------------------------------------- */
-/* Two columns: illustration + title on the left (a little wider), crew
-   cards stacked on the right. One column below 900px — see Responsive. */
+/* Wide: title centred across the top, then illustration (a little wider)
+   beside the stacked crew cards. One column below 900px — see Responsive. */
 
 .landing {
     display: grid;
     grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
-    gap: var(--spacing-2xl);
+    grid-template-areas:
+        "title title"
+        "image cards";
+    column-gap: var(--spacing-2xl);
+    row-gap: var(--spacing-xl);
     align-items: center;
     padding: var(--spacing-xl) 0;
 }
 
-.landing-intro {
+.landing-title {
+    grid-area: title;
     text-align: center;
 }
 
 .landing .hero-image {
+    grid-area: image;
     display: block;
     width: 100%;
     height: auto;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
-    margin-bottom: var(--spacing-lg);
 }
 
 .landing h1 {
@@ -65,6 +70,7 @@ main.curator-main {
 
 /* Cards as a vertical stack of full-width bars, text left-aligned */
 .landing .crew-cards {
+    grid-area: cards;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
@@ -121,11 +127,19 @@ main.curator-main {
 @media (max-width: 900px) {
     .landing {
         grid-template-columns: 1fr;
-        gap: var(--spacing-xl);
+        grid-template-areas:
+            "image"
+            "title"
+            "cards";
+        row-gap: var(--spacing-lg);
     }
 
     .landing .hero-image {
         max-width: 560px;
-        margin: 0 auto var(--spacing-lg);
+        margin: 0 auto;
+    }
+
+    .landing-title {
+        margin-bottom: var(--spacing-sm);
     }
 }

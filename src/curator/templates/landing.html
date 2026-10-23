@@ -4,14 +4,16 @@
 
 {% block content %}
 {#
-  Two columns on wide screens: the Curator illustration, title and
-  subtitle on the left; the crew cards stacked on the right. Collapses
-  to one column (image first) on narrow screens — see .landing in
-  static/css/layout.css.
+  Wide screens: title and subtitle centred across the top, then two
+  columns — the Curator illustration on the left, the crew cards stacked
+  on the right. Narrow screens: one column, image first, then the title,
+  then the cards. Placement is done with grid areas in .landing
+  (static/css/layout.css), so the markup order doesn't change.
 #}
 <section class="landing">
-    <div class="landing-intro">
-        <img src="/static/img/curator.png" alt="The Curator" class="hero-image">
+    <img src="/static/img/curator.png" alt="The Curator" class="hero-image">
+
+    <div class="landing-title">
         <h1>{{ site_title }}</h1>
         <p class="subtitle">{{ site_subtitle }}</p>
     </div>
