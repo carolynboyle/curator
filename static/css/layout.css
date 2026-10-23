@@ -38,7 +38,7 @@ main.curator-main {
         "title title"
         "image cards";
     column-gap: var(--spacing-2xl);
-    row-gap: var(--spacing-xl);
+    row-gap: calc(var(--spacing-2xl) + var(--spacing-md));  /* title to columns */
     align-items: center;
     padding: var(--spacing-xl) 0;
 }
@@ -57,15 +57,27 @@ main.curator-main {
     box-shadow: var(--shadow-lg);
 }
 
-.landing h1 {
-    font-size: 2rem;
-    margin-bottom: var(--spacing-sm);
+/* "Curator: Navigate the Project Crew" on one line — name large and bold,
+   tagline smaller and lighter, sharing a baseline; wraps centred on
+   narrow screens. */
+.landing-title h1 {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0 0.45em;
+    margin: 0;
 }
 
-.landing .subtitle {
+.landing-title-name {
+    font-size: 2.25rem;
+    font-weight: 700;
+}
+
+.landing-title-tagline {
+    font-size: 1.35rem;
+    font-weight: 400;
     color: var(--color-text-light);
-    font-size: 1.1rem;
-    margin: 0;
 }
 
 /* Cards as a vertical stack of full-width bars, text left-aligned */
@@ -119,8 +131,12 @@ main.curator-main {
         padding: var(--spacing-lg) var(--spacing-md);
     }
 
-    .landing h1 {
-        font-size: 1.5rem;
+    .landing-title-name {
+        font-size: 1.75rem;
+    }
+
+    .landing-title-tagline {
+        font-size: 1.1rem;
     }
 }
 
