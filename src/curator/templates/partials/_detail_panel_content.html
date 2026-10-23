@@ -59,6 +59,11 @@
   </div>
 </div>
 
+{% if entity == "tasks" %}
+  {% set task_label = "New Task" if not record_id else (record.get('description', '') or 'Edit Task') %}
+  <div class="panel-context-label">{{ task_label[:60] }}{% if task_label | length > 60 %}…{% endif %}</div>
+{% endif %}
+
 <!-- Tab content container -->
 <div class="detail-tab-panels">
 

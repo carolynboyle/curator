@@ -112,6 +112,17 @@
   color: var(--color-text);
 }
 
+/* Context label — shown for task panels: "New Task" or truncated description */
+.panel-context-label {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
 /* Tab panels container */
 .detail-tab-panels {
   flex: 1;
