@@ -433,7 +433,18 @@ export function initDetailPanel() {
       panel.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
       e.target.classList.add('active');
       const tabPanel = panel.querySelector(`.detail-tab-panel[data-tab="${targetTab}"]`);
-      if (tabPanel) tabPanel.classList.add('active');
+      if (tabPanel) {
+        tabPanel.classList.add('active');
+        // Tabulator initialises while the tab has display:none, so it measures
+        // 0px height and renders nothing. Force a redraw once the tab is visible
+        // and the browser has laid it out (setTimeout defers past the paint).
+        tabPanel.querySelectorAll('[id$="-datasheet"]').forEach(el => {
+          const tabu = window[`tabulator_${el.id}`];
+          if (tabu && typeof tabu.redraw === 'function') {
+            setTimeout(() => tabu.redraw(true), 0);
+          }
+        });
+      }
     }
 
     if (e.target.classList.contains('detail-close-button')) handleDiscard();
