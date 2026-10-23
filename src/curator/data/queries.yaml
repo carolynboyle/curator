@@ -9,6 +9,24 @@
 # params are passed as comma-separated string in the query string.
 
 # =============================================================================
+# PROJECT LINKS
+# =============================================================================
+
+project_links:
+  # Fetch all links for a project (embedded widget in project Details tab)
+  for_project:
+    type: select_all
+    sql: >
+      SELECT
+          id,
+          label::text,
+          url::text,
+          sort_order
+      FROM projects.project_links
+      WHERE project_id = %s
+      ORDER BY sort_order, id
+
+# =============================================================================
 # TASKS
 # =============================================================================
 

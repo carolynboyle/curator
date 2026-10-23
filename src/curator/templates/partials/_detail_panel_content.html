@@ -37,7 +37,6 @@
 
   {% if entity == "projects" %}
     <button class="detail-tab-button" data-tab="tasks">Tasks</button>
-    <button class="detail-tab-button" data-tab="links">Links</button>
     <button class="detail-tab-button" data-tab="contacts">Contacts</button>
   {% elif entity == "contacts" %}
     <button class="detail-tab-button" data-tab="emails">Emails</button>
@@ -78,6 +77,57 @@
         {% include "partials/_detail_form_fields.html" %}
       </div>
     </form>
+
+    {#
+      Links widget — embedded directly in the Details tab for projects
+      so the full project context (fields, notes, links) is visible in
+      one place without a tab switch.
+
+      Only rendered for existing project records (record_id is set).
+      New-record panels have no links to show and can't add them until
+      the project is saved (needs a project_id FK).
+    #}
+    {% if entity == "projects" and record_id %}
+    <div class="links-widget" id="links-widget-{{ record_id }}">
+      <div class="links-widget-header">Links</div>
+      <div class="links-widget-toolbar">
+        <button type="button" class="links-add-btn" title="Add a new link">+ Add</button>
+        <div class="links-slot">
+          <!-- Search state (default) -->
+          <div class="links-slot-search">
+            <input type="text"
+                   class="links-search-input"
+                   placeholder="Search links…"
+                   autocomplete="off">
+          </div>
+          <!-- Edit state (new or selected) -->
+          <div class="links-slot-edit" hidden>
+            <input type="text"
+                   class="links-edit-label"
+                   placeholder="Label (required)"
+                   autocomplete="off">
+            <input type="text"
+                   class="links-edit-url"
+                   placeholder="URL (optional)"
+                   autocomplete="off">
+            <div class="links-edit-actions">
+              <button type="button" class="links-save-btn">Save</button>
+              <button type="button" class="links-cancel-btn">Cancel</button>
+              <button type="button" class="links-delete-btn" hidden>Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="links-list" role="listbox" aria-label="Project links"></ul>
+    </div>
+
+    <script type="module">
+      window.initLinksWidget?.(
+        document.getElementById('links-widget-{{ record_id }}'),
+        '{{ record_id }}'
+      );
+    </script>
+    {% endif %}
   </div>
 
   <!-- ===== CHILD TABS (deferred) ===== -->
@@ -117,9 +167,6 @@
       </script>
     </div>
 
-    <div class="detail-tab-panel" data-tab="links">
-      <p class="tab-placeholder">Links — coming soon</p>
-    </div>
     <div class="detail-tab-panel" data-tab="contacts">
       <p class="tab-placeholder">Contacts — coming soon</p>
     </div>
