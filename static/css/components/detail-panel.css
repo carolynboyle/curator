@@ -36,6 +36,17 @@
   display: none;
 }
 
+/* Hide the tab bar and all grid panels while the detail panel is open */
+.crew-section.panel-open .tabs,
+.crew-section.panel-open .tab-panel {
+  display: none;
+}
+
+/* Give the panel more vertical room when grids are hidden */
+.crew-section.panel-open .detail-panel.active {
+  height: 620px;
+}
+
 /* Tab navigation bar */
 .detail-tabs {
   display: flex;

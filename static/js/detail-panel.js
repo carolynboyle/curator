@@ -52,18 +52,26 @@ function getHero() {
   return document.querySelector('.crew-header');
 }
 
+function getCrewSection() {
+  return document.querySelector('.crew-section');
+}
+
 function showPanel() {
-  const panel = getPanel();
-  const hero  = getHero();
-  if (panel) panel.classList.add('active');
-  if (hero)  hero.classList.add('hidden');
+  const panel   = getPanel();
+  const hero    = getHero();
+  const section = getCrewSection();
+  if (panel)   panel.classList.add('active');
+  if (hero)    hero.classList.add('hidden');
+  if (section) section.classList.add('panel-open');
 }
 
 function hidePanel() {
-  const panel = getPanel();
-  const hero  = getHero();
-  if (panel) panel.classList.remove('active');
-  if (hero)  hero.classList.remove('hidden');
+  const panel   = getPanel();
+  const hero    = getHero();
+  const section = getCrewSection();
+  if (panel)   panel.classList.remove('active');
+  if (hero)    hero.classList.remove('hidden');
+  if (section) section.classList.remove('panel-open');
 }
 
 function resetToDetailsTab() {
