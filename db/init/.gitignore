@@ -1,0 +1,3 @@
+# SQL files are fetched at install time by db/install.sh — not tracked in git.
+# The .gitkeep above keeps the directory itself in the repo.
+*.sql

@@ -1,0 +1,38 @@
+# Curator install configuration
+# ============================================================
+# 1. Copy this file:  cp install.conf.example install.conf
+# 2. Fill in values below (at minimum: the two passwords)
+# 3. Run:            bash db/install.sh
+#
+# install.conf is deleted automatically when the install
+# completes — its absence confirms setup is done.
+# Never commit install.conf to git: it contains secrets.
+# ============================================================
+
+
+# -- PostgreSQL ---------------------------------------------------------------
+# Database name and superuser created by the Postgres container on first start.
+POSTGRES_DB=wcyj
+POSTGRES_USER=steward
+POSTGRES_PASSWORD=
+
+# Password for the web_app_user role (lower-privilege app account).
+# Must match the value set in 06_api.sql — the install script sets this in .env;
+# 06_api.sql reads it from the environment when the container initialises.
+WEB_APP_USER_PASSWORD=
+
+
+# -- App ----------------------------------------------------------------------
+# Host port the app listens on. Defaults to 8080 if omitted.
+APP_PORT=8080
+
+
+# -- Install behaviour --------------------------------------------------------
+# Branch to fetch SQL files from in the steward repo.
+# Change this to test against a development branch.
+STEWARD_BRANCH=main
+
+# Set to true to run `docker compose up --build -d` after fetching SQL files.
+# Set to false (default) to fetch files only — start containers separately
+# once you have reviewed what was fetched.
+RUN_COMPOSE=false
