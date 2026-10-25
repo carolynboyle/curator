@@ -21,6 +21,9 @@
 
     - container_class (str, optional): Extra CSS class on the container div
     - container_id    (str, optional): HTML id on the container div
+    - breadcrumb      (str, optional): Path indicator shown flush-right,
+                      e.g. "Seanchaí › Records › PR-006". Set to '' or
+                      omit to suppress.
 
   Usage in a template — set variables first, then include:
 
@@ -55,5 +58,9 @@
       {{ action.label | safe }}
     </button>
   {% endfor %}
+
+  {% if breadcrumb %}
+  <span class="form-breadcrumb">{{ breadcrumb }}</span>
+  {% endif %}
 
 </div>

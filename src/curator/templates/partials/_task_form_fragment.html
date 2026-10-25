@@ -44,5 +44,6 @@
       {% include "partials/_detail_form_fields.html" %}
     </div>
   </form>
+  {% set breadcrumb = "Tasks › " ~ (record_id if record_id else "New") %}
   {% include 'partials/_form_actions.html' %}
 </div>

@@ -246,4 +246,33 @@
 </div>
 
 <!-- Action buttons: sticky footer -->
+{#
+  Breadcrumb indicator — shown flush-right in the action bar so the user
+  always knows which record they're editing.  Format:
+    "Seanchaí › Records › PR-006"   (existing record)
+    "Projects › New"                (new-record panel)
+#}
+{% if entity == "records" %}
+  {% set _bc_section = "Seanchaí › Records" %}
+  {% set _bc_id = record.get('record_id') or record_id %}
+{% elif entity == "searches" %}
+  {% set _bc_section = "Seanchaí › Searches" %}
+  {% set _bc_id = record.get('search_id') or record_id %}
+{% elif entity == "projects" %}
+  {% set _bc_section = "Projects" %}
+  {% set _bc_id = record.get('name') or record_id %}
+{% elif entity == "tasks" %}
+  {% set _bc_section = "Tasks" %}
+  {% set _bc_id = record_id %}
+{% elif entity == "contacts" %}
+  {% set _bc_section = "Contacts" %}
+  {% set _bc_id = record_id %}
+{% elif entity == "organizations" %}
+  {% set _bc_section = "Organizations" %}
+  {% set _bc_id = record_id %}
+{% else %}
+  {% set _bc_section = entity | title %}
+  {% set _bc_id = record_id %}
+{% endif %}
+{% set breadcrumb = _bc_section ~ " › " ~ (_bc_id if _bc_id else "New") %}
 {% include 'partials/_form_actions.html' %}
