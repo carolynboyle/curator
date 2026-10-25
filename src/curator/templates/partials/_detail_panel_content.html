@@ -263,7 +263,7 @@
   {% set _bc_id = record.get('name') or record_id %}
 {% elif entity == "tasks" %}
   {% set _bc_section = "Tasks" %}
-  {% set _bc_id = record_id %}
+  {% set _bc_id = (record.get('description', '') | truncate(40, True, '…')) if record.get('description') else (record_id or 'New') %}
 {% elif entity == "contacts" %}
   {% set _bc_section = "Contacts" %}
   {% set _bc_id = record_id %}
