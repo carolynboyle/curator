@@ -76,6 +76,33 @@ def _require_description(description: str):
 
 # -- Single task fetch (for detail panel) -------------------------------------
 
+@router.get("/crew/tasks/{task_id}/linked-records")
+async def get_task_linked_records(
+    task_id: int,
+    db: AsyncDBConnection = Depends(get_db),
+):
+    """Return seanchai records linked to a task via seanchai.task_records.
+
+    Calls api.get_task_linked_records(task_id) — returns a JSON array of
+    [{id, record_id, type_code, record_type, year, subject, county,
+      source_citation, source_url}] ordered by display_order then record_id.
+    Returns [] when the task has no linked records.
+
+    Used by the task detail panel to surface source records (and their
+    clickable source_url links) without requiring navigation to the Records
+    tab. Route must be declared before /crew/tasks/{task_id} so the path
+    segment 'linked-records' is not parsed as a task_id integer.
+    """
+    result = await _fetch_json_scalar(
+        db, "SELECT api.get_task_linked_records(%s)", (task_id,)
+    )
+    # api function returns a JSONB array; _fetch_json_scalar returns it as
+    # a Python list/None. Normalise to list so the JS always gets an array.
+    if result is None:
+        result = []
+    return JSONResponse(result)
+
+
 @router.get("/crew/tasks/{task_id}")
 async def get_task(
     task_id: int,

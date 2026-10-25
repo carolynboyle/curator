@@ -79,6 +79,58 @@
     </form>
 
     {#
+      Linked records widget — shows seanchai research records linked to
+      this task via seanchai.task_records, with clickable source_url links.
+      Read-only; populated by JS after the panel swaps in.
+      Only shown for existing tasks (record_id set) — new tasks have no links.
+    #}
+    {% if entity == "tasks" and record_id %}
+    <div class="linked-records-widget" id="linked-records-widget-{{ record_id }}"
+         data-task-id="{{ record_id }}">
+      <div class="linked-records-header">Linked Records</div>
+      <div class="linked-records-list">
+        <p class="linked-records-empty">Loading…</p>
+      </div>
+    </div>
+    <script>
+    (function () {
+      var widget = document.getElementById('linked-records-widget-{{ record_id }}');
+      if (!widget) return;
+      var list = widget.querySelector('.linked-records-list');
+      fetch('/crew/tasks/{{ record_id }}/linked-records')
+        .then(function (r) { return r.json(); })
+        .then(function (records) {
+          if (!records || records.length === 0) {
+            list.innerHTML = '<p class="linked-records-empty">No linked records.</p>';
+            return;
+          }
+          var html = '';
+          records.forEach(function (rec) {
+            var label = rec.record_id + (rec.subject ? ' — ' + rec.subject : '');
+            var meta  = [rec.type_code, rec.year, rec.county].filter(Boolean).join(' · ');
+            var link  = rec.source_url
+              ? '<a href="' + rec.source_url + '" target="_blank" rel="noopener" '
+                + 'class="linked-record-url" title="' + rec.source_url + '">↗</a>'
+              : '';
+            html += '<div class="linked-record-row">'
+                  +   '<div class="linked-record-main">'
+                  +     '<span class="linked-record-id">' + rec.record_id + '</span>'
+                  +     (rec.subject ? '<span class="linked-record-subject">' + rec.subject + '</span>' : '')
+                  +     link
+                  +   '</div>'
+                  +   (meta ? '<div class="linked-record-meta">' + meta + '</div>' : '')
+                  + '</div>';
+          });
+          list.innerHTML = html;
+        })
+        .catch(function () {
+          list.innerHTML = '<p class="linked-records-empty">Could not load linked records.</p>';
+        });
+    }());
+    </script>
+    {% endif %}
+
+    {#
       Links widget — embedded directly in the Details tab for projects
       so the full project context (fields, notes, links) is visible in
       one place without a tab switch.

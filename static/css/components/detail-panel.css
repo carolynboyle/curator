@@ -643,3 +643,96 @@ a.links-item-url:hover {
   font-size: 0.75rem;
   font-style: italic;
 }
+
+/* =========================================================================
+   Linked records widget — embedded in the task Details tab (read-only)
+   Shows seanchai research records linked via seanchai.task_records.
+   Mirrors .links-widget visual rhythm; no edit controls.
+   ========================================================================= */
+
+.linked-records-widget {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.linked-records-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-light);
+  margin-bottom: 0.5rem;
+  padding: 0 0.75rem;
+}
+
+.linked-records-list {
+  /* rows injected by JS */
+}
+
+.linked-records-empty {
+  padding: 0.5rem 0.75rem;
+  color: var(--color-text-light);
+  font-size: 0.8125rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.linked-record-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+}
+
+.linked-record-row:last-child {
+  border-bottom: none;
+}
+
+/* Main line: record_id + subject + external link icon */
+.linked-record-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.linked-record-id {
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.linked-record-subject {
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ↗ link icon — opens source_url in new tab */
+a.linked-record-url {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  line-height: 1;
+  text-decoration: none;
+  margin-left: auto;
+  padding-left: 0.25rem;
+}
+
+a.linked-record-url:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* Secondary line: type · year · county */
+.linked-record-meta {
+  color: var(--color-text-light);
+  font-size: 0.75rem;
+}
