@@ -158,8 +158,9 @@ bash db/install.sh                 # re-fetches SQL and rebuilds
 ```
 
 A re-runnable update path (diff-based fetch, `--force` flag, manifest
-tracking) is planned. See `docs/roadmap/TODO_STEWARD_TIDY_UP.md` →
-"Install script (curator)".
+tracking) is planned. An interactive guided install (with port-conflict
+detection and first-user creation) is also on the roadmap. See
+`docs/roadmap/TODO_INSTALL_SCRIPT_INTERACTIVE.md`.
 
 ---
 
