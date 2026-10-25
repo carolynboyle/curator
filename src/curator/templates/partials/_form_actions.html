@@ -21,9 +21,13 @@
 
     - container_class (str, optional): Extra CSS class on the container div
     - container_id    (str, optional): HTML id on the container div
-    - breadcrumb      (str, optional): Path indicator shown flush-right,
-                      e.g. "Seanchaí › Records › PR-006". Set to '' or
-                      omit to suppress.
+    - bc_entity       (str, optional): Entity key, e.g. "records", "tasks".
+                      Written as data-bc-entity; JS maps it to a display
+                      section label via CRUMB_SECTION.
+    - bc_label        (str, optional): Record display label, e.g. "PR-006"
+                      or a task description. Written as data-bc-label; JS
+                      assembles the full breadcrumb including project context
+                      for task panels.
 
   Usage in a template — set variables first, then include:
 
@@ -40,8 +44,10 @@
 #}
 
 <div class="form-actions {% if container_class %}{{ container_class }}{% endif %}"
-     {% if container_id %}id="{{ container_id }}"{% endif %}>
-  
+     {% if container_id %}id="{{ container_id }}"{% endif %}
+     data-bc-entity="{{ bc_entity | default('') }}"
+     data-bc-label="{{ bc_label | default('') }}">
+
   {% for action in actions %}
     <button
         type="{{ action.type }}"
@@ -59,8 +65,6 @@
     </button>
   {% endfor %}
 
-  {% if breadcrumb %}
-  <span class="form-breadcrumb">{{ breadcrumb }}</span>
-  {% endif %}
+  <span class="form-breadcrumb"></span>
 
 </div>

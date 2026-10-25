@@ -44,7 +44,7 @@
       {% include "partials/_detail_form_fields.html" %}
     </div>
   </form>
-  {% set _bc_task = (record.get('description', '') | truncate(40, True, '…')) if record.get('description') else (record_id or 'New') %}
-  {% set breadcrumb = "Tasks › " ~ _bc_task %}
+  {% set bc_entity = "tasks" %}
+  {% set bc_label = record.get('description', '') %}
   {% include 'partials/_form_actions.html' %}
 </div>

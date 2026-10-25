@@ -136,6 +136,66 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ---------------------------------------------------------------------------
+// Breadcrumb
+// ---------------------------------------------------------------------------
+
+/**
+ * Entity key → display section label.
+ * Entries with › are pre-composed (JS only appends the record label).
+ * The task entry is plain "Tasks" — openTaskPanel() prepends the project
+ * name separately via _bcProjectName when drilling in from a project panel.
+ */
+const CRUMB_SECTION = {
+  projects:      'Projects',
+  contacts:      'Contacts',
+  organizations: 'Organizations',
+  tasks:         'Tasks',
+  records:       'Seanchaí › Records',
+  searches:      'Seanchaí › Searches',
+};
+
+/**
+ * Project name captured just before openTaskPanel() replaces the panel.
+ * Lets task breadcrumbs read "FamilySearch Research › Tasks › …".
+ * Cleared by returnToProject(), openDetailPanel(), openNewRecordPanel().
+ */
+let _bcProjectName = null;
+
+/**
+ * Update the breadcrumb span in the currently rendered form-actions bar.
+ *
+ * Reads data-bc-entity and data-bc-label written by _form_actions.html,
+ * maps entity → section label via CRUMB_SECTION, prepends the stored
+ * project name for task panels, truncates long labels, and sets the
+ * textContent of the always-present .form-breadcrumb span.
+ *
+ * Safe to call after every fetchAndSwapPanel(); silently does nothing
+ * when no .form-actions bar is in the DOM.
+ */
+function updateBreadcrumb() {
+  const bar = document.querySelector('.form-actions');
+  if (!bar) return;
+
+  const entity = bar.dataset.bcEntity || '';
+  const label  = (bar.dataset.bcLabel || '').trim();
+
+  let section = CRUMB_SECTION[entity]
+    ?? (entity ? entity[0].toUpperCase() + entity.slice(1) : '');
+
+  // Task panels: prepend the project name captured in openTaskPanel()
+  if (entity === 'tasks' && _bcProjectName) {
+    section = _bcProjectName + ' › ' + section;
+  }
+
+  const MAX     = 40;
+  const display = label.length > MAX ? label.slice(0, MAX - 1) + '…' : label;
+  const crumb   = section + ' › ' + (display || 'New');
+
+  const span = bar.querySelector('.form-breadcrumb');
+  if (span) span.textContent = crumb;
+}
+
 /**
  * Fetch the full panel body HTML for one entity + record (or 'new')
  * and swap it into .detail-panel — tab bar, form, everything. Swapping
@@ -181,6 +241,7 @@ async function fetchAndSwapPanel(entity, recordIdOrNew, params = {}) {
       oldScript.replaceWith(newScript);
     });
 
+    updateBreadcrumb();
     return true;
   } catch (err) {
     console.error('Could not fetch panel content:', err);
@@ -263,6 +324,11 @@ async function openTaskPanel(taskIdOrNew, projectId) {
   panel.dataset.returnEntity = 'projects';
   panel.dataset.returnId     = String(projectId);
 
+  // Capture project name for task breadcrumb ("Project Name › Tasks › …").
+  // The current form-actions bar (project panel) holds it as data-bc-label.
+  const currentBar = document.querySelector('.form-actions');
+  _bcProjectName   = currentBar?.dataset.bcLabel?.trim() || null;
+
   const params = (taskIdOrNew === 'new' && projectId) ? { project_id: projectId } : {};
   const ok = await fetchAndSwapPanel('tasks', taskIdOrNew, params);
   if (!ok) return;
@@ -286,6 +352,8 @@ async function returnToProject(entity, id, { forceReload = true } = {}) {
 
   const ok = await fetchAndSwapPanel(entity, id);
   if (!ok) return;
+
+  _bcProjectName = null;   // task drill-in context no longer applies
 
   panel.dataset.entity = entity;
   panel.dataset.id     = String(id);
@@ -542,6 +610,8 @@ export async function openDetailPanel(entity, recordId) {
   const panel = getPanel();
   if (!panel) return;
 
+  if (entity !== 'tasks') _bcProjectName = null;
+
   const ok = await fetchAndSwapPanel(entity, recordId);
   if (!ok) return;
 
@@ -574,6 +644,8 @@ export async function openDetailPanel(entity, recordId) {
 export async function openNewRecordPanel(entity, params = {}) {
   const panel = getPanel();
   if (!panel) return;
+
+  if (entity !== 'tasks') _bcProjectName = null;
 
   const defaults = window.newRecordDefaults?.[entity] ?? {};
   const ok = await fetchAndSwapPanel(entity, 'new', { ...defaults, ...params });
