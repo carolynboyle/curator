@@ -68,6 +68,7 @@ fi
 
 STEWARD_BRANCH="${STEWARD_BRANCH:-main}"
 RUN_COMPOSE="${RUN_COMPOSE:-false}"
+APP_HOST="${APP_HOST:-}"
 
 
 # ---- Write .env --------------------------------------------------------------
@@ -84,6 +85,7 @@ POSTGRES_USER=$POSTGRES_USER
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 WEB_APP_USER_PASSWORD=$WEB_APP_USER_PASSWORD
 APP_PORT=$APP_PORT
+APP_HOST=$APP_HOST
 EOF
 
 echo "  .env written."

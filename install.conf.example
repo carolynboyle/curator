@@ -26,6 +26,11 @@ WEB_APP_USER_PASSWORD=
 # Host port the app listens on. Defaults to 8080 if omitted.
 APP_PORT=8080
 
+# Host IP to bind to. Defaults to 0.0.0.0 (all interfaces) if omitted.
+# On a VPS accessible via Tailscale only, set this to the Tailscale IP
+# (e.g. 100.64.0.1) to prevent the app from being reachable on the public interface.
+APP_HOST=
+
 
 # -- Install behaviour --------------------------------------------------------
 # Branch to fetch SQL files from in the steward repo.
