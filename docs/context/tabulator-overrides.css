@@ -1,0 +1,130 @@
+/* ============================================================
+   tabulator-overrides.css — Compact pgAdmin-style datasheet
+   Loaded AFTER tabulator_simple.min.css to win specificity.
+   Targets Tabulator's real DOM classes (divs, not <table>).
+   ============================================================ */
+
+/* ---- Grid container ----------------------------------------------- */
+
+.tabulator {
+    border: 1px solid var(--color-border, #d1d5db);
+    font-size: 0.875rem;
+    background: var(--color-surface, #fff);
+}
+
+/* ---- Header row ---------------------------------------------------- */
+
+.tabulator .tabulator-header {
+    border-bottom: 2px solid var(--color-border, #d1d5db);
+    background: var(--color-lighter, #f3f4f6);
+    font-weight: 600;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    background: var(--color-lighter, #f3f4f6);
+    border-right: 1px solid var(--color-border, #d1d5db);
+}
+
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+    padding: 4px 8px;
+}
+
+/* ---- Data rows — compact ------------------------------------------ */
+
+.tabulator .tabulator-row {
+    min-height: 26px;
+    border-bottom: 1px solid var(--color-light, #e5e7eb);
+}
+
+.tabulator .tabulator-row .tabulator-cell {
+    padding: 3px 8px;
+    border-right: 1px solid var(--color-light, #e5e7eb);
+    height: 26px;
+    line-height: 20px;
+}
+
+.tabulator .tabulator-row:hover {
+    background: var(--color-lighter, #f3f4f6);
+}
+
+/* Alternating row stripes — pgAdmin style */
+.tabulator .tabulator-row.tabulator-row-even {
+    background: var(--color-surface, #fff);
+}
+
+.tabulator .tabulator-row.tabulator-row-odd {
+    background: #fafafa;
+}
+
+/* ---- Header filter (search box) — flatten Pico's styling ---------- */
+
+.tabulator .tabulator-header-filter input,
+.tabulator .tabulator-header-filter select {
+    width: 100%;
+    padding: 2px 6px;
+    margin: 0;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 0;
+    font-size: 0.85rem;
+    font-family: inherit;
+    height: auto;
+    box-shadow: none;
+    background: var(--color-surface, #fff);
+}
+
+/* ---- Cell editors — flat, flush with cell ------------------------- */
+
+.tabulator .tabulator-cell .tabulator-cell-editing input,
+.tabulator .tabulator-cell .tabulator-cell-editing select,
+.tabulator .tabulator-cell input,
+.tabulator .tabulator-cell select {
+    border: none;
+    border-radius: 0;
+    padding: 2px 6px;
+    margin: 0;
+    font-size: 0.85rem;
+    font-family: inherit;
+    height: auto;
+    box-shadow: none;
+    background: var(--color-surface, #fff);
+    outline: 2px solid var(--color-primary, #0f766e);
+    outline-offset: -2px;
+}
+
+/* ---- Editing cell highlight --------------------------------------- */
+
+.tabulator .tabulator-cell.tabulator-editing {
+    border: none;
+    padding: 0;
+}
+
+/* ---- Detail / add icon buttons ------------------------------------ */
+
+.tabulator .detail-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    font-size: 1rem;
+    color: currentColor;
+    opacity: 0.5;
+}
+
+.tabulator .detail-icon:hover:not(:disabled) {
+    opacity: 1;
+}
+
+.tabulator .add-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0 0.3rem 0 0;
+    color: currentColor;
+    opacity: 0.6;
+}
+
+.tabulator .add-icon:hover {
+    opacity: 1;
+}

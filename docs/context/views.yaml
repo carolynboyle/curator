@@ -1,0 +1,74 @@
+# viewkit test fixture
+# Mirrors the shape of a real Curator views.yaml without coupling to it.
+
+projects:
+  title: "Projects"
+  columns:
+    - name: name
+      label: "Project"
+      link: true
+      sortable: true
+    - name: status
+      label: "Status"
+    - name: project_type
+      label: "Type"
+    - name: open_tasks
+      label: "Open Tasks"
+      truncate: 6
+  fields:
+    - name: name
+      label: "Name"
+      type: text
+      required: true
+      placeholder: "My Project"
+    - name: slug
+      label: "Slug"
+      type: text
+      required: true
+      readonly: true
+      help_text: "Auto-generated from name. Not editable after creation."
+    - name: description
+      label: "Description"
+      type: textarea
+    - name: status_id
+      label: "Status"
+      type: select
+      source: project_status
+      required: true
+    - name: type_id
+      label: "Type"
+      type: select
+      source: project_type
+    - name: parent_id
+      label: "Parent Project"
+      type: select
+      source: projects
+    - name: target_date
+      label: "Target Date"
+      type: date
+
+tasks:
+  title: "Tasks"
+  columns:
+    - name: description
+      label: "Task"
+      link: true
+    - name: status
+      label: "Status"
+    - name: priority
+      label: "Priority"
+  fields:
+    - name: description
+      label: "Description"
+      type: textarea
+      required: true
+    - name: status_id
+      label: "Status"
+      type: select
+      source: task_status
+      required: true
+    - name: priority_id
+      label: "Priority"
+      type: select
+      source: priority
+      required: true

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role_title }} — Curator{% endblock %}
+
+{% block content %}
+<section class="crew-section {{ role }}">
+
+    {% with
+        role=role,
+        hero_image=role + ".png",
+        title=role_title,
+        show_back=true
+    %}
+        {% include "_crew_header.html" %}
+    {% endwith %}
+
+    {% include "_projects_table.html" %}
+
+</section>
+
+<!-- Embed lookups as data for access in partials -->
+<script>
+    window.projectTypes = {{ project_types | tojson }};
+    window.projectStatuses = {{ project_statuses | tojson }};
+</script>
+{% endblock %}

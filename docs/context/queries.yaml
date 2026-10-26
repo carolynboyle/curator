@@ -1,0 +1,51 @@
+# viewkit test fixture
+# Mirrors the shape of a real queries.yaml without coupling to
+# any specific application's schema.
+
+projects:
+  get_all:
+    type: select_all
+    sql: "SELECT * FROM v_projects ORDER BY name"
+
+  get_all_by_status:
+    type: select_all
+    sql: >
+      SELECT * FROM v_projects
+      WHERE status = %s
+      ORDER BY name
+
+  get_by_slug:
+    type: select_one
+    sql: "SELECT * FROM v_projects WHERE slug = %s"
+
+  slug_exists:
+    type: select_scalar
+    sql: "SELECT EXISTS (SELECT 1 FROM projects WHERE slug = %s)"
+
+  create:
+    type: execute
+    sql: >
+      INSERT INTO projects (name, slug, description, status_id, type_id, parent_id)
+      VALUES (%s, %s, %s, %s, %s, %s)
+
+  delete:
+    type: execute
+    sql: "DELETE FROM projects WHERE slug = %s"
+
+tasks:
+  get_by_id:
+    type: select_one
+    sql: "SELECT * FROM v_tasks WHERE id = %s"
+
+  get_child_count:
+    type: select_scalar
+    sql: "SELECT COUNT(*) FROM tasks WHERE parent_id = %s"
+
+  create:
+    type: select_scalar
+    sql: >
+      INSERT INTO tasks
+          (project_id, parent_id, description, status_id, priority_id,
+           links, source_file, sort_order)
+      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+      RETURNING id
