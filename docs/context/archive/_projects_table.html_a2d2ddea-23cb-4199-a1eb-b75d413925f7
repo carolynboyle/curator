@@ -1,0 +1,414 @@
+<div class="crew-content">
+    <div class="datasheet-toolbar">
+        <button class="add-icon" id="add-project-btn" title="Add project">+ Add Project</button>
+    </div>
+    <div id="projects-grid"></div>
+</div>
+
+<script>
+window.addEventListener('load', function () {
+
+    // -------------------------------------------------------------------------
+    // Dirty row tracking
+    // -------------------------------------------------------------------------
+    let dirtyRow = null;
+    let originalValues = {};
+    let pendingAction = null;
+
+    function snapshot(row) {
+        const d = row.getData();
+        return { name: d.name, type_id: d.type_id, status_id: d.status_id };
+    }
+
+    function isDirty(row) {
+        if (!dirtyRow) return false;
+        const d = row.getData();
+        return (
+            String(d.name      || '') !== String(originalValues.name      || '') ||
+            String(d.type_id   || '') !== String(originalValues.type_id   || '') ||
+            String(d.status_id || '') !== String(originalValues.status_id || '')
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Row selection
+    // -------------------------------------------------------------------------
+    let selectedRows = new Set();
+
+    function setRowSelected(row, selected) {
+        const el = row.getElement();
+        if (selected) {
+            selectedRows.add(row);
+            el.classList.add('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = true;
+        } else {
+            selectedRows.delete(row);
+            el.classList.remove('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = false;
+        }
+        updateSelectAllCheckbox();
+    }
+
+    function updateSelectAllCheckbox() {
+        const allCb = document.getElementById('select-all-checkbox');
+        if (!allCb) return;
+        const rows = table.getRows();
+        const allChecked = rows.length > 0 && rows.every(r => selectedRows.has(r));
+        allCb.checked = allChecked;
+        allCb.indeterminate = !allChecked && selectedRows.size > 0;
+    }
+
+    function clearSelection() {
+        selectedRows.forEach(row => {
+            const el = row.getElement();
+            el.classList.remove('row-selected');
+            const cb = el.querySelector('.row-checkbox');
+            if (cb) cb.checked = false;
+        });
+        selectedRows.clear();
+        updateSelectAllCheckbox();
+    }
+
+    // -------------------------------------------------------------------------
+    // Clipboard copy — tries modern API first, falls back to execCommand.
+    // Works on HTTP, HTTPS, and localhost with no permission dialog.
+    // -------------------------------------------------------------------------
+    function copySelectionToClipboard() {
+        if (selectedRows.size === 0) return;
+        const lines = [];
+        table.getRows().forEach(row => {
+            if (!selectedRows.has(row)) return;
+            const d = row.getData();
+            const name   = d.name                    || '';
+            const type   = typeValues[d.type_id]     || '';
+            const status = statusValues[d.status_id] || '';
+            lines.push([name, type, status].join('\t'));
+        });
+        const text = lines.join('\n');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(() => _execCommandCopy(text));
+        } else {
+            _execCommandCopy(text);
+        }
+    }
+
+    function _execCommandCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (err) { /* nothing we can do */ }
+        document.body.removeChild(ta);
+    }
+
+    // -------------------------------------------------------------------------
+    // Save/Discard dialog
+    // -------------------------------------------------------------------------
+    const dialog = document.getElementById('datasheet-dialog');
+
+    dialog.querySelector('.ds-dialog-save').addEventListener('click', () => {
+        dialog.close();
+        if (pendingAction) { pendingAction.onSave(); pendingAction = null; }
+    });
+
+    dialog.querySelector('.ds-dialog-discard').addEventListener('click', () => {
+        dialog.close();
+        if (pendingAction) { pendingAction.onDiscard(); pendingAction = null; }
+    });
+
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.close();
+            if (pendingAction) { pendingAction.onDiscard(); pendingAction = null; }
+        }
+    });
+
+    function showDialog(onSave, onDiscard) {
+        pendingAction = { onSave, onDiscard };
+        dialog.showModal();
+    }
+
+    // -------------------------------------------------------------------------
+    // Save a row to the server
+    // -------------------------------------------------------------------------
+    async function saveRow(row) {
+        const data = row.getData();
+        const isNew = !data.id;
+
+        // Don't save a new row with no name — just delete it
+        if (isNew && !data.name) {
+            row.delete();
+            dirtyRow = null;
+            originalValues = {};
+            return true;
+        }
+
+        const url = isNew
+            ? `/crew/projects/save`
+            : `/crew/projects/${data.id}/save`;
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name:      data.name,
+                type_id:   data.type_id   || null,
+                status_id: data.status_id || null,
+            }),
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+            alert(err.detail || 'Save failed');
+            return false;
+        }
+
+        // Response is JSON — update row with server values (id, timestamps, etc.)
+        const saved = await resp.json();
+        row.update(saved);
+
+        dirtyRow = null;
+        originalValues = {};
+        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // Attempt to leave a dirty row
+    // -------------------------------------------------------------------------
+    function attemptLeave(row, onProceed) {
+        if (!dirtyRow || !isDirty(row)) {
+            if (dirtyRow) dirtyRow.update(originalValues);
+            dirtyRow = null;
+            originalValues = {};
+            onProceed();
+            return;
+        }
+        showDialog(
+            async () => { const saved = await saveRow(dirtyRow); if (saved) onProceed(); },
+            () => {
+                if (dirtyRow) dirtyRow.update(originalValues);
+                dirtyRow = null;
+                originalValues = {};
+                onProceed();
+            }
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Lookup maps
+    // -------------------------------------------------------------------------
+    const typeValues = (window.projectTypes || []).reduce((acc, t) => {
+        acc[t.id] = t.name; return acc;
+    }, {});
+
+    const statusValues = (window.projectStatuses || []).reduce((acc, s) => {
+        acc[s.id] = s.name; return acc;
+    }, {});
+
+    // -------------------------------------------------------------------------
+    // Tabulator init
+    // -------------------------------------------------------------------------
+    const table = new Tabulator('#projects-grid', {
+        ajaxURL: '/crew',
+        ajaxParams: { role: '{{ role }}' },
+        ajaxConfig: { headers: { 'Accept': 'application/json' } },
+        filterMode: 'local',
+        ajaxResponse: function(url, params, response) {
+            return response.records || response;
+        },
+        layout: 'fitColumns',
+        height: 'auto',
+        placeholder: 'No projects found.',
+        editTriggerEvent: 'dblclick',
+
+        cellEditing: function(cell) {
+            const row = cell.getRow();
+            if (dirtyRow && dirtyRow !== row) {
+                cell.cancelEdit();
+                attemptLeave(dirtyRow, () => {
+                    dirtyRow = row;
+                    originalValues = snapshot(row);
+                    setTimeout(() => cell.edit(), 50);
+                });
+                return;
+            }
+            if (!dirtyRow) {
+                dirtyRow = row;
+                originalValues = snapshot(row);
+            }
+        },
+
+        // cellEdited fires when the user confirms an edit (Enter or click away)
+        // Auto-save immediately — no separate Save button needed for grid rows
+        cellEdited: async function(cell) {
+            const row = cell.getRow();
+            dirtyRow = row; // ensure dirtyRow is set even if cellEditing was skipped
+            await saveRow(row);
+            // Refresh the detail icon cell so ⋯ un-dims after new row gets an id
+            row.reformat();
+        },
+
+        rowClick: function(e, row) {
+            if (e.target.classList.contains('row-checkbox')) return;
+            if (e.target.classList.contains('detail-icon')) return;
+            if (dirtyRow && dirtyRow !== row) {
+                attemptLeave(dirtyRow, () => {});
+                return;
+            }
+            if (selectedRows.has(row)) {
+                setRowSelected(row, false);
+            } else {
+                setRowSelected(row, true);
+            }
+        },
+
+        columns: [
+            // Checkbox column (left)
+            {
+                field: 'select',
+                title: '<input type="checkbox" id="select-all-checkbox" title="Select all">',
+                width: 32,
+                minWidth: 32,
+                resizable: false,
+                headerSort: false,
+                cssClass: 'col-select',
+                headerClick: function() {
+                    const allCb = document.getElementById('select-all-checkbox');
+                    if (allCb && allCb.checked) {
+                        clearSelection();
+                    } else {
+                        table.getRows().forEach(r => setRowSelected(r, true));
+                        copySelectionToClipboard();
+                    }
+                },
+                formatter: function() {
+                    return '<input type="checkbox" class="row-checkbox" title="Select row">';
+                },
+                cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    const row = cell.getRow();
+                    if (selectedRows.has(row)) {
+                        setRowSelected(row, false);
+                    } else {
+                        setRowSelected(row, true);
+                    }
+                },
+            },
+
+            // Name column
+            {
+                field: 'name',
+                title: 'Name',
+                editor: 'input',
+                headerFilter: 'input',
+                headerFilterPlaceholder: 'Search projects...',
+                headerFilterLiveFilter: true,
+                headerFilterFunc: 'like',
+                widthGrow: 3,
+            },
+
+            // Type column
+            {
+                field: 'type_id',
+                title: 'Type',
+                editor: 'list',
+                editorParams: { values: typeValues, clearable: true },
+                formatter: function(cell) {
+                    const val = cell.getValue();
+                    return val ? (typeValues[val] || '—') : '—';
+                },
+                widthGrow: 1,
+            },
+
+            // Status column
+            {
+                field: 'status_id',
+                title: 'Status',
+                editor: 'list',
+                editorParams: { values: statusValues, clearable: true },
+                formatter: function(cell) {
+                    const val = cell.getValue();
+                    return val ? (statusValues[val] || '—') : '—';
+                },
+                widthGrow: 1,
+            },
+
+            // Detail icon column (right)
+            {
+                field: 'detail',
+                title: '',
+                width: 36,
+                minWidth: 36,
+                resizable: false,
+                headerSort: false,
+                cssClass: 'col-detail',
+                formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    const disabled = id ? '' : 'style="opacity:0.3;cursor:default"';
+                    const title = id ? 'Project details' : 'Save record first';
+                    return `<button class="detail-icon" title="${title}" ${disabled}>⋯</button>`;
+                },
+
+                cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    const id = cell.getRow().getData().id;
+                    if (!id) return; // unsaved row — silently ignore
+                    window.openDetailPanel('projects', id);
+                },
+            },
+        ],
+    });
+
+    // + Add Project button (lives outside Tabulator to avoid sort-trigger conflicts)
+    document.getElementById('add-project-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const addRow = () => table.addRow(
+            { id: null, name: '', type_id: null, status_id: null }, true
+        );
+        if (dirtyRow) { attemptLeave(dirtyRow, addRow); } else { addRow(); }
+    });
+
+    // Ctrl+C — copy selected rows
+    // Escape — cancel new empty row, discard dirty row, or clear selection
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedRows.size > 0) {
+            e.preventDefault();
+            copySelectionToClipboard();
+        }
+        if (e.key === 'Escape') {
+            if (dirtyRow) {
+                e.preventDefault();
+                const data = dirtyRow.getData();
+                const isNew = !data.id;
+                if (isNew) {
+                    // Empty new row — just remove it, no dialog needed
+                    dirtyRow.delete();
+                    dirtyRow = null;
+                    originalValues = {};
+                } else {
+                    // Existing dirty row — show Save/Discard dialog
+                    attemptLeave(dirtyRow, () => {});
+                }
+            } else if (selectedRows.size > 0) {
+                clearSelection();
+            }
+        }
+    });
+
+    // Click outside grid — dirty check + clear selection
+    document.addEventListener('click', (e) => {
+        const grid = document.getElementById('projects-grid');
+        if (grid.contains(e.target)) return;
+        if (dialog.contains(e.target)) return;
+        if (dirtyRow) attemptLeave(dirtyRow, () => {});
+        clearSelection();
+    });
+
+});
+</script>

@@ -1,0 +1,11 @@
+{% for record in records %}
+<tr>
+    <td>{{ record["name"] }}</td>
+    <td>{{ record["type"] or "—" }}</td>
+    <td>{{ record["status"] }}</td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="3">No projects found.</td>
+</tr>
+{% endfor %}

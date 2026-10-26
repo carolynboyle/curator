@@ -1,0 +1,16 @@
+<tr class="crew-row-display"
+    data-id="{{ record.id }}"
+    data-name="{{ record.name }}"
+    data-type-id="{{ record.type_id or '' }}"
+    data-status-id="{{ record.status_id or '' }}">
+    <td class="icon-col">
+        <button
+            class="detail-icon"
+            title="Project details"
+            disabled
+        >⋯</button>
+    </td>
+    <td data-field="name">{{ record["name"] }}</td>
+    <td data-field="type_id" data-value="{{ record['type_id'] or '' }}">{{ record["type"] or "—" }}</td>
+    <td data-field="status_id" data-value="{{ record['status_id'] or '' }}">{{ record["status"] or "—" }}</td>
+</tr>

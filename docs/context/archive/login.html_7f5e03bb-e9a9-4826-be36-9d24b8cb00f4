@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_title | default("Curator") }} — Login</title>
+
+    <!-- Curator base styles -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+
+    <!-- Component styles -->
+    <link rel="stylesheet" href="/static/css/components/navbar.css">
+    <link rel="stylesheet" href="/static/css/components/card.css">
+    <link rel="stylesheet" href="/static/css/components/forms.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+
+    <!-- Theme -->
+    <link rel="stylesheet" href="/static/css/themes/{{ theme | default('light') }}.css">
+
+    <style>
+        /* Login dialog — scoped here, not in a separate file until design is final */
+        #login-dialog {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        #login-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(2px);
+        }
+
+        .login-dialog-inner {
+            padding: 2rem;
+        }
+
+        .login-dialog-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-dialog-header .login-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .login-dialog-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-text-primary, #1e293b);
+        }
+
+        .login-dialog-header p {
+            margin: 0.25rem 0 0;
+            font-size: 0.875rem;
+            color: var(--color-text-muted, #64748b);
+        }
+
+        .login-field {
+            margin-bottom: 1rem;
+        }
+
+        .login-field label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.375rem;
+            color: var(--color-text-primary, #1e293b);
+        }
+
+        .login-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--color-border, #cbd5e1);
+            border-radius: 0.375rem;
+            font-size: 0.9375rem;
+            background: var(--color-surface, #fff);
+            color: var(--color-text-primary, #1e293b);
+        }
+
+        .login-field input:focus {
+            outline: 2px solid var(--color-teal, #0f766e);
+            outline-offset: 1px;
+            border-color: var(--color-teal, #0f766e);
+        }
+
+        .login-remember {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            color: var(--color-text-secondary, #475569);
+        }
+
+        .login-remember input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            accent-color: var(--color-teal, #0f766e);
+        }
+
+        .login-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.375rem;
+            padding: 0.625rem 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #991b1b;
+        }
+
+        .login-submit {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            background: var(--color-teal, #0f766e);
+            color: #fff;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .login-submit:hover {
+            background: var(--color-teal-dark, #0d5f58);
+        }
+
+        .login-submit:focus {
+            outline: 2px solid var(--color-teal, #0f766e);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login dialog — opens automatically; cannot be dismissed without logging in -->
+    <dialog id="login-dialog">
+        <div class="login-dialog-inner">
+            <div class="login-dialog-header">
+                <span class="login-icon">{{ site_icon | default("🎭") }}</span>
+                <h2>{{ site_title | default("Curator") }}</h2>
+                <p>Sign in to continue</p>
+            </div>
+
+            {% if error %}
+            <div class="login-error" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="/auth/login">
+                <div class="login-field">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        autocomplete="username"
+                        autofocus
+                        required
+                    >
+                </div>
+
+                <div class="login-field">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <label class="login-remember">
+                    <input type="checkbox" name="remember_me" value="true">
+                    Remember me for 30 days
+                </label>
+
+                <button type="submit" class="login-submit">Sign in</button>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- Background — landing page sits behind dialog -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span>{{ site_icon | default("🎭") }} {{ site_title | default("Curator") }}</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="curator-main">
+        <!-- Intentionally empty — dialog is the only interaction point -->
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Project Crew. All hands on deck.</p>
+    </footer>
+
+    <script>
+        // Open dialog immediately on page load — cannot be dismissed
+        // showModal() ensures backdrop renders and ESC key is blocked below
+        document.getElementById('login-dialog').showModal();
+
+        // Prevent ESC from closing the login dialog
+        document.getElementById('login-dialog').addEventListener('cancel', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

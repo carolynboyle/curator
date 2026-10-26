@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Captain's Command — Curator{% endblock %}
+
+{% block content %}
+<section class="crew-section">
+    <div class="crew-header">
+        <img src="/static/img/captain.png" alt="Captain" class="crew-hero-image">
+        <h1>{{ role_title }}</h1>
+        <a href="/" class="btn-back">← Back to Crew</a>
+    </div>
+
+    <!-- Main Tab Navigation -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="projects">Projects</button>
+        <button class="tab-btn" data-tab="identities">Identities</button>
+        <button class="tab-btn" data-tab="configuration">Configuration</button>
+    </div>
+
+    <!-- Main Tab Panels -->
+    <div class="tab-panels">
+        <!-- Projects Tab -->
+        <div id="tab-projects" class="tab-panel active">
+            <div class="crew-content">
+                <div style="margin-bottom: 1.5rem;">
+                    <input type="text" id="search-input" placeholder="Search projects..." 
+                           hx-get="/crew" 
+                           hx-target="#crew-rows" 
+                           hx-include="[name='role']"
+                           hx-trigger="input changed delay:300ms"
+                           value="{{ search }}"
+                           style="width: 100%;">
+                    <input type="hidden" name="role" value="{{ role }}">
+                </div>
+
+                {% if records %}
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Name
+                                    <button class="add-icon" 
+                                            hx-get="/crew/projects/new?role={{ role }}" 
+                                            hx-target="#crew-rows" 
+                                            hx-swap="afterbegin"
+                                            title="Add project">+</button>
+                                </th>
+                                <th>Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crew-rows">
+                            {% for record in records %}
+                            <tr class="project-row" id="display-row-{{ record['id'] }}">
+                                <td class="icon-col">
+                                    <button class="edit-icon" 
+                                            hx-get="/crew/projects/{{ record['id'] }}/edit-form" 
+                                            hx-target="#display-row-{{ record['id'] }}" 
+                                            hx-swap="outerHTML"
+                                            title="Edit">✏️</button>
+                                    <button class="detail-icon" title="Details" disabled>⋯</button>
+                                </td>
+                                <td>{{ record["name"] }}</td>
+                                <td>{{ record["type"] or "—" }}</td>
+                                <td>{{ record["status"] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No projects found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Identities Tab -->
+        <div id="tab-identities" class="tab-panel">
+            <div class="crew-content">
+                <!-- Identities Sub-selector -->
+                <div class="sub-tab-bar">
+                    <button class="sub-tab-btn active" data-sub="contacts">Contacts</button>
+                    <button class="sub-tab-btn" data-sub="organizations">Organizations</button>
+                    <button class="sub-tab-btn" data-sub="users">Users (DB Auth)</button>
+                </div>
+
+                <!-- Identities Sub-panels -->
+                <div class="sub-tab-panels">
+                    <!-- Contacts Sub-form -->
+                    <div id="sub-contacts" class="sub-tab-panel active">
+                        {% include "_identities_contacts.html" %}
+                    </div>
+
+                    <!-- Organizations Sub-form -->
+                    <div id="sub-organizations" class="sub-tab-panel">
+                        {% include "_identities_organizations.html" %}
+                    </div>
+
+                    <!-- Users Sub-form -->
+                    <div id="sub-users" class="sub-tab-panel">
+                        {% include "_identities_users.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="tab-configuration" class="tab-panel">
+            <div class="crew-content">
+                <p>Configuration settings coming soon.</p>
+                <p class="hint">Future: Role/Type/Status mappings, User management, Audit logs</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Embed lookup tables for inline edit/add forms
+    const projectTypes = {{ project_types | tojson }};
+    const projectStatuses = {{ project_statuses | tojson }};
+
+    // Main tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all main tabs and panels
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            
+            // Add active to clicked button and corresponding panel
+            btn.classList.add('active');
+            const tabName = btn.dataset.tab;
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        });
+    });
+
+    // Sub-tab switching (within Identities tab)
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all sub-tabs and sub-panels
+            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.remove('active'));
+            
+            // Add active to clicked button and corresponding sub-panel
+            btn.classList.add('active');
+            const subName = btn.dataset.sub;
+            document.getElementById(`sub-${subName}`).classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

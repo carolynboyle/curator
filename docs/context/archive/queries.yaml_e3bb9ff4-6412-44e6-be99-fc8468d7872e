@@ -1,0 +1,145 @@
+# queries.yaml
+# QueryLoader query definitions for Curator
+# Location: src/curator/data/queries.yaml
+#
+# Structure: entity → query_name → { type, sql }
+# Used by: /api/query/{entity}/{query_name}?params=X
+#
+# Parameter binding uses %s placeholders (psycopg style).
+# params are passed as comma-separated string in the query string.
+
+# =============================================================================
+# TASKS
+# =============================================================================
+
+tasks:
+  # Fetch all tasks for a project (detail panel Tasks tab)
+  for_project:
+    type: select_all
+    sql: >
+      SELECT
+          t.id,
+          t.description::text,
+          t.notes::text,
+          t.status_id,
+          ts.name::text AS status,
+          t.priority_id,
+          p.name::text  AS priority,
+          t.sort_order,
+          t.created_at
+      FROM projects.tasks t
+      LEFT JOIN projects.task_status ts ON ts.id = t.status_id
+      LEFT JOIN projects.priority    p  ON p.id  = t.priority_id
+      WHERE t.project_id = %s
+        AND t.parent_id IS NULL
+      ORDER BY t.sort_order, t.created_at
+
+  # Fetch sub-tasks for a parent task
+  for_task:
+    type: select_all
+    sql: >
+      SELECT
+          t.id,
+          t.description::text,
+          t.notes::text,
+          t.status_id,
+          ts.name::text AS status,
+          t.priority_id,
+          p.name::text  AS priority,
+          t.sort_order,
+          t.created_at
+      FROM projects.tasks t
+      LEFT JOIN projects.task_status ts ON ts.id = t.status_id
+      LEFT JOIN projects.priority    p  ON p.id  = t.priority_id
+      WHERE t.parent_id = %s
+      ORDER BY t.sort_order, t.created_at
+
+# =============================================================================
+# CONTACT EMAILS
+# =============================================================================
+
+contact_emails:
+  # Fetch all emails for a contact (detail panel Emails tab)
+  for_contact:
+    type: select_all
+    sql: >
+      SELECT
+          id,
+          email::text,
+          email_type::text
+      FROM identity.contact_emails
+      WHERE contact_id = %s
+      ORDER BY id
+
+# =============================================================================
+# CONTACT PHONES
+# =============================================================================
+
+contact_phones:
+  # Fetch all phones for a contact (detail panel Phones tab)
+  for_contact:
+    type: select_all
+    sql: >
+      SELECT
+          id,
+          phone_number::text,
+          description::text
+      FROM identity.contact_phones
+      WHERE contact_id = %s
+      ORDER BY id
+
+# =============================================================================
+# CONTACT URLS
+# =============================================================================
+
+contact_urls:
+  # Fetch all URLs for a contact (detail panel URLs tab)
+  for_contact:
+    type: select_all
+    sql: >
+      SELECT
+          cu.id,
+          ut.name::text AS url_type,
+          cu.value::text
+      FROM identity.contact_urls cu
+      JOIN identity.url_type ut ON ut.id = cu.url_type_id
+      WHERE cu.contact_id = %s
+      ORDER BY cu.id
+
+# =============================================================================
+# ORGANIZATION CONTACTS
+# =============================================================================
+
+organization_contacts:
+  # Fetch all contacts in an organization (detail panel Contacts tab on org)
+  for_organization:
+    type: select_all
+    sql: >
+      SELECT
+          c.id,
+          c.name::text,
+          c.title::text,
+          ocr.name::text AS role
+      FROM identity.contacts c
+      JOIN identity.organization_contacts oc
+          ON oc.contact_id = c.id
+      LEFT JOIN identity.organization_contact_role ocr
+          ON ocr.id = oc.role_id
+      WHERE oc.organization_id = %s
+      ORDER BY c.name
+
+  # Fetch all organizations for a contact (detail panel Organizations tab on contact)
+  for_contact:
+    type: select_all
+    sql: >
+      SELECT
+          o.id,
+          o.name::text,
+          ocr.name::text AS role
+      FROM identity.organizations o
+      JOIN identity.organization_contacts oc
+          ON oc.organization_id = o.id
+      LEFT JOIN identity.organization_contact_role ocr
+          ON ocr.id = oc.role_id
+      WHERE oc.contact_id = %s
+      ORDER BY o.name

@@ -1,0 +1,11 @@
+{#
+  _tab_configuration.html
+
+  Configuration tab content — captain only.
+  Placeholder until configuration UI is built.
+#}
+<div class="crew-content">
+    <div class="empty-state">
+        <p>Configuration options coming soon.</p>
+    </div>
+</div>

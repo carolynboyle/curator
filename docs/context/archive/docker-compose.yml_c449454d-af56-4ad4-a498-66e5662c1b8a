@@ -1,0 +1,92 @@
+# =============================================================================
+# Curator - Docker Compose
+# =============================================================================
+#
+# Security measures applied (same posture as Directus compose):
+#   - Port bound to Tailscale interface only (wcyjvs1 mesh IP)
+#   - Read-only root filesystem
+#   - /tmp mounted as tmpfs
+#   - All Linux capabilities dropped
+#   - no-new-privileges prevents privilege escalation
+#   - Memory and CPU limits contain blast radius
+#   - Named network isolates container from default bridge
+#   - No credentials in this file — see .env and mounted config
+#
+# Runtime mounts (host paths — adjust if your layout differs):
+#   ~/.config/dev-utils/config.yaml  — dbkit reads DB host/port/name/user
+#   ~/.pgpass                         — DB password, must be chmod 0600
+#   ~/.config/curator/curator.yaml   — optional config override (can omit)
+#
+# Tailscale IP of wcyjvs1: update CURATOR_TAILSCALE_IP below before running.
+#
+# First run:
+#   cp .env.example .env          # then set CURATOR_TAILSCALE_IP
+#   docker compose up -d
+# =============================================================================
+
+services:
+  curator:
+    build: .
+    image: curator:latest
+    container_name: curator
+    restart: unless-stopped
+
+    # -------------------------------------------------------------------------
+    # Network: bind to Tailscale interface only
+    # -------------------------------------------------------------------------
+    ports:
+      - "${CURATOR_TAILSCALE_IP}:8080:8080"
+    networks:
+      - curator_net
+
+    # -------------------------------------------------------------------------
+    # Filesystem hardening
+    # -------------------------------------------------------------------------
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+
+    # -------------------------------------------------------------------------
+    # Runtime config mounts — credentials never baked into image
+    # -------------------------------------------------------------------------
+    volumes:
+      - type: bind
+        source: ${HOME}/.config/dev-utils/config.yaml
+        target: /home/curator/.config/dev-utils/config.yaml
+        read_only: true
+      - type: bind
+        source: ${HOME}/.pgpass
+        target: /home/curator/.pgpass
+        read_only: true
+      # Optional: uncomment to override default curator.yaml
+      # - type: bind
+      #   source: ${HOME}/.config/curator/curator.yaml
+      #   target: /home/curator/.config/curator/curator.yaml
+      #   read_only: true
+
+    # -------------------------------------------------------------------------
+    # Capability and privilege hardening
+    # -------------------------------------------------------------------------
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # -------------------------------------------------------------------------
+    # Resource limits
+    # -------------------------------------------------------------------------
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  curator_net:
+    driver: bridge

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The Curator{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/curator.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+</head>
+<body>
+
+<nav class="curator-nav">
+    <a href="/" class="nav-brand">The Curator</a>
+    <a href="/projects/" {% if request.url.path.startswith('/projects') %}class="active"{% endif %}>Projects</a>
+    <a href="/tasks/" {% if request.url.path.startswith('/tasks') %}class="active"{% endif %}>Tasks</a>
+    <a href="/tags/" {% if request.url.path.startswith('/tags') %}class="active"{% endif %}>Tags</a>
+    <a href="/files/" {% if request.url.path.startswith('/files') %}class="active"{% endif %}>Files</a>
+</nav>
+
+<main class="curator-main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="curator-footer">
+    The Curator &mdash; Project Crew
+</footer>
+
+</body>
+</html>

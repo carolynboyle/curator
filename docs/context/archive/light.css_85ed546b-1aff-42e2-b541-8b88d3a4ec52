@@ -1,0 +1,66 @@
+/* =============================================================================
+   Light Theme (default)
+   App shell colors — WCYJ teal identity
+   Crew workspace colors are in static/css/crew/{role}.css
+   ============================================================================= */
+
+:root {
+    /* App shell — WCYJ teal */
+    --color-primary:      #0f766e;
+    --color-primary-dark: #0d6460;
+    --color-primary-light:#ccebe9;
+
+    /* Neutrals */
+    --color-bg:           #f5f7fa;
+    --color-surface:      #ffffff;
+    --color-border:       #dde1e7;
+    --color-text:         #1a1a1a;
+    --color-text-light:   #6b7280;
+
+    /* Semantic */
+    --color-danger:       #dc2626;
+    --color-danger-bg:    #fef2f2;
+    --color-success:      #166534;
+    --color-warning:      #b45309;
+}
+
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* -- Navbar ---------------------------------------------------------------- */
+
+.navbar {
+    background: #ffffff;
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.nav-brand a {
+    color: var(--color-primary);
+}
+
+.nav-links a {
+    color: var(--color-text-light);
+}
+
+.nav-links a:hover {
+    color: var(--color-primary);
+}
+
+/* -- Footer ---------------------------------------------------------------- */
+
+footer {
+    color: var(--color-text-light);
+    border-top-color: var(--color-border);
+}
+
+/* -- Links ----------------------------------------------------------------- */
+
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-dark);
+}

@@ -1,0 +1,318 @@
+# curator/data/queries.yaml
+# SQL queries for all four Curator repositories.
+# Loaded by QueryBuilder via ConfigManager.queries_path.
+
+projects:
+
+  get_all:
+    type: select_all
+    sql: "SELECT * FROM v_projects ORDER BY name"
+
+  get_all_by_status:
+    type: select_all
+    sql: >
+      SELECT * FROM v_projects
+      WHERE status = %s
+      ORDER BY name
+
+  get_by_slug:
+    type: select_one
+    sql: "SELECT * FROM v_projects WHERE slug = %s"
+
+  get_by_id:
+    type: select_one
+    sql: "SELECT * FROM v_projects WHERE id = %s"
+
+  slug_exists:
+    type: select_scalar
+    sql: "SELECT EXISTS (SELECT 1 FROM projects WHERE slug = %s)"
+
+  get_subprojects:
+    type: select_all
+    sql: >
+      SELECT * FROM v_projects
+      WHERE parent_id = %s
+      ORDER BY name
+
+  get_parent_options:
+    type: select_all
+    sql: >
+      SELECT id, name FROM projects
+      WHERE parent_id IS NULL
+      ORDER BY name
+
+  create:
+    type: select_scalar
+    sql: >
+      INSERT INTO projects
+          (name, slug, description, status_id, type_id, parent_id, target_date)
+      VALUES (%s, %s, %s, %s, %s, %s, %s)
+      RETURNING slug
+
+  update:
+    type: execute
+    sql: >
+      UPDATE projects SET
+          name        = %s,
+          description = %s,
+          status_id   = %s,
+          type_id     = %s,
+          parent_id   = %s,
+          target_date = %s
+      WHERE slug = %s
+
+  delete:
+    type: execute
+    sql: "DELETE FROM projects WHERE slug = %s"
+
+  get_status_options:
+    type: select_all
+    sql: "SELECT * FROM project_status ORDER BY sort_order"
+
+  get_type_options:
+    type: select_all
+    sql: "SELECT * FROM project_type ORDER BY sort_order"
+
+
+tasks:
+
+  get_all_for_project:
+    type: select_all
+    sql: >
+      SELECT * FROM v_tasks
+      WHERE project_id = %s AND parent_id IS NULL
+      ORDER BY sort_order, id
+
+  get_tree_for_project:
+    type: select_all
+    sql: >
+      SELECT * FROM v_task_tree
+      WHERE project_id = %s
+      ORDER BY path
+
+  get_by_id:
+    type: select_one
+    sql: "SELECT * FROM v_tasks WHERE id = %s"
+
+  get_subtasks:
+    type: select_all
+    sql: >
+      SELECT * FROM v_tasks
+      WHERE parent_id = %s
+      ORDER BY sort_order, id
+
+  get_child_count:
+    type: select_scalar
+    sql: "SELECT COUNT(*) FROM tasks WHERE parent_id = %s"
+
+  create:
+    type: select_scalar
+    sql: >
+      INSERT INTO tasks
+          (project_id, parent_id, description, status_id, priority_id,
+           links, source_file, sort_order)
+      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+      RETURNING id
+
+  update:
+    type: execute
+    sql: >
+      UPDATE tasks SET
+          description  = %s,
+          status_id    = %s,
+          priority_id  = %s,
+          parent_id    = %s,
+          links        = %s,
+          sort_order   = %s,
+          completed_at = %s
+      WHERE id = %s
+
+  delete:
+    type: execute
+    sql: "DELETE FROM tasks WHERE id = %s"
+
+  delete_descendants:
+    type: execute
+    sql: >
+      WITH RECURSIVE descendants AS (
+          SELECT id FROM tasks WHERE parent_id = %s
+          UNION ALL
+          SELECT t.id FROM tasks t
+          JOIN descendants d ON d.id = t.parent_id
+      )
+      DELETE FROM tasks WHERE id IN (SELECT id FROM descendants)
+
+  get_status_options:
+    type: select_all
+    sql: "SELECT * FROM task_status ORDER BY sort_order"
+
+  get_priority_options:
+    type: select_all
+    sql: "SELECT * FROM priority ORDER BY sort_order"
+
+  get_parent_options:
+    type: select_all
+    sql: >
+      SELECT id, description FROM tasks
+      WHERE project_id = %s AND parent_id IS NULL
+      ORDER BY sort_order, id
+
+
+tags:
+
+  get_all:
+    type: select_all
+    sql: >
+      SELECT t.id, t.name, tc.name AS category
+      FROM tags t
+      LEFT JOIN tag_category tc ON tc.id = t.category_id
+      ORDER BY tc.sort_order, t.name
+
+  get_by_id:
+    type: select_one
+    sql: >
+      SELECT t.id, t.name, t.category_id, tc.name AS category
+      FROM tags t
+      LEFT JOIN tag_category tc ON tc.id = t.category_id
+      WHERE t.id = %s
+
+  get_for_project:
+    type: select_all
+    sql: >
+      SELECT t.id, t.name, tc.name AS category
+      FROM tags t
+      JOIN project_tags pt ON pt.tag_id = t.id
+      LEFT JOIN tag_category tc ON tc.id = t.category_id
+      WHERE pt.project_id = %s
+      ORDER BY tc.sort_order, t.name
+
+  get_for_task:
+    type: select_all
+    sql: >
+      SELECT t.id, t.name, tc.name AS category
+      FROM tags t
+      JOIN task_tags tt ON tt.tag_id = t.id
+      LEFT JOIN tag_category tc ON tc.id = t.category_id
+      WHERE tt.task_id = %s
+      ORDER BY tc.sort_order, t.name
+
+  create:
+    type: select_scalar
+    sql: >
+      INSERT INTO tags (name, category_id)
+      VALUES (%s, %s)
+      RETURNING id
+
+  update:
+    type: execute
+    sql: "UPDATE tags SET name = %s, category_id = %s WHERE id = %s"
+
+  delete:
+    type: execute
+    sql: "DELETE FROM tags WHERE id = %s"
+
+  assign_to_project:
+    type: execute
+    sql: >
+      INSERT INTO project_tags (project_id, tag_id)
+      VALUES (%s, %s)
+      ON CONFLICT (project_id, tag_id) DO NOTHING
+
+  remove_from_project:
+    type: execute
+    sql: >
+      DELETE FROM project_tags
+      WHERE project_id = %s AND tag_id = %s
+
+  assign_to_task:
+    type: execute
+    sql: >
+      INSERT INTO task_tags (task_id, tag_id)
+      VALUES (%s, %s)
+      ON CONFLICT (task_id, tag_id) DO NOTHING
+
+  remove_from_task:
+    type: execute
+    sql: >
+      DELETE FROM task_tags
+      WHERE task_id = %s AND tag_id = %s
+
+  get_category_options:
+    type: select_all
+    sql: "SELECT * FROM tag_category ORDER BY sort_order"
+
+
+files:
+
+  get_for_project:
+    type: select_all
+    sql: >
+      SELECT pf.id, pf.label, pf.location, pf.notes,
+             ft.name AS file_type, lt.name AS location_type
+      FROM project_files pf
+      JOIN file_type ft     ON ft.id = pf.file_type_id
+      JOIN location_type lt ON lt.id = pf.location_type_id
+      WHERE pf.project_id = %s
+      ORDER BY pf.label
+
+  get_for_task:
+    type: select_all
+    sql: >
+      SELECT pf.id, pf.label, pf.location, pf.notes,
+             ft.name AS file_type, lt.name AS location_type
+      FROM project_files pf
+      JOIN file_type ft     ON ft.id = pf.file_type_id
+      JOIN location_type lt ON lt.id = pf.location_type_id
+      WHERE pf.task_id = %s
+      ORDER BY pf.label
+
+  get_all:
+    type: select_all
+    sql: >
+      SELECT pf.id, pf.label, pf.location, pf.notes,
+             ft.name AS file_type, lt.name AS location_type
+      FROM project_files pf
+      JOIN file_type ft     ON ft.id = pf.file_type_id
+      JOIN location_type lt ON lt.id = pf.location_type_id
+      ORDER BY pf.label
+
+  get_by_id:
+    type: select_one
+    sql: >
+      SELECT pf.*, ft.name AS file_type, lt.name AS location_type
+      FROM project_files pf
+      JOIN file_type ft     ON ft.id = pf.file_type_id
+      JOIN location_type lt ON lt.id = pf.location_type_id
+      WHERE pf.id = %s
+
+  create:
+    type: select_scalar
+    sql: >
+      INSERT INTO project_files
+          (project_id, task_id, label, file_type_id,
+           location, location_type_id, notes)
+      VALUES (%s, %s, %s, %s, %s, %s, %s)
+      RETURNING id
+
+  update:
+    type: execute
+    sql: >
+      UPDATE project_files SET
+          label            = %s,
+          file_type_id     = %s,
+          location         = %s,
+          location_type_id = %s,
+          notes            = %s
+      WHERE id = %s
+
+  delete:
+    type: execute
+    sql: "DELETE FROM project_files WHERE id = %s"
+
+  get_file_type_options:
+    type: select_all
+    sql: "SELECT * FROM file_type ORDER BY sort_order"
+
+  get_location_type_options:
+    type: select_all
+    sql: "SELECT * FROM location_type ORDER BY sort_order"

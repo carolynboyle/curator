@@ -1,0 +1,96 @@
+/* =============================================================================
+   Layout — Page skeleton, container, main content area
+   ============================================================================= */
+
+/* -- Page structure -------------------------------------------------------- */
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main.curator-main {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+/* -- Container ------------------------------------------------------------- */
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+/* -- Landing page layout --------------------------------------------------- */
+
+.landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+}
+
+.landing h1 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.landing .subtitle {
+    color: var(--color-text-light);
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.landing .hero-image {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Cards must break out of the centered column to use full width */
+.landing .crew-cards {
+    width: 100%;
+    align-self: stretch;
+}
+
+/* -- Crew dashboard layout ------------------------------------------------- */
+
+.crew-dashboard {
+    padding: var(--spacing-xl) 0;
+}
+
+.crew-dashboard h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.crew-dashboard .phase-message {
+    color: var(--color-text-light);
+    font-style: italic;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* -- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+    main.curator-main {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .landing h1 {
+        font-size: 1.5rem;
+    }
+
+    .landing .hero-image {
+        width: 160px;
+        height: 160px;
+    }
+}

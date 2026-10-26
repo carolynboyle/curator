@@ -1,0 +1,79 @@
+/* =============================================================================
+   Mechanic Workspace — Forest Green palette
+   #166534 family: workshop, tools, hardware, go signals
+   ============================================================================= */
+
+:root {
+    --crew-primary:   #166534;
+    --crew-dark:      #14532d;
+    --crew-mid:       #16a34a;
+    --crew-light:     #dcfce7;
+    --crew-tint:      #f0fdf4;
+    --crew-text:      #ffffff;
+}
+
+/* -- Card (landing page) --------------------------------------------------- */
+
+.crew-card.mechanic {
+    background-color: var(--crew-primary);
+    color: var(--crew-text);
+}
+
+.crew-card.mechanic h2 {
+    color: var(--crew-text);
+}
+
+.crew-card.mechanic p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.crew-card.mechanic:hover {
+    background-color: var(--crew-dark);
+    border-color: var(--crew-mid);
+}
+
+/* -- Crew page header ------------------------------------------------------- */
+
+.crew-section.mechanic .crew-header {
+    background-color: var(--crew-primary);
+    color: var(--crew-text);
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.mechanic .crew-header h1 {
+    color: var(--crew-text);
+}
+
+.crew-section.mechanic .crew-header .btn-back {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.mechanic .crew-header .btn-back:hover {
+    color: var(--crew-text);
+}
+
+/* -- Table ------------------------------------------------------------------ */
+
+.crew-section.mechanic .records-table thead {
+    background-color: var(--crew-dark);
+    color: var(--crew-text);
+}
+
+.crew-section.mechanic .records-table tbody tr:hover {
+    background-color: var(--crew-tint);
+}
+
+.crew-section.mechanic .records-table a {
+    color: var(--crew-mid);
+}
+
+/* -- Badges ----------------------------------------------------------------- */
+
+.crew-section.mechanic .badge {
+    background-color: var(--crew-light);
+    color: var(--crew-dark);
+}

@@ -1,0 +1,54 @@
+<!-- Add form row -->
+<tr class="crew-row-add" id="add-row-new">
+    <td class="icon-col"></td>
+    <td>
+        <input
+            type="text"
+            name="name"
+            class="edit-input"
+            placeholder="Project name"
+            required
+        >
+    </td>
+    <td>
+        <select name="type_id" class="edit-select" required>
+            <option value="">— Type —</option>
+            {% for t in project_types %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <select name="status_id" class="edit-select" required>
+            <option value="">— Status —</option>
+            {% for s in project_statuses %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+</tr>
+
+<!-- Add controls row -->
+<tr class="crew-row-edit-controls" id="add-controls-new">
+    <td class="icon-col"></td>
+    <td colspan="3">
+        <div class="edit-controls">
+            <button
+                type="button"
+                class="btn-save"
+                hx-post="/crew/projects/new/save?role={{ role }}"
+                hx-include="#add-row-new"
+                hx-target="#add-row-new"
+                hx-swap="outerHTML"
+            >Save</button>
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-post="/crew/projects/new/cancel"
+                hx-target="#add-row-new"
+                hx-swap="outerHTML"
+            >Cancel</button>
+            <span class="add-error" id="add-error"></span>
+        </div>
+    </td>
+</tr>

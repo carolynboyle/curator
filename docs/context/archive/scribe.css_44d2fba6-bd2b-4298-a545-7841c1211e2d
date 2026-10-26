@@ -1,0 +1,79 @@
+/* =============================================================================
+   Scribe Workspace — Slate palette
+   #475569 family: quiet, scholarly, documentation
+   ============================================================================= */
+
+:root {
+    --crew-primary:   #475569;
+    --crew-dark:      #334155;
+    --crew-mid:       #64748b;
+    --crew-light:     #e2e8f0;
+    --crew-tint:      #f8fafc;
+    --crew-text:      #ffffff;
+}
+
+/* -- Card (landing page) --------------------------------------------------- */
+
+.crew-card.scribe {
+    background-color: var(--crew-primary);
+    color: var(--crew-text);
+}
+
+.crew-card.scribe h2 {
+    color: var(--crew-text);
+}
+
+.crew-card.scribe p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.crew-card.scribe:hover {
+    background-color: var(--crew-dark);
+    border-color: var(--crew-mid);
+}
+
+/* -- Crew page header ------------------------------------------------------- */
+
+.crew-section.scribe .crew-header {
+    background-color: var(--crew-primary);
+    color: var(--crew-text);
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1.5rem;
+}
+
+.crew-section.scribe .crew-header h1 {
+    color: var(--crew-text);
+}
+
+.crew-section.scribe .crew-header .btn-back {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.crew-section.scribe .crew-header .btn-back:hover {
+    color: var(--crew-text);
+}
+
+/* -- Table ------------------------------------------------------------------ */
+
+.crew-section.scribe .records-table thead {
+    background-color: var(--crew-dark);
+    color: var(--crew-text);
+}
+
+.crew-section.scribe .records-table tbody tr:hover {
+    background-color: var(--crew-tint);
+}
+
+.crew-section.scribe .records-table a {
+    color: var(--crew-mid);
+}
+
+/* -- Badges ----------------------------------------------------------------- */
+
+.crew-section.scribe .badge {
+    background-color: var(--crew-light);
+    color: var(--crew-dark);
+}

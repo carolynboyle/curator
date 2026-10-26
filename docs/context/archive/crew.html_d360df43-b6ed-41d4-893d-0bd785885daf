@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role_title }} — Curator{% endblock %}
+
+{% block content %}
+<section class="crew-section {{ role }}">
+
+    <div class="crew-header crew-card {{ role }}">
+        <h1>{{ role_title }}</h1>
+        <a href="/" class="btn-back">← Back to Crew</a>
+    </div>
+
+    <div class="crew-content">
+        {% if records %}
+        <table class="crew-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record["name"] }}</td>
+                    <td>{{ record["type"] or "—" }}</td>
+                    <td>{{ record["status"] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No projects assigned to {{ role_title }} yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</section>
+{% endblock %}
