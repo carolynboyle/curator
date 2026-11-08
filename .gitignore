@@ -23,3 +23,5 @@ install.conf
 .vscode/
 *.swp
 *.swo
+# Claude Code — prevents credentials in approved commands from being committed
+.claude/*.local.json
