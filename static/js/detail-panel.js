@@ -65,13 +65,35 @@ function showPanel() {
   if (section) section.classList.add('panel-open');
 }
 
+// The grid row the panel was opened from. The grids are display:none while
+// a panel is open, so closing the panel would otherwise leave the page at
+// the top instead of where the person was working.
+let _originRow = null;
+
+function rememberOriginRow(e) {
+  const row = e.target.closest?.('.tabulator-row');
+  if (row) _originRow = row;
+}
+
+/** Scroll back to the row the panel was opened from (or to the tabs). */
+function restoreGridPosition() {
+  const row    = _originRow?.isConnected ? _originRow : null;
+  const target = row ?? document.querySelector('.crew-section .tabs');
+  // Next frame: the grids only get their layout back once panel-open is gone
+  requestAnimationFrame(() => {
+    target?.scrollIntoView({ block: row ? 'center' : 'start' });
+  });
+}
+
 function hidePanel() {
   const panel   = getPanel();
-  const hero    = getHero();
   const section = getCrewSection();
   if (panel)   panel.classList.remove('active');
-  if (hero)    hero.classList.remove('hidden');
+  // The hero (.crew-header) is deliberately NOT restored: it is much taller
+  // than the panel, so bringing it back pushed the grid the person came
+  // from below the fold. It stays hidden until the page is reloaded.
   if (section) section.classList.remove('panel-open');
+  restoreGridPosition();
 }
 
 function resetToDetailsTab() {
@@ -442,9 +464,16 @@ function closeTaskPopup() {
 // falls back to the /crew default, so existing entities are unaffected.
 // ---------------------------------------------------------------------------
 
+//
+// "update" is an optional window-level hook that takes the saved record and
+// updates (or adds) just that row in place. When an entity has one, saving
+// no longer reloads the whole grid, so the person keeps their filter, sort
+// and scroll position. Entities without one fall back to "refresh".
 const ENTITY_ROUTES = {
-  records:  { base: '/seanchai/records',  refresh: '_refreshRecordsGrid' },
-  searches: { base: '/seanchai/searches', refresh: '_refreshSearchesGrid' },
+  records:  { base: '/seanchai/records',  refresh: '_refreshRecordsGrid',
+              update: '_updateRecordsRow' },
+  searches: { base: '/seanchai/searches', refresh: '_refreshSearchesGrid',
+              update: '_updateSearchesRow' },
   tasks:    { base: '/crew/tasks',        refresh: null }, // handled by returnToProject
 };
 
@@ -455,6 +484,16 @@ function saveBaseFor(entity) {
 function refreshGridFor(entity) {
   const hook = ENTITY_ROUTES[entity]?.refresh ?? '_refreshProjectsGrid';
   if (hook && typeof window[hook] === 'function') window[hook]();
+}
+
+/** Put a just-saved record into its grid: in place if the grid can, else reload. */
+function applySavedToGrid(entity, saved) {
+  const hook = ENTITY_ROUTES[entity]?.update;
+  if (hook && typeof window[hook] === 'function') {
+    window[hook](saved);
+    return;
+  }
+  refreshGridFor(entity);
 }
 
 // ---------------------------------------------------------------------------
@@ -540,7 +579,7 @@ async function handleSave() {
         hidePanel();
       }
     } else {
-      refreshGridFor(form?.dataset.entity);
+      applySavedToGrid(form?.dataset.entity, saved);
       hidePanel();
     }
   } finally {
@@ -569,7 +608,7 @@ async function handleNew() {
       // the page's defaults (e.g. the dashboard's crew role on a new
       // project) are pre-filled again instead of being blanked.
       await openNewRecordPanel(entity);
-      refreshGridFor(entity);
+      applySavedToGrid(entity, saved);
     }
   } finally {
     _saving = false;
@@ -651,6 +690,8 @@ export async function openNewRecordPanel(entity, params = {}) {
   const ok = await fetchAndSwapPanel(entity, 'new', { ...defaults, ...params });
   if (!ok) return;
 
+  _originRow = null;   // nothing to scroll back to; the new row is added at the top
+
   panel.dataset.entity = entity;
   panel.dataset.id     = '';
   delete panel.dataset.returnEntity;
@@ -668,7 +709,7 @@ export async function openNewRecordPanel(entity, params = {}) {
 }
 
 /**
- * Close the detail panel and restore the hero image.
+ * Close the detail panel (the hero image stays hidden — see hidePanel()).
  */
 export function closeDetailPanel() {
   closeTaskPopup();
@@ -680,6 +721,10 @@ export function closeDetailPanel() {
 // ---------------------------------------------------------------------------
 
 export function initDetailPanel() {
+  // Remember which grid row a panel is opened from (capture phase, so this
+  // runs before the cell's own click handler opens the panel)
+  document.addEventListener('click', rememberOriginRow, true);
+
   // Tab switching + lazy task list loading
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('detail-tab-button')) {

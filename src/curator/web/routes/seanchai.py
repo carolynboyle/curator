@@ -46,8 +46,9 @@ async def _fetch_record_for_display(db: AsyncDBConnection, record_id: int) -> di
 
     Returns a dict with the v_record_detail whitelist columns:
     record_id, record_type_id, type_code, record_type, record_status_id,
-    status, display_order, year, subject, county, state, source_citation,
-    source_url, notes — or None if not found.
+    status, display_order, year, subject, county, state, country,
+    source_citation, notes, plus the record's id and its documents array
+    (the parts list, see record_documents.py) — or None if not found.
     """
     return await _fetch_json_scalar(
         db, "SELECT api.get_record_detail(%s)", (record_id,)
@@ -163,7 +164,9 @@ async def save_new_record(
     """Insert a new seanchaí record via api.save_record().
 
     Accepts JSON body: {subject, record_type_id, record_status_id,
-    display_order, year, county, state, source_citation, source_url, notes}.
+    display_order, year, county, state, country, source_citation, notes}.
+    Links no longer travel with the record: they are parts in
+    seanchai.record_documents (record_documents.py).
     Any record_id in the body is ignored — the proc assigns it.
 
     Returns the new record as JSON on success (200).
@@ -189,8 +192,8 @@ async def save_new_record(
         "year":             body.get("year") or None,
         "county":           body.get("county") or None,
         "state":            body.get("state") or None,
+        "country":          body.get("country") or None,
         "source_citation":  body.get("source_citation") or None,
-        "source_url":       body.get("source_url") or None,
         "notes":            body.get("notes") or None,
     }
 
@@ -233,8 +236,8 @@ async def save_record(
         "year":             body.get("year") or None,
         "county":           body.get("county") or None,
         "state":            body.get("state") or None,
+        "country":          body.get("country") or None,
         "source_citation":  body.get("source_citation") or None,
-        "source_url":       body.get("source_url") or None,
         "notes":            body.get("notes") or None,
     }
 

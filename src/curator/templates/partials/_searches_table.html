@@ -395,6 +395,17 @@ window.addEventListener('load', function () {
         window.openNewRecordPanel('searches');
     });
 
+    // In-place update after a detail-panel save (see _updateRecordsRow in
+    // _records_table.html) — keeps the filter, sort and scroll position.
+    window._updateSearchesRow = (saved) => {
+        const row = saved && saved.id != null ? table.getRow(saved.id) : null;
+        if (row) {
+            row.update(saved);
+        } else if (saved) {
+            table.addRow(saved, true);
+        }
+    };
+
     // Expose grid refresh so detail-panel.js can reload after Save & New
     window._refreshSearchesGrid = () => {
         table.setData('/seanchai/searches');

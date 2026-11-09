@@ -1,0 +1,220 @@
+/* =========================================================================
+   Documents widget — parts of a seanchaí record (record-documents.js)
+
+   Same visual language as the project links widget in detail-panel.css,
+   with its own docs-* class names so the two never collide.
+   ========================================================================= */
+
+.docs-widget {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.docs-widget-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-light);
+  margin-bottom: 0.5rem;
+  padding: 0 0.75rem;
+}
+
+.docs-count {
+  font-weight: 400;
+}
+
+.docs-toolbar {
+  padding: 0 0.75rem 0.5rem;
+}
+
+.docs-add-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.docs-add-btn:hover {
+  background: var(--color-border);
+}
+
+/* ── Parts list ── */
+
+.docs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.docs-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.docs-item:hover {
+  background: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+.docs-item.active {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.docs-seq {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  text-align: right;
+  color: var(--color-text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.docs-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-link {
+  flex-shrink: 0;
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+a.docs-link:hover {
+  filter: brightness(1.25);
+}
+
+/* Slot with nothing in it yet — dimmed, not clickable */
+.docs-link--empty {
+  color: var(--color-text-light);
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Path shown as text when no repo base URL is configured */
+.docs-path {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-light);
+  font-size: 0.75rem;
+}
+
+.docs-status {
+  flex-shrink: 0;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.6875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+.docs-status--verified {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.docs-status--not_transcribed {
+  opacity: 0.7;
+}
+
+.docs-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+}
+
+/* ── Edit slot ── */
+
+.docs-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.6rem 0.75rem 0.25rem;
+}
+
+.docs-edit[hidden] {
+  display: none;
+}
+
+.docs-edit input,
+.docs-edit select {
+  width: 100%;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-input-text);
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: 0.25rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.docs-edit input:focus,
+.docs-edit select:focus {
+  border-color: var(--color-primary);
+}
+
+.docs-edit-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.docs-save-btn,
+.docs-cancel-btn,
+.docs-delete-btn {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.docs-save-btn {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.docs-save-btn:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.docs-save-btn:disabled,
+.docs-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.docs-delete-btn {
+  margin-left: auto;
+  color: var(--color-danger, #c0392b);
+  border-color: var(--color-danger, #c0392b);
+}
+
+.docs-delete-btn[hidden] {
+  display: none;
+}

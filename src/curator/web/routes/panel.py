@@ -24,7 +24,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from dbkit.connection import AsyncDBConnection
 from curator.formkit import FormActions
-from curator.web.deps import get_db
+from curator.web.deps import get_config, get_db
 from curator.web.routes.contacts import _fetch_contact_for_display
 from curator.web.routes.organizations import _fetch_organization_for_display
 from curator.web.routes.projects import _fetch_project_for_display
@@ -72,13 +72,23 @@ def _render_panel_content(
     kit = request.app.state.fieldkit[entity]
     detail_panel_actions = FormActions.from_yaml(_FORMS_PATH, "detail_panel")
     template = env.get_template("partials/_detail_panel_content.html")
+
+    # Documents widget settings (records only) — from curator.yaml's
+    # seanchai: section, so neither the repo URL nor the status list is
+    # hard-coded in the template or the JS.
+    seanchai_cfg = get_config().get_section("seanchai") if entity == "records" else {}
+
     return HTMLResponse(
         template.render(
             entity=entity,
             record_id=record_id,
             record=record,
             fields=kit.fields,
+            field_rows=kit.field_rows,
+            layout=kit.layout,
             options=kit.options,
+            repo_base=seanchai_cfg.get("repo_blob_base", ""),
+            doc_statuses=seanchai_cfg.get("document_statuses", []),
             actions=detail_panel_actions["actions"],
             container_class=detail_panel_actions["container_class"],
         )

@@ -420,6 +420,18 @@ window.addEventListener('load', function () {
         table.setData('/seanchai/records');
     };
 
+    // Put a record saved from the detail panel into the grid in place —
+    // no reload, so the header filter, sort and scroll position survive.
+    // New records go to the top.
+    window._updateRecordsRow = (saved) => {
+        const row = saved && saved.id != null ? table.getRow(saved.id) : null;
+        if (row) {
+            row.update(saved);
+        } else if (saved) {
+            table.addRow(saved, true);
+        }
+    };
+
     // Keyboard shortcuts
     document.addEventListener('keydown', async (e) => {
         // Ctrl+C / Cmd+C — copy selected rows as TSV

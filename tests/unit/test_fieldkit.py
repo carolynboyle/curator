@@ -360,3 +360,92 @@ class TestColumnOrder:
         kit = await FieldKit.create(db, "projects.v_project_detail", overrides_path)
 
         assert [f.name for f in kit.fields] == ["name", "description", "target_date"]
+
+
+# ---------------------------------------------------------------------------
+# Layout hints — side dict + grouping of fields into form lines
+# ---------------------------------------------------------------------------
+
+class TestLayoutHints:
+    """rows / maxlength / row / flex in an override entry go to
+    FieldKit.layout (not onto FieldDef), and field_rows groups adjacent
+    fields that share a "row" value."""
+
+    COLUMNS = [
+        {"name": "year", "data_type": "character varying", "position": 1},
+        {"name": "county", "data_type": "character varying", "position": 2},
+        {"name": "state", "data_type": "character varying", "position": 3},
+        {"name": "country", "data_type": "text", "position": 4},
+        {"name": "notes", "data_type": "text", "position": 5},
+    ]
+
+    @pytest.mark.asyncio
+    async def test_layout_keys_are_collected_per_field(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "state": {"control": "text", "maxlength": 50, "flex": 2},
+            "notes": {"control": "textarea", "rows": 14},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert kit.layout == {
+            "state": {"maxlength": 50, "flex": 2},
+            "notes": {"rows": 14},
+        }
+
+    @pytest.mark.asyncio
+    async def test_override_without_layout_keys_adds_no_layout_entry(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "year": {"control": "text", "label": "Year"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert kit.layout == {}
+
+    @pytest.mark.asyncio
+    async def test_layout_for_a_column_not_in_the_view_is_ignored(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "gone": {"control": "text", "rows": 3},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert kit.layout == {}
+
+    @pytest.mark.asyncio
+    async def test_adjacent_fields_with_the_same_row_share_a_line(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "county": {"control": "text", "row": "location"},
+            "state": {"control": "text", "row": "location"},
+            "country": {"control": "text", "row": "location"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert [[f.name for f in line] for line in kit.field_rows] == [
+            ["year"], ["county", "state", "country"], ["notes"],
+        ]
+
+    @pytest.mark.asyncio
+    async def test_same_row_value_after_another_field_starts_a_new_line(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "year": {"control": "text", "row": "a"},
+            "county": {"control": "text", "row": "b"},
+            "state": {"control": "text", "row": "a"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert [[f.name for f in line] for line in kit.field_rows] == [
+            ["year"], ["county"], ["state"], ["country"], ["notes"],
+        ]
+
+    @pytest.mark.asyncio
+    async def test_no_hints_means_one_field_per_line(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert all(len(line) == 1 for line in kit.field_rows)
+        assert len(kit.field_rows) == len(self.COLUMNS)

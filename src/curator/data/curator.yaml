@@ -42,6 +42,20 @@ crew:
       title: "The Seanchaí"
       description: "Family history research and the memoir"
 
+seanchai:
+  # Base URL for links to transcription files (md_path on a record's parts
+  # is relative to the repo root). Point this at your own repo — override in
+  # ~/.config/curator/curator.yaml. Leave empty to show the path as plain
+  # text instead of a link.
+  repo_blob_base: "https://github.com/carolynboyle/seanchai/blob/main/"
+  # Status choices for a record part, in the order they appear. Must match
+  # the CHECK on seanchai.record_documents.status (steward 10k).
+  document_statuses:
+    - not_transcribed
+    - raw
+    - cleaned
+    - verified
+
 plugin:
   name: "The Curator"
   version: "0.2.0"

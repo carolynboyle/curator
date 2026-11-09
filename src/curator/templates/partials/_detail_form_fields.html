@@ -14,8 +14,20 @@
     - options (dict) — source name -> list of {"value", "label"} dicts,
                         from FieldKit.options; only consulted for
                         field_type == "select"
+    - field_rows (list[list[FieldDef]], optional) — from
+                        FieldKit.field_rows: fields grouped into form
+                        lines. Omitted (task fragment) → one field per line.
+    - layout  (dict, optional) — FieldKit.layout: field name ->
+                        {rows, maxlength, row, flex} hints from
+                        fieldkit_overrides.yaml
 #}
-{% for field in fields %}
+{% set layout = layout|default({}) %}
+{% set field_rows = field_rows|default(none) %}
+{% set line_groups = field_rows if field_rows else fields|batch(1)|list %}
+{% for line in line_groups %}
+{% if line|length > 1 %}<div class="form-row">{% endif %}
+{% for field in line %}
+{% set lay = layout.get(field.name, {}) %}
   {% if field.field_type == "hidden" %}
     {# No wrapping .form-group / label / help_text — a hidden field has
        nothing to display. Rendering the bare <input type="hidden">
@@ -29,7 +41,7 @@
     />
 
   {% else %}
-    <div class="form-group">
+    <div class="form-group"{% if lay.flex %} style="flex: {{ lay.flex }}"{% endif %}>
       <label for="detail-{{ field.name }}">{{ field.label }}</label>
 
       {% if field.field_type == "text" %}
@@ -39,6 +51,7 @@
           name="{{ field.name }}"
           value="{{ record.get(field.name) or '' }}"
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+          {% if lay.maxlength %}maxlength="{{ lay.maxlength }}"{% endif %}
           {% if field.readonly %}readonly tabindex="-1"{% endif %}
         />
 
@@ -57,6 +70,7 @@
         <textarea
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if lay.rows %}rows="{{ lay.rows }}"{% endif %}
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
           {% if field.readonly %}readonly tabindex="-1"{% endif %}
         >{{ record.get(field.name) or '' }}</textarea>
@@ -101,5 +115,7 @@
       {% endif %}
     </div>
   {% endif %}
+{% endfor %}
+{% if line|length > 1 %}</div>{% endif %}
 {% endfor %}
 

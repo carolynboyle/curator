@@ -17,6 +17,14 @@
 #       readonly: true/false (optional, default false) — shown but not
 #                 editable; applies to text, textarea, number and date
 #       placeholder: Hint text shown in an empty input (optional)
+#       rows:     Textarea height in text rows (optional)
+#       maxlength: Longest value a text input accepts (optional)
+#       row:      Layout — adjacent fields with the same "row" value share
+#                 one line of the form (optional; any name)
+#       flex:     Layout — relative width within a shared line (optional,
+#                 default 1)
+#     A column that only needs layout hints still needs an explicit
+#     "control:" — an entry replaces the type-based default.
 #
 # UNVERIFIED as of 2026-07-04 — confirmed only that type_id/status_id
 # are project fields. Check \d+ projects.v_project_detail in pgAdmin for
@@ -96,6 +104,29 @@ seanchai.v_record_detail:
   display_order:
     control: number
     label: Display Order
+  county:
+    control: text
+    label: County
+    row: location
+    flex: 3
+  state:
+    control: text
+    label: State / Province
+    row: location
+    flex: 2
+    maxlength: 50
+    # Free text: records outside the US (provinces, counties of other
+    # countries) use the same box.
+  country:
+    control: text
+    label: Country
+    row: location
+    flex: 3
+    # Added by steward 10l_seanchai_country_and_form_view.sql.
+  notes:
+    control: textarea
+    label: Notes
+    rows: 14
 
 seanchai.v_search_detail:
   search_id:

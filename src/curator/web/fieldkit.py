@@ -60,6 +60,15 @@ _TIER1_TYPE_MAP = {
 # if a future bare (non-FK) integer column shows up.
 _INTEGER_TYPES = {"bigint", "integer", "smallint"}
 
+# Layout hints an override entry may carry besides the FieldDef keys. They
+# live in a side dict (FieldKit.layout) rather than on viewkit's FieldDef,
+# which Curator doesn't own:
+#   rows       textarea height, in text rows
+#   maxlength  longest value a text input accepts
+#   row        fields with the same adjacent "row" value share one line
+#   flex       relative width of the field within its line (default 1)
+_LAYOUT_KEYS = ("rows", "maxlength", "row", "flex")
+
 # Shipped default lives in curator/data/ — same directory curator.yaml
 # ships from. fieldkit.py is one level deeper (curator/web/) than
 # config.py (curator/), hence parents[1] rather than parent.
@@ -84,15 +93,38 @@ class FieldKit:  # pylint: disable=too-few-public-methods
     class is built via the async FieldKit.create() factory rather than
     a synchronous __init__.
     """
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         view_name: str,
         fields: list[FieldDef],
         options: Optional[dict] = None,
+        layout: Optional[dict] = None,
     ):
         self.view_name = view_name
         self.fields = fields
         self.options = options or {}
+        # field name -> {rows, maxlength, row, flex}, only for fields
+        # whose override entry carries at least one layout hint
+        self.layout = layout or {}
+
+    @property
+    def field_rows(self) -> list[list[FieldDef]]:
+        """Fields grouped into form lines, in view column order.
+
+        Adjacent fields whose layout hint "row" has the same value share
+        one line; every other field gets a line to itself. The same
+        "row" value used again after a different field starts a new line.
+        """
+        rows: list[list[FieldDef]] = []
+        previous_key = None
+        for field in self.fields:
+            key = self.layout.get(field.name, {}).get("row")
+            if key is not None and key == previous_key:
+                rows[-1].append(field)
+            else:
+                rows.append([field])
+            previous_key = key
+        return rows
 
     @classmethod
     async def create(
@@ -143,7 +175,14 @@ class FieldKit:  # pylint: disable=too-few-public-methods
         await cls._validate_sources(db, view_name, fields)
         options = await cls._load_options(db, fields)
 
-        return cls(view_name, fields, options)
+        field_names = {field.name for field in fields}
+        layout = {
+            name: {key: entry[key] for key in _LAYOUT_KEYS if key in entry}
+            for name, entry in entity_overrides.items()
+            if name in field_names and any(key in entry for key in _LAYOUT_KEYS)
+        }
+
+        return cls(view_name, fields, options, layout)
 
     # -- Internal ---------------------------------------------------------
 

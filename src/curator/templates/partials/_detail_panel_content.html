@@ -22,6 +22,13 @@
                       defaults []
     - options         (dict, optional) — FieldKit.options, source name ->
                       list of {"value","label"} dicts, defaults {}
+    - field_rows      (list, optional) — FieldKit.field_rows, fields
+                      grouped into form lines
+    - layout          (dict, optional) — FieldKit.layout hints
+    - repo_base       (str, optional) — records only: base URL for
+                      transcription links (curator.yaml seanchai:)
+    - doc_statuses    (list, optional) — records only: status choices for
+                      a document part (curator.yaml seanchai:)
     - actions         (list, optional) — from formkit.FormActions, for
                       _form_actions.html, defaults []
     - container_class (str, optional) — for _form_actions.html
@@ -30,6 +37,8 @@
 {% set options = options|default({}) %}
 {% set record = record|default({}) %}
 {% set actions = actions|default([]) %}
+{% set repo_base = repo_base|default('') %}
+{% set doc_statuses = doc_statuses|default([]) %}
 
 <!-- Tab navigation -->
 <div class="detail-tabs">
@@ -178,6 +187,50 @@
         document.getElementById('links-widget-{{ record_id }}'),
         '{{ record_id }}'
       );
+    </script>
+    {% endif %}
+
+    {#
+      Documents widget — the parts of a seanchaí record (one per page of a
+      multi-page deed, say). Each part has an original-image link and a
+      transcription path in the seanchai repo. Embedded in the Details tab,
+      like the project links widget above.
+
+      Only rendered for existing records: a new record has no id to attach
+      parts to until it is saved.
+    #}
+    {% if entity == "records" and record_id %}
+    <div class="docs-widget" id="docs-widget-{{ record_id }}"
+         data-record-id="{{ record_id }}"
+         data-repo-base="{{ repo_base }}">
+      <div class="docs-widget-header">Documents <span class="docs-count"></span></div>
+      <div class="docs-toolbar">
+        <button type="button" class="docs-add-btn" title="Add a part (page) to this record">+ Add part</button>
+      </div>
+      <ul class="docs-list" role="listbox" aria-label="Record parts"></ul>
+      <div class="docs-edit" hidden>
+        <input type="text" class="docs-edit-label"
+               placeholder="Label, e.g. Deed Book 12, p. 340" autocomplete="off">
+        <input type="text" class="docs-edit-url"
+               placeholder="Original image URL (FamilySearch)" autocomplete="off">
+        <input type="text" class="docs-edit-md"
+               placeholder="Transcription path in the repo, e.g. docs/records/PR-033/01.md"
+               autocomplete="off">
+        <select class="docs-edit-status" aria-label="Transcription status">
+          {% for status in doc_statuses %}
+          <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
+          {% endfor %}
+        </select>
+        <div class="docs-edit-actions">
+          <button type="button" class="docs-save-btn">Save part</button>
+          <button type="button" class="docs-cancel-btn">Cancel</button>
+          <button type="button" class="docs-delete-btn" hidden>Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      window.initDocsWidget?.(document.getElementById('docs-widget-{{ record_id }}'));
     </script>
     {% endif %}
   </div>
