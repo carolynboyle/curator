@@ -230,6 +230,26 @@
   min-height: 4rem;
 }
 
+/* A tab that holds fieldkit "tab"-hinted fields (e.g. Notes): the field
+   takes the whole pane instead of sitting in a box inside a scroll area,
+   so there is no scrollbar nested inside the panel's own. The textarea
+   scrolls itself only when the text outgrows the pane. */
+.detail-tab-panel.detail-tab-fill.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-tab-fill .form-group {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.detail-tab-fill .form-group textarea {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+}
+
 /* Read-only fields (fieldkit override readonly: true) — visibly not
    editable: page background instead of input background, no focus ring. */
 .form-group input[readonly],

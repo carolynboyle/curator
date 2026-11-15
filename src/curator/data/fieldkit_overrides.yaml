@@ -23,6 +23,10 @@
 #                 one line of the form (optional; any name)
 #       flex:     Layout — relative width within a shared line (optional,
 #                 default 1)
+#       tab:      Layout — label of a separate tab that holds the field
+#                 instead of the Details form (optional; fields with the
+#                 same label share a tab, which fills the panel — for long
+#                 text such as notes)
 #     A column that only needs layout hints still needs an explicit
 #     "control:" — an entry replaces the type-based default.
 #
@@ -149,7 +153,9 @@ seanchai.v_record_detail:
   notes:
     control: textarea
     label: Notes
-    rows: 14
+    tab: Notes
+    # Long text: its own tab, filling the panel, rather than a box inside
+    # the Details scroll area.
 
 seanchai.v_search_detail:
   search_id:

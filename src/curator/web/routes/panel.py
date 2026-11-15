@@ -85,6 +85,7 @@ def _render_panel_content(
             record=record,
             fields=kit.fields,
             field_rows=kit.field_rows,
+            tab_panes=kit.tab_panes,
             layout=kit.layout,
             options=kit.options,
             repo_base=seanchai_cfg.get("repo_blob_base", ""),

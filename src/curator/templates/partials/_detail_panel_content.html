@@ -24,6 +24,9 @@
                       list of {"value","label"} dicts, defaults {}
     - field_rows      (list, optional) — FieldKit.field_rows, fields
                       grouped into form lines
+    - tab_panes       (list, optional) — FieldKit.tab_panes, fields that
+                      live in their own tab (fieldkit "tab" hint); each
+                      gets a tab button and a panel after Details
     - layout          (dict, optional) — FieldKit.layout hints
     - repo_base       (str, optional) — records only: base URL for
                       transcription links (curator.yaml seanchai:)
@@ -39,12 +42,21 @@
 {% set actions = actions|default([]) %}
 {% set repo_base = repo_base|default('') %}
 {% set doc_statuses = doc_statuses|default([]) %}
+{% set tab_panes = tab_panes|default([]) %}
 
 <!-- Tab navigation -->
 <div class="detail-tabs">
   <button class="detail-tab-button active" data-tab="details">Details</button>
 
-  {% if entity == "projects" %}
+  {# Fields the fieldkit overrides moved out of the form (long text, e.g. Notes) #}
+  {% for pane in tab_panes %}
+    <button class="detail-tab-button" data-tab="{{ pane.slug }}">{{ pane.label }}</button>
+  {% endfor %}
+
+  {% if entity == "records" and record_id %}
+    {# A new record has no id to attach document parts to until it is saved #}
+    <button class="detail-tab-button" data-tab="documents">Documents</button>
+  {% elif entity == "projects" %}
     <button class="detail-tab-button" data-tab="tasks">Tasks</button>
     <button class="detail-tab-button" data-tab="contacts">Contacts</button>
   {% elif entity == "contacts" %}
@@ -189,51 +201,69 @@
       );
     </script>
     {% endif %}
+  </div>
 
-    {#
-      Documents widget — the parts of a seanchaí record (one per page of a
-      multi-page deed, say). Each part has an original-image link and a
-      transcription path in the seanchai repo. Embedded in the Details tab,
-      like the project links widget above.
+  <!-- ===== FIELD TABS (fieldkit "tab" hint, e.g. Notes) ===== -->
+  {#
+    These fields are rendered outside <form id="detail-form">, so each
+    control carries form="detail-form" (form_id) — the browser still
+    submits them with the form, and saveForm()'s FormData(form) picks
+    them up. detail-tab-fill lets a long-text field use the whole pane.
+  #}
+  {% for pane in tab_panes %}
+  <div class="detail-tab-panel detail-tab-fill" data-tab="{{ pane.slug }}">
+    {% with fields=pane.fields, field_rows=none, form_id="detail-form" %}
+      {% include "partials/_detail_form_fields.html" %}
+    {% endwith %}
+  </div>
+  {% endfor %}
 
-      Only rendered for existing records: a new record has no id to attach
-      parts to until it is saved.
-    #}
-    {% if entity == "records" and record_id %}
-    <div class="docs-widget" id="docs-widget-{{ record_id }}"
-         data-record-id="{{ record_id }}"
-         data-repo-base="{{ repo_base }}">
-      <div class="docs-widget-header">Documents <span class="docs-count"></span></div>
-      <div class="docs-toolbar">
-        <button type="button" class="docs-add-btn" title="Add a part (page) to this record">+ Add part</button>
-      </div>
-      <ul class="docs-list" role="listbox" aria-label="Record parts"></ul>
-      <div class="docs-edit" hidden>
-        <input type="text" class="docs-edit-label"
-               placeholder="Label, e.g. Deed Book 12, p. 340" autocomplete="off">
-        <input type="text" class="docs-edit-url"
-               placeholder="Original image URL (FamilySearch)" autocomplete="off">
-        <input type="text" class="docs-edit-md"
-               placeholder="Transcription path in the repo, e.g. docs/records/PR-033/01.md"
-               autocomplete="off">
-        <select class="docs-edit-status" aria-label="Transcription status">
-          {% for status in doc_statuses %}
-          <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
-          {% endfor %}
-        </select>
-        <div class="docs-edit-actions">
-          <button type="button" class="docs-save-btn">Save part</button>
-          <button type="button" class="docs-cancel-btn">Cancel</button>
-          <button type="button" class="docs-delete-btn" hidden>Delete</button>
-        </div>
+  <!-- ===== DOCUMENTS TAB (records) ===== -->
+  {#
+    Documents widget — the parts of a seanchaí record (one per page of a
+    multi-page deed, say). Each part has an original-image link and a
+    transcription path in the seanchai repo. Lives in its own tab (the Details
+    tab holds only the form).
+
+    Only rendered for existing records: a new record has no id to attach
+    parts to until it is saved.
+  #}
+  {% if entity == "records" and record_id %}
+  <div class="detail-tab-panel" data-tab="documents">
+  <div class="docs-widget" id="docs-widget-{{ record_id }}"
+       data-record-id="{{ record_id }}"
+       data-repo-base="{{ repo_base }}">
+    <div class="docs-widget-header">Documents <span class="docs-count"></span></div>
+    <div class="docs-toolbar">
+      <button type="button" class="docs-add-btn" title="Add a part (page) to this record">+ Add part</button>
+    </div>
+    <ul class="docs-list" role="listbox" aria-label="Record parts"></ul>
+    <div class="docs-edit" hidden>
+      <input type="text" class="docs-edit-label"
+             placeholder="Label, e.g. Deed Book 12, p. 340" autocomplete="off">
+      <input type="text" class="docs-edit-url"
+             placeholder="Original image URL (FamilySearch)" autocomplete="off">
+      <input type="text" class="docs-edit-md"
+             placeholder="Transcription path in the repo, e.g. docs/records/PR-033/01.md"
+             autocomplete="off">
+      <select class="docs-edit-status" aria-label="Transcription status">
+        {% for status in doc_statuses %}
+        <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
+        {% endfor %}
+      </select>
+      <div class="docs-edit-actions">
+        <button type="button" class="docs-save-btn">Save part</button>
+        <button type="button" class="docs-cancel-btn">Cancel</button>
+        <button type="button" class="docs-delete-btn" hidden>Delete</button>
       </div>
     </div>
-
-    <script type="module">
-      window.initDocsWidget?.(document.getElementById('docs-widget-{{ record_id }}'));
-    </script>
-    {% endif %}
   </div>
+
+  <script type="module">
+    window.initDocsWidget?.(document.getElementById('docs-widget-{{ record_id }}'));
+  </script>
+  </div>
+  {% endif %}
 
   <!-- ===== CHILD TABS (deferred) ===== -->
   {% if entity == "projects" %}

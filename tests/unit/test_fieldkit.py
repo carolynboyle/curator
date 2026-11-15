@@ -449,3 +449,81 @@ class TestLayoutHints:
 
         assert all(len(line) == 1 for line in kit.field_rows)
         assert len(kit.field_rows) == len(self.COLUMNS)
+
+
+class TestTabHints:
+    """A "tab" hint moves a field out of the Details lines into its own tab
+    (FieldKit.tab_panes). The label is the tab's title; the slug is its
+    data-tab key."""
+
+    COLUMNS = [
+        {"name": "year", "data_type": "character varying", "position": 1},
+        {"name": "notes", "data_type": "text", "position": 2},
+        {"name": "county", "data_type": "character varying", "position": 3},
+        {"name": "state", "data_type": "character varying", "position": 4},
+        {"name": "remarks", "data_type": "text", "position": 5},
+    ]
+
+    @pytest.mark.asyncio
+    async def test_tab_key_is_collected_in_layout(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "notes": {"control": "textarea", "tab": "Notes"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert kit.layout == {"notes": {"tab": "Notes"}}
+
+    @pytest.mark.asyncio
+    async def test_tabbed_field_is_left_out_of_the_details_lines(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "notes": {"control": "textarea", "tab": "Notes"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert [[f.name for f in line] for line in kit.field_rows] == [
+            ["year"], ["county"], ["state"], ["remarks"],
+        ]
+
+    @pytest.mark.asyncio
+    async def test_tabbed_field_does_not_split_a_row(self, tmp_path):
+        # notes sits between year and county in the view; if it counted as
+        # a different field, the two "top" fields would end up on two lines.
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "year": {"control": "text", "row": "top"},
+            "notes": {"control": "textarea", "tab": "Notes"},
+            "county": {"control": "text", "row": "top"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert [[f.name for f in line] for line in kit.field_rows] == [
+            ["year", "county"], ["state"], ["remarks"],
+        ]
+
+    @pytest.mark.asyncio
+    async def test_tab_panes_group_fields_by_label_in_view_order(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {"seanchai.v_x": {
+            "notes": {"control": "textarea", "tab": "Long Text"},
+            "remarks": {"control": "textarea", "tab": "Long Text"},
+            "state": {"control": "text", "tab": "Extra"},
+        }})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert [
+            (pane["label"], pane["slug"], [f.name for f in pane["fields"]])
+            for pane in kit.tab_panes
+        ] == [
+            ("Long Text", "long-text", ["notes", "remarks"]),
+            ("Extra", "extra", ["state"]),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_no_tab_hints_means_no_tab_panes(self, tmp_path):
+        overrides = _write_overrides(tmp_path, {})
+
+        kit = await FieldKit.create(_mock_db(self.COLUMNS), "seanchai.v_x", overrides)
+
+        assert kit.tab_panes == []

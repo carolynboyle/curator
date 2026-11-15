@@ -18,10 +18,16 @@
                         FieldKit.field_rows: fields grouped into form
                         lines. Omitted (task fragment) → one field per line.
     - layout  (dict, optional) — FieldKit.layout: field name ->
-                        {rows, maxlength, row, flex} hints from
+                        {rows, maxlength, row, flex, tab} hints from
                         fieldkit_overrides.yaml
+    - form_id (str, optional) — id of the <form> the controls belong to,
+                        for fields rendered in a tab panel outside that
+                        <form> element (FieldKit.tab_panes). Adds
+                        form="<form_id>" to every control, so the browser
+                        still submits them with the form.
 #}
 {% set layout = layout|default({}) %}
+{% set form_id = form_id|default('') %}
 {% set field_rows = field_rows|default(none) %}
 {% set line_groups = field_rows if field_rows else fields|batch(1)|list %}
 {% for line in line_groups %}
@@ -37,6 +43,7 @@
       type="hidden"
       id="detail-{{ field.name }}"
       name="{{ field.name }}"
+      {% if form_id %}form="{{ form_id }}"{% endif %}
       value="{{ record.get(field.name) or '' }}"
     />
 
@@ -49,6 +56,7 @@
           type="text"
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if form_id %}form="{{ form_id }}"{% endif %}
           value="{{ record.get(field.name) or '' }}"
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
           {% if lay.maxlength %}maxlength="{{ lay.maxlength }}"{% endif %}
@@ -61,6 +69,7 @@
           type="number"
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if form_id %}form="{{ form_id }}"{% endif %}
           value="{{ record.get(field.name) if record.get(field.name) is not none else '' }}"
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
           {% if field.readonly %}readonly tabindex="-1"{% endif %}
@@ -70,13 +79,14 @@
         <textarea
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if form_id %}form="{{ form_id }}"{% endif %}
           {% if lay.rows %}rows="{{ lay.rows }}"{% endif %}
           {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
           {% if field.readonly %}readonly tabindex="-1"{% endif %}
         >{{ record.get(field.name) or '' }}</textarea>
 
       {% elif field.field_type == "select" %}
-        <select id="detail-{{ field.name }}" name="{{ field.name }}">
+        <select id="detail-{{ field.name }}" name="{{ field.name }}"{% if form_id %} form="{{ form_id }}"{% endif %}>
           <option value="">—</option>
           {% for opt in options.get(field.source, []) %}
             <option
@@ -97,6 +107,7 @@
           type="date"
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if form_id %}form="{{ form_id }}"{% endif %}
           value="{{ record.get(field.name) or '' }}"
           {% if field.readonly %}readonly tabindex="-1"{% endif %}
         />
@@ -106,6 +117,7 @@
           type="checkbox"
           id="detail-{{ field.name }}"
           name="{{ field.name }}"
+          {% if form_id %}form="{{ form_id }}"{% endif %}
           {% if record.get(field.name) %}checked{% endif %}
         />
       {% endif %}

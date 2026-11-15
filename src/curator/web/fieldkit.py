@@ -30,6 +30,7 @@ Usage:
     kit.fields  # list[FieldDef], in view column order
 """
 
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -67,7 +68,9 @@ _INTEGER_TYPES = {"bigint", "integer", "smallint"}
 #   maxlength  longest value a text input accepts
 #   row        fields with the same adjacent "row" value share one line
 #   flex       relative width of the field within its line (default 1)
-_LAYOUT_KEYS = ("rows", "maxlength", "row", "flex")
+#   tab        label of a separate tab that holds the field instead of the
+#              Details form (e.g. "Notes" for a long text field)
+_LAYOUT_KEYS = ("rows", "maxlength", "row", "flex", "tab")
 
 # Shipped default lives in curator/data/ — same directory curator.yaml
 # ships from. fieldkit.py is one level deeper (curator/web/) than
@@ -103,7 +106,7 @@ class FieldKit:  # pylint: disable=too-few-public-methods
         self.view_name = view_name
         self.fields = fields
         self.options = options or {}
-        # field name -> {rows, maxlength, row, flex}, only for fields
+        # field name -> {rows, maxlength, row, flex, tab}, only for fields
         # whose override entry carries at least one layout hint
         self.layout = layout or {}
 
@@ -114,10 +117,15 @@ class FieldKit:  # pylint: disable=too-few-public-methods
         Adjacent fields whose layout hint "row" has the same value share
         one line; every other field gets a line to itself. The same
         "row" value used again after a different field starts a new line.
+        Fields that carry a "tab" hint live in their own tab (see
+        tab_panes) and take no part in the Details lines, so they never
+        break up a run of adjacent fields.
         """
         rows: list[list[FieldDef]] = []
         previous_key = None
         for field in self.fields:
+            if "tab" in self.layout.get(field.name, {}):
+                continue
             key = self.layout.get(field.name, {}).get("row")
             if key is not None and key == previous_key:
                 rows[-1].append(field)
@@ -125,6 +133,29 @@ class FieldKit:  # pylint: disable=too-few-public-methods
                 rows.append([field])
             previous_key = key
         return rows
+
+    @property
+    def tab_panes(self) -> list[dict]:
+        """Fields that live in their own tab, grouped by tab label.
+
+        One dict per tab, in order of first appearance in the view:
+        {"label": "Notes", "slug": "notes", "fields": [FieldDef, ...]}.
+        "slug" is the label reduced to lowercase letters, digits and
+        hyphens, for use as the tab's data-tab key. Empty when no field
+        carries a "tab" hint, so entities without one get no extra tabs.
+        """
+        panes: dict[str, dict] = {}
+        for field in self.fields:
+            label = self.layout.get(field.name, {}).get("tab")
+            if label is None:
+                continue
+            pane = panes.setdefault(label, {
+                "label": label,
+                "slug": re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-"),
+                "fields": [],
+            })
+            pane["fields"].append(field)
+        return list(panes.values())
 
     @classmethod
     async def create(
