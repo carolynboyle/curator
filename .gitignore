@@ -25,3 +25,6 @@ install.conf
 *.swo
 # Claude Code — prevents credentials in approved commands from being committed
 .claude/*.local.json
+
+# curl cookie jars from local test runs
+cookies.txt
