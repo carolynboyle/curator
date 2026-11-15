@@ -26,6 +26,9 @@ include = ["curator*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Plain `pytest` runs the unit tests; integration tests need the live
+# database and are run on purpose with `pytest -m integration`.
+addopts = "-m 'not integration'"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 markers = ["integration: requires steward wcyj database (run with -m integration)"]
@@ -36,10 +39,12 @@ test = [
     "pytest-asyncio",
     "python-dotenv",
     "httpx",
+    "pylint",
 ]
 dev = [
     "pytest",
     "pytest-asyncio",
     "python-dotenv",
     "httpx",
+    "pylint",
 ]

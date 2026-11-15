@@ -37,5 +37,18 @@ services:
     ports:
       - "${APP_HOST:-0.0.0.0}:${APP_PORT:-8080}:8080"
 
+  # Unit tests and lint in the same image family as the app. Not started by
+  # `docker compose up` (profile): run it with
+  #   docker compose run --rm test       (or scripts/check.sh)
+  # No database needed — the unit tests mock it.
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+
 volumes:
   db_data:

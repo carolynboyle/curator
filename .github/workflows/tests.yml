@@ -1,0 +1,28 @@
+# Runs Curator's lint and unit tests on every push, using the same Docker
+# route as `scripts/check.sh` — so a green run here means the same thing as a
+# green run on your own machine. See tests/README.md.
+name: tests
+
+on:
+  push:
+  workflow_dispatch:
+
+# A newer push to the same branch makes an older, still-running check pointless.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # dbkit and viewkit are pip-installed from GitHub during the build
+      # (see pyproject.toml), so the dev-utils repo must be readable from here.
+      - name: Build the test image
+        run: docker compose build test
+
+      - name: Pylint (errors) and unit tests
+        run: docker compose run --rm test
