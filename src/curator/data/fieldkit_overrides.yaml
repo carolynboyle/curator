@@ -78,6 +78,8 @@ seanchai.v_record_detail:
     label: Record ID
     readonly: true
     placeholder: Assigned on save
+    row: identity
+    flex: 2
     # Ledger key (e.g. PR-001), a varchar, not an FK. Named *_id so
     # fieldkit requires an explicit control for it. Assigned by
     # api.save_record on insert (<type code>-NNN, see steward
@@ -85,25 +87,44 @@ seanchai.v_record_detail:
     # display-only here.
   type_code:
     control: hidden
+    row: identity
+    # Hidden fields carry the same "row" as their neighbours: they sit
+    # between Type and Status in the view's column order, and a field
+    # without a row value would split the identity line in two.
     # Derived from record_type_id by the view join; the Type dropdown
     # already shows it, and api.save_record ignores it.
   record_type:
     control: hidden
+    row: identity
     # Same — derived name for record_type_id.
   status:
     control: hidden
+    row: identity
     # Same — derived name for record_status_id (the Status dropdown).
   record_type_id:
     control: select
     label: Type
     source: record_types
+    row: identity
+    flex: 3
   record_status_id:
     control: select
     label: Status
     source: record_statuses
+    row: identity
+    flex: 2
   display_order:
     control: number
     label: Display Order
+    row: ordering
+    flex: 1
+  year:
+    control: text
+    label: Year
+    row: ordering
+    flex: 1
+    # Text, not number: records.year is not an integer column. Listed
+    # here only to carry the layout hints.
   county:
     control: text
     label: County
