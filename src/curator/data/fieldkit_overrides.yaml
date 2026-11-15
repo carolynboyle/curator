@@ -114,14 +114,16 @@ seanchai.v_record_detail:
     row: identity
     flex: 2
   display_order:
-    control: number
-    label: Display Order
-    row: ordering
-    flex: 1
+    control: hidden
+    row: identity
+    # Manual ledger sort position (lists order by display_order, then
+    # record_id). Hidden, not removed: the form still submits the current
+    # value, so existing order numbers are preserved. Carries the identity
+    # row value so it doesn't split the line between Status and Year.
   year:
     control: text
     label: Year
-    row: ordering
+    row: identity
     flex: 1
     # Text, not number: records.year is not an integer column. Listed
     # here only to carry the layout hints.
