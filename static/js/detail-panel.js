@@ -48,6 +48,65 @@ function getForm() {
   return document.getElementById('detail-form');
 }
 
+// ---------------------------------------------------------------------------
+// Per-tab footer handlers
+//
+// The footer's Save / New buttons (and Alt+S / Alt+N) normally act on the
+// record form. A widget living in a tab can take them over while its tab is
+// the active one by registering handlers on its tab pane:
+//
+//   registerFooterHandlers(pane, {
+//     save:         async () => {...},   // Save button / Alt+S
+//     new:          () => {...},         // New button / Alt+N / Alt+A
+//     canSave:      () => bool,          // optional; false greys out Save
+//     isDirty:      () => bool,          // optional; unsaved edits in the tab
+//     dirtyMessage: 'text',              // optional; asked before the panel closes
+//   });
+//
+// Exit / × / Esc always close the panel, but ask first if any tab reports
+// unsaved edits. The handlers live on the pane element, so they disappear
+// with it when the panel body is swapped.
+// ---------------------------------------------------------------------------
+
+function getActivePane() {
+  return getPanel()?.querySelector('.detail-tab-panel.active') ?? null;
+}
+
+function activeFooterHandlers() {
+  return getActivePane()?._footerHandlers ?? null;
+}
+
+/** Grey out the footer Save button when the active tab cannot save right now. */
+function syncFooterState() {
+  const save = getPanel()?.querySelector('.btn-save');
+  if (!save) return;
+  const h = activeFooterHandlers();
+  save.disabled = Boolean(h?.canSave && !h.canSave());
+}
+
+/**
+ * True if the panel may be left (closed or replaced). Asks the person when
+ * any tab holds unsaved edits.
+ */
+function confirmLeavePanel() {
+  const panes = getPanel()?.querySelectorAll('.detail-tab-panel') ?? [];
+  for (const pane of panes) {
+    const h = pane._footerHandlers;
+    if (h?.isDirty?.()) {
+      // eslint-disable-next-line no-alert
+      return confirm(h.dirtyMessage ||
+        'There are changes that have not been saved.\n\nDiscard them and continue?');
+    }
+  }
+  return true;
+}
+
+export function registerFooterHandlers(pane, handlers) {
+  if (!pane) return;
+  pane._footerHandlers = handlers;
+  syncFooterState();
+}
+
 function getHero() {
   return document.querySelector('.crew-header');
 }
@@ -558,6 +617,16 @@ async function saveForm() {
 // ---------------------------------------------------------------------------
 
 async function handleSave() {
+  // A tab with its own Save (Documents) takes over while it is active
+  const tab = activeFooterHandlers();
+  if (tab?.save) {
+    if (tab.canSave && !tab.canSave()) return;
+    await tab.save();
+    return;
+  }
+  // Saving the record closes the panel, which would drop edits in other tabs
+  if (!confirmLeavePanel()) return;
+
   if (_saving) return;
   _saving = true;
   try {
@@ -588,6 +657,15 @@ async function handleSave() {
 }
 
 async function handleNew() {
+  // A tab with its own New (Documents) takes over while it is active
+  const tab = activeFooterHandlers();
+  if (tab?.new) {
+    tab.new();
+    return;
+  }
+  // Save-and-new replaces the panel body, which would drop edits in other tabs
+  if (!confirmLeavePanel()) return;
+
   if (_saving) return;
   _saving = true;
   try {
@@ -616,6 +694,8 @@ async function handleNew() {
 }
 
 async function handleDiscard() {
+  if (!confirmLeavePanel()) return;
+
   const form   = getForm();
   const isTask = form?.dataset.entity === 'tasks';
   const panel  = getPanel();
@@ -737,6 +817,7 @@ export function initDetailPanel() {
       const tabPanel = panel.querySelector(`.detail-tab-panel[data-tab="${targetTab}"]`);
       if (tabPanel) {
         tabPanel.classList.add('active');
+        syncFooterState();
 
         // Lazy-load task list on first visit to the Tasks tab
         if (targetTab === 'tasks') {
@@ -772,12 +853,16 @@ export function initDetailPanel() {
     // triggers native form submission. Without preventDefault here, the
     // browser's native GET-to-current-URL submission races the fetch() in
     // handleSave() and wins, since nothing else stops it.
-    if (e.target.classList.contains('btn-save')) {
+    //
+    // closest() rather than e.target: the labels underline their accelerator
+    // letter in a <u>, and a click landing on that letter has the <u> as its
+    // target, not the button.
+    if (e.target.closest('.btn-save')) {
       e.preventDefault();
       handleSave();
     }
-    if (e.target.classList.contains('btn-new'))     handleNew();
-    if (e.target.classList.contains('btn-discard')) handleDiscard();
+    if (e.target.closest('.btn-new'))     handleNew();
+    if (e.target.closest('.btn-discard')) handleDiscard();
   });
 
   // Keyboard shortcuts
@@ -848,6 +933,8 @@ window.openNewRecordPanel = openNewRecordPanel;
 window.closeDetailPanel   = closeDetailPanel;
 window.openTaskPanel      = openTaskPanel;
 window.loadTaskList       = loadTaskList;
+window.registerFooterHandlers = registerFooterHandlers;
+window.syncFooterState        = syncFooterState;
 
 // Initialize
 if (document.readyState === 'loading') {

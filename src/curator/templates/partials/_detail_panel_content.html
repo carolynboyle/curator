@@ -205,13 +205,18 @@
 
   <!-- ===== FIELD TABS (fieldkit "tab" hint, e.g. Notes) ===== -->
   {#
+    data-footer-hide="new" hides the footer's New button on these tabs:
+    their fields belong to the current record, so starting another record
+    from here would be confusing (detail-panel.css).
+
     These fields are rendered outside <form id="detail-form">, so each
     control carries form="detail-form" (form_id) — the browser still
     submits them with the form, and saveForm()'s FormData(form) picks
     them up. detail-tab-fill lets a long-text field use the whole pane.
   #}
   {% for pane in tab_panes %}
-  <div class="detail-tab-panel detail-tab-fill" data-tab="{{ pane.slug }}">
+  <div class="detail-tab-panel detail-tab-fill" data-tab="{{ pane.slug }}"
+       data-footer-hide="new">
     {% with fields=pane.fields, field_rows=none, form_id="detail-form" %}
       {% include "partials/_detail_form_fields.html" %}
     {% endwith %}
@@ -223,7 +228,9 @@
     Documents widget — the documents attached to a seanchaí record: the pages
     of a multi-page deed, or a separate document that belongs with the record.
     Master-detail: a searchable list on the left, the edit form on the right
-    (greyed out until a document is picked or "+ Add document" is clicked).
+    (greyed out until a document is picked or the footer's New is clicked).
+    While this tab is active the footer's Save and New act on documents
+    (record-documents.js registers them with detail-panel.js).
     Each document has an original-image link and a transcription path in the
     seanchai repo. Lives in its own tab (the Details tab holds only the form).
 
@@ -240,8 +247,6 @@
       <div class="docs-side">
         <input type="search" class="docs-search" placeholder="Search documents"
                aria-label="Search documents" autocomplete="off">
-        <button type="button" class="docs-add-btn"
-                title="Add a document to this record">+ Add document</button>
         <ul class="docs-list" role="listbox" aria-label="Record documents"></ul>
       </div>
       <fieldset class="docs-edit" disabled>
@@ -279,8 +284,6 @@
           </select>
         </label>
         <div class="docs-edit-actions">
-          <button type="button" class="docs-save-btn">Save document</button>
-          <button type="button" class="docs-cancel-btn">Cancel</button>
           <button type="button" class="docs-delete-btn" hidden>Delete</button>
         </div>
       </fieldset>

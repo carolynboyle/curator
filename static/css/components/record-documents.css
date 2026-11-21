@@ -42,7 +42,7 @@
   gap: 1.25rem;
 }
 
-/* ── Left: search, add, list ── */
+/* ── Left: search and list ── */
 
 .docs-side {
   min-height: 0;
@@ -66,23 +66,6 @@
 
 .docs-search:focus {
   border-color: var(--color-primary);
-}
-
-.docs-add-btn {
-  align-self: flex-start;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 0.25rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.docs-add-btn:hover {
-  background: var(--color-border);
 }
 
 .docs-list {
@@ -249,8 +232,6 @@
   margin-top: 0.2rem;
 }
 
-.docs-save-btn,
-.docs-cancel-btn,
 .docs-delete-btn {
   padding: 0.2rem 0.55rem;
   font-size: 0.75rem;
@@ -263,17 +244,6 @@
   white-space: nowrap;
 }
 
-.docs-save-btn {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.docs-save-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.docs-save-btn:disabled,
-.docs-cancel-btn:disabled,
 .docs-delete-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

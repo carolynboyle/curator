@@ -14,9 +14,12 @@
  *   initDocsWidget(widget)
  *     Master-detail: a searchable list of documents on the left, the edit
  *     form on the right. The form is greyed out (its <fieldset> disabled)
- *     until a document is picked or "+ Add document" is clicked. Called from
- *     the inline <script type="module"> in _detail_panel_content.html each
- *     time a record panel is opened.
+ *     until a document is picked or the footer's New button is used. While
+ *     the Documents tab is active the footer's Save and New buttons (and
+ *     Alt+S / Alt+N) act on documents: the widget registers them with
+ *     detail-panel.js (registerFooterHandlers). Called from the inline
+ *     <script type="module"> in _detail_panel_content.html each time a
+ *     record panel is opened.
  *
  * Reads the record's internal id from widget.dataset.recordId and the
  * repo base URL (for transcription links) from widget.dataset.repoBase.
@@ -111,7 +114,6 @@ export async function initDocsWidget(widget) {
   const repoBase = widget.dataset.repoBase || '';
 
   // -- DOM refs --
-  const addBtn      = widget.querySelector('.docs-add-btn');
   const searchInput = widget.querySelector('.docs-search');
   const countEl     = widget.querySelector('.docs-count');
   const listEl      = widget.querySelector('.docs-list');
@@ -122,8 +124,6 @@ export async function initDocsWidget(widget) {
   const statusSel   = widget.querySelector('.docs-edit-status');
   const openUrlBtn  = widget.querySelector('.docs-open-url');
   const openMdBtn   = widget.querySelector('.docs-open-md');
-  const saveBtn     = widget.querySelector('.docs-save-btn');
-  const cancelBtn   = widget.querySelector('.docs-cancel-btn');
   const deleteBtn   = widget.querySelector('.docs-delete-btn');
 
   // -- State --
@@ -131,6 +131,7 @@ export async function initDocsWidget(widget) {
   let currentDocId = null;     // integer in 'edit' mode, otherwise null
   let allDocs      = [];
   let baseline     = '';       // JSON snapshot of the form when it was filled
+  let saving       = false;    // a save request is in flight
 
   // -- Form helpers --
 
@@ -190,7 +191,7 @@ export async function initDocsWidget(widget) {
       empty.className   = 'docs-empty';
       empty.textContent = allDocs.length
         ? 'No matching documents.'
-        : 'No documents yet. Use + Add document.';
+        : 'No documents yet. Use New to add one.';
       listEl.appendChild(empty);
       return;
     }
@@ -235,6 +236,7 @@ export async function initDocsWidget(widget) {
     baseline = _formValues();
     _syncOpenButtons();
     _markActiveRow();
+    window.syncFooterState?.();
     if (focus) labelInput.focus();
   }
 
@@ -252,6 +254,7 @@ export async function initDocsWidget(widget) {
     baseline = _formValues();
     _syncOpenButtons();
     _markActiveRow();
+    window.syncFooterState?.();
   }
 
   function _select(doc) {
@@ -264,21 +267,16 @@ export async function initDocsWidget(widget) {
 
   searchInput.addEventListener('input', _renderList);
 
-  // -- Add / cancel --
+  // -- New (footer New button / Alt+N) --
 
-  addBtn.addEventListener('click', () => {
+  function _newDoc() {
     if (mode === 'add' && !_isDirty()) {
       labelInput.focus();
       return;
     }
     if (!_confirmDiscard()) return;
     _showEdit(null);
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    if (!_confirmDiscard()) return;
-    _hideEdit();
-  });
+  }
 
   // -- Open links in a new tab --
   // Double-click the URL box, or use the ↗ / 📄 buttons. These open whatever
@@ -293,7 +291,8 @@ export async function initDocsWidget(widget) {
 
   // -- Save --
 
-  saveBtn.addEventListener('click', async () => {
+  async function _saveDoc() {
+    if (saving || mode === 'none') return;
     const sourceUrl = urlInput.value.trim();
     const mdPath    = mdInput.value.trim();
 
@@ -317,7 +316,7 @@ export async function initDocsWidget(widget) {
       : '/seanchai/record_documents/save';
 
     try {
-      saveBtn.disabled = true;
+      saving = true;
       const res  = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -339,9 +338,9 @@ export async function initDocsWidget(widget) {
       console.error('Could not save document:', err);
       alert('Save failed. Please try again.');
     } finally {
-      saveBtn.disabled = false;
+      saving = false;
     }
-  });
+  }
 
   // -- Delete --
 
@@ -368,6 +367,17 @@ export async function initDocsWidget(widget) {
     } finally {
       deleteBtn.disabled = false;
     }
+  });
+
+  // -- Footer: Save / New (and Alt+S / Alt+N) act on documents while this tab is active --
+
+  window.registerFooterHandlers?.(widget.closest('.detail-tab-panel'), {
+    save:         _saveDoc,
+    new:          _newDoc,
+    canSave:      () => mode !== 'none' && !saving,
+    isDirty:      _isDirty,
+    dirtyMessage: 'This document has changes that have not been saved.\n\n' +
+                  'Discard them and close?',
   });
 
   // -- Initial state: greyed-out form, then the list --

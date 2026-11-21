@@ -781,3 +781,10 @@ a.linked-record-url:hover {
   color: var(--color-text-light);
   font-size: 0.75rem;
 }
+
+/* Footer buttons a tab does not want. A tab pane carrying
+   data-footer-hide="new" hides the New button while it is the active tab
+   (e.g. Notes: its text belongs to the current record). */
+.detail-panel:has(.detail-tab-panel.active[data-footer-hide~="new"]) .detail-panel-actions .btn-new {
+  display: none;
+}

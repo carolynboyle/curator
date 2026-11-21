@@ -10,6 +10,8 @@ tab:
   - the Details form no longer holds the tabbed fields
   - the Documents tab exists only for a saved record
   - an entity with no tab hints keeps its old tab bar
+  - field tabs hide the footer's New button; Documents leaves Save/New to
+    the footer (no in-form add/save/cancel buttons)
 """
 
 import re
@@ -122,16 +124,32 @@ class TestDocumentsTab:
         assert fieldset[:fieldset.index(">")].endswith("disabled")
         for hook in ("docs-edit-label", "docs-edit-url", "docs-edit-md",
                      "docs-edit-status", "docs-open-url", "docs-open-md",
-                     "docs-save-btn", "docs-cancel-btn", "docs-delete-btn"):
+                     "docs-delete-btn"):
             assert f'class="{hook}' in fieldset or f" {hook}" in fieldset
+
+    def test_save_and_new_are_left_to_the_footer(self):
+        html = _render(tab_panes=[NOTES_PANE])
+        widget = html[html.index('class="docs-widget"'):]
+        widget = widget[:widget.index("</script>")]
+
+        for gone in ("docs-add-btn", "docs-save-btn", "docs-cancel-btn"):
+            assert gone not in widget
+        assert "docs-delete-btn" in widget
+
+    def test_field_tabs_hide_new_but_documents_does_not(self):
+        html = _render(tab_panes=[NOTES_PANE])
+
+        notes = html[html.index('data-tab="notes"\n'):]
+        assert 'data-footer-hide="new"' in notes[:notes.index(">")]
+        docs = html[html.index('data-tab="documents"'):]
+        assert "data-footer-hide" not in docs[:docs.index(">")]
 
     def test_widget_says_document_not_part(self):
         html = _render(tab_panes=[NOTES_PANE])
         widget = html[html.index('class="docs-widget"'):]
         widget = widget[:widget.index("</script>")]
 
-        assert "+ Add document" in widget
-        assert "Save document" in widget
+        assert "Documents" in widget
         assert "part" not in widget.lower()
 
     def test_new_record_has_no_documents_tab_or_panel(self):

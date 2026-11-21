@@ -68,6 +68,24 @@
   background: var(--color-border);
 }
 
+/* A disabled action (e.g. Save on the Documents tab before a document is picked) */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-save:disabled,
+.btn-new:disabled,
+.btn-discard:disabled,
+.btn-cancel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-save:hover:disabled,
+.btn-new:hover:disabled,
+.btn-discard:hover:disabled,
+.btn-cancel:hover:disabled {
+  background: transparent;
+}
+
 /* ---------------------------------------------------------------------------
    Accelerator key underlines
    <u> inside button labels marks the accesskey letter
