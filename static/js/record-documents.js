@@ -3,32 +3,37 @@
  *
  * Documents widget for the seanchaí record detail panel.
  *
- * A ledger record can span many pages. Each "part" has up to two links:
- * the original image (source_url, e.g. FamilySearch) and a markdown
- * transcription kept in the seanchai repo (md_path, repo-relative).
+ * A ledger record can have many documents: the pages of a multi-page deed,
+ * or a separate document that belongs with the same record. Each document
+ * has up to two links: the original image (source_url, e.g. FamilySearch)
+ * and a markdown transcription kept in the seanchai repo (md_path,
+ * repo-relative).
  *
  * Public function (exposed on window):
  *
  *   initDocsWidget(widget)
- *     Renders the parts list in reading order and wires add / select /
- *     save / cancel / delete. Called from the inline <script type="module">
- *     in _detail_panel_content.html each time a record panel is opened.
+ *     Master-detail: a searchable list of documents on the left, the edit
+ *     form on the right. The form is greyed out (its <fieldset> disabled)
+ *     until a document is picked or "+ Add document" is clicked. Called from
+ *     the inline <script type="module"> in _detail_panel_content.html each
+ *     time a record panel is opened.
  *
  * Reads the record's internal id from widget.dataset.recordId and the
  * repo base URL (for transcription links) from widget.dataset.repoBase.
  * Both come from the server-rendered template, so nothing is hard-coded
- * here. With no repo base configured, a transcription path is shown as
- * plain text instead of a link.
+ * here. With no repo base configured, the transcription open button stays
+ * disabled.
  *
- * Mirrors project-links.js: currentDocId is null in "add" mode and an
- * integer in "edit" mode; allDocs is a local cache of the list.
+ * State: mode is 'none' (form greyed out), 'add' (new document) or 'edit'
+ * (currentDocId is the document's id). A snapshot of the form taken when it
+ * is filled lets the widget warn before unsaved edits are thrown away.
  */
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** True only for http(s) URLs — anything else is never rendered as a link. */
+/** True only for http(s) URLs — anything else is never opened. */
 function _isSafeUrl(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
 }
@@ -41,6 +46,11 @@ function _repoUrl(base, mdPath) {
   return `${root}${path}`;
 }
 
+/** Open a link in a new tab, if it is a safe http(s) URL. */
+function _openInTab(url) {
+  if (_isSafeUrl(url)) window.open(url.trim(), '_blank', 'noopener,noreferrer');
+}
+
 async function _fetchDocs(recordId) {
   const res = await fetch(`/seanchai/records/${encodeURIComponent(recordId)}/documents`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -48,32 +58,28 @@ async function _fetchDocs(recordId) {
   return Array.isArray(data) ? data : [];
 }
 
-/** Build a small link (or a dimmed placeholder) for one slot of a part. */
-function _linkSlot(kind, href, glyph, title) {
-  if (!href) {
-    const empty = document.createElement('span');
-    empty.className = `docs-link docs-link--empty docs-link-${kind}`;
-    empty.textContent = glyph;
-    empty.title = `No ${title.toLowerCase()} yet`;
-    return empty;
-  }
-  const a = document.createElement('a');
-  a.className = `docs-link docs-link-${kind}`;
-  a.href = href;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.textContent = glyph;
-  a.title = title;
-  // Opening a link must not select the row for editing
-  a.addEventListener('click', e => e.stopPropagation());
-  return a;
+/** The label a document shows in the list. */
+function _displayLabel(doc) {
+  return doc.label || `Document ${doc.seq}`;
 }
 
-/** Build one <li> for a part. Raw values are kept on the element's dataset. */
-function _buildItem(doc, repoBase) {
+/** True if the (lower-cased) search text appears in any field of the document. */
+function _matches(doc, query) {
+  const haystack = [
+    _displayLabel(doc),
+    doc.source_url,
+    doc.md_path,
+    (doc.status || '').replace(/_/g, ' '),
+  ].join('\n').toLowerCase();
+  return haystack.includes(query);
+}
+
+/** Build one <li> for a document: sequence number, label, status chip. */
+function _buildItem(doc) {
   const li = document.createElement('li');
   li.className = 'docs-item';
   li.dataset.id = doc.id;
+  li.tabIndex = 0;
   li.setAttribute('role', 'option');
 
   const seq = document.createElement('span');
@@ -83,26 +89,9 @@ function _buildItem(doc, repoBase) {
 
   const label = document.createElement('span');
   label.className = 'docs-label';
-  label.textContent = doc.label || `Part ${doc.seq}`;
+  label.textContent = _displayLabel(doc);
+  label.title = _displayLabel(doc);
   li.appendChild(label);
-
-  li.appendChild(_linkSlot(
-    'source',
-    _isSafeUrl(doc.source_url) ? doc.source_url.trim() : null,
-    '↗',
-    'Original image'
-  ));
-
-  const mdHref = _repoUrl(repoBase, doc.md_path);
-  if (doc.md_path && !mdHref) {
-    // No repo base configured — show the path itself
-    const path = document.createElement('span');
-    path.className = 'docs-link docs-link-md docs-path';
-    path.textContent = doc.md_path;
-    li.appendChild(path);
-  } else {
-    li.appendChild(_linkSlot('md', mdHref, '📄', 'Transcription'));
-  }
 
   const status = document.createElement('span');
   status.className = `docs-status docs-status--${doc.status}`;
@@ -123,48 +112,108 @@ export async function initDocsWidget(widget) {
 
   // -- DOM refs --
   const addBtn      = widget.querySelector('.docs-add-btn');
+  const searchInput = widget.querySelector('.docs-search');
   const countEl     = widget.querySelector('.docs-count');
   const listEl      = widget.querySelector('.docs-list');
-  const editEl      = widget.querySelector('.docs-edit');
+  const editEl      = widget.querySelector('.docs-edit');       // <fieldset>
   const labelInput  = widget.querySelector('.docs-edit-label');
   const urlInput    = widget.querySelector('.docs-edit-url');
   const mdInput     = widget.querySelector('.docs-edit-md');
   const statusSel   = widget.querySelector('.docs-edit-status');
+  const openUrlBtn  = widget.querySelector('.docs-open-url');
+  const openMdBtn   = widget.querySelector('.docs-open-md');
   const saveBtn     = widget.querySelector('.docs-save-btn');
   const cancelBtn   = widget.querySelector('.docs-cancel-btn');
   const deleteBtn   = widget.querySelector('.docs-delete-btn');
 
   // -- State --
-  let currentDocId = null;   // null → adding a new part; integer → editing
+  let mode         = 'none';   // 'none' | 'add' | 'edit'
+  let currentDocId = null;     // integer in 'edit' mode, otherwise null
   let allDocs      = [];
+  let baseline     = '';       // JSON snapshot of the form when it was filled
+
+  // -- Form helpers --
+
+  function _formValues() {
+    return JSON.stringify([
+      labelInput.value.trim(),
+      urlInput.value.trim(),
+      mdInput.value.trim(),
+      statusSel.value,
+    ]);
+  }
+
+  function _isDirty() {
+    return mode !== 'none' && _formValues() !== baseline;
+  }
+
+  /** True if it is fine to leave the current form contents behind. */
+  function _confirmDiscard() {
+    if (!_isDirty()) return true;
+    // eslint-disable-next-line no-alert
+    return confirm('This document has changes that have not been saved.\n\n' +
+                   'Discard them and continue?');
+  }
+
+  function _syncOpenButtons() {
+    openUrlBtn.disabled = !_isSafeUrl(urlInput.value);
+    const mdHref = _repoUrl(repoBase, mdInput.value.trim());
+    openMdBtn.disabled = !_isSafeUrl(mdHref);
+    openMdBtn.title = repoBase
+      ? 'Open the transcription in the repo'
+      : 'No repository URL is configured (seanchai.repo_blob_base)';
+  }
+
+  function _markActiveRow() {
+    listEl.querySelectorAll('.docs-item').forEach(r =>
+      r.classList.toggle('active',
+        mode === 'edit' && Number(r.dataset.id) === currentDocId));
+  }
 
   // -- List rendering --
 
   function _renderList() {
-    listEl.innerHTML = '';
-    countEl.textContent = allDocs.length ? `(${allDocs.length})` : '';
+    const query = searchInput.value.trim().toLowerCase();
+    const shown = query ? allDocs.filter(d => _matches(d, query)) : allDocs;
 
-    if (allDocs.length === 0) {
+    listEl.innerHTML = '';
+    if (!allDocs.length) {
+      countEl.textContent = '';
+    } else if (query) {
+      countEl.textContent = `(${shown.length} of ${allDocs.length})`;
+    } else {
+      countEl.textContent = `(${allDocs.length})`;
+    }
+
+    if (!shown.length) {
       const empty = document.createElement('li');
       empty.className   = 'docs-empty';
-      empty.textContent = 'No parts yet. Use + Add part.';
+      empty.textContent = allDocs.length
+        ? 'No matching documents.'
+        : 'No documents yet. Use + Add document.';
       listEl.appendChild(empty);
       return;
     }
 
-    allDocs.forEach(doc => {
-      const li = _buildItem(doc, repoBase);
-      if (currentDocId != null && doc.id === currentDocId) li.classList.add('active');
+    shown.forEach(doc => {
+      const li = _buildItem(doc);
       li.addEventListener('click', () => _select(doc));
+      li.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          _select(doc);
+        }
+      });
       listEl.appendChild(li);
     });
+    _markActiveRow();
   }
 
   async function _load() {
     try {
       allDocs = await _fetchDocs(recordId);
     } catch (err) {
-      console.error('Could not load document parts:', err);
+      console.error('Could not load documents:', err);
       allDocs = [];
     }
     _renderList();
@@ -172,46 +221,75 @@ export async function initDocsWidget(widget) {
 
   // -- State transitions --
 
-  function _showEdit(doc) {
-    editEl.hidden       = false;
+  /** Fill and enable the form: a document to edit, or null to add one. */
+  function _showEdit(doc, { focus = true } = {}) {
+    mode                = doc ? 'edit' : 'add';
     currentDocId        = doc ? doc.id : null;
+    editEl.disabled     = false;
     labelInput.value    = doc?.label      ?? '';
     urlInput.value      = doc?.source_url ?? '';
     mdInput.value       = doc?.md_path    ?? '';
     statusSel.value     = doc?.status     ?? statusSel.options[0]?.value ?? '';
     deleteBtn.hidden    = (doc == null);
     urlInput.setCustomValidity('');
-    labelInput.focus();
+    baseline = _formValues();
+    _syncOpenButtons();
+    _markActiveRow();
+    if (focus) labelInput.focus();
   }
 
+  /** Clear the form and grey it out. */
   function _hideEdit() {
-    editEl.hidden = true;
-    currentDocId  = null;
-    listEl.querySelectorAll('.docs-item').forEach(r => r.classList.remove('active'));
+    mode             = 'none';
+    currentDocId     = null;
+    labelInput.value = '';
+    urlInput.value   = '';
+    mdInput.value    = '';
+    statusSel.value  = statusSel.options[0]?.value ?? '';
+    urlInput.setCustomValidity('');
+    deleteBtn.hidden = true;
+    editEl.disabled  = true;
+    baseline = _formValues();
+    _syncOpenButtons();
+    _markActiveRow();
   }
 
   function _select(doc) {
-    listEl.querySelectorAll('.docs-item').forEach(r =>
-      r.classList.toggle('active', Number(r.dataset.id) === doc.id));
+    if (mode === 'edit' && currentDocId === doc.id) return;
+    if (!_confirmDiscard()) return;
     _showEdit(doc);
   }
+
+  // -- Search --
+
+  searchInput.addEventListener('input', _renderList);
 
   // -- Add / cancel --
 
   addBtn.addEventListener('click', () => {
-    listEl.querySelectorAll('.docs-item').forEach(r => r.classList.remove('active'));
+    if (mode === 'add' && !_isDirty()) {
+      labelInput.focus();
+      return;
+    }
+    if (!_confirmDiscard()) return;
     _showEdit(null);
   });
 
-  cancelBtn.addEventListener('click', _hideEdit);
-
-  // -- Open the original URL in a new tab on double-click --
-  // Opens whatever is in the box (saved or not). Only http(s) is launched.
-
-  urlInput.addEventListener('dblclick', () => {
-    const url = urlInput.value.trim();
-    if (_isSafeUrl(url)) window.open(url, '_blank', 'noopener,noreferrer');
+  cancelBtn.addEventListener('click', () => {
+    if (!_confirmDiscard()) return;
+    _hideEdit();
   });
+
+  // -- Open links in a new tab --
+  // Double-click the URL box, or use the ↗ / 📄 buttons. These open whatever
+  // is in the box (saved or not); only http(s) URLs are launched.
+
+  urlInput.addEventListener('dblclick', () => _openInTab(urlInput.value));
+  openUrlBtn.addEventListener('click', () => _openInTab(urlInput.value));
+  openMdBtn.addEventListener('click', () =>
+    _openInTab(_repoUrl(repoBase, mdInput.value.trim())));
+  urlInput.addEventListener('input', _syncOpenButtons);
+  mdInput.addEventListener('input', _syncOpenButtons);
 
   // -- Save --
 
@@ -253,9 +331,12 @@ export async function initDocsWidget(widget) {
       }
 
       await _load();
-      _hideEdit();
+      // Keep the saved document selected (it also re-baselines the form)
+      const saved = allDocs.find(d => d.id === Number(data.id));
+      if (saved) _showEdit(saved, { focus: false });
+      else _hideEdit();
     } catch (err) {
-      console.error('Could not save document part:', err);
+      console.error('Could not save document:', err);
       alert('Save failed. Please try again.');
     } finally {
       saveBtn.disabled = false;
@@ -266,7 +347,7 @@ export async function initDocsWidget(widget) {
 
   deleteBtn.addEventListener('click', async () => {
     if (currentDocId == null) return;
-    if (!confirm('Remove this part?')) return;  // eslint-disable-line no-alert
+    if (!confirm('Remove this document?')) return;  // eslint-disable-line no-alert
 
     try {
       deleteBtn.disabled = true;
@@ -282,14 +363,15 @@ export async function initDocsWidget(widget) {
         alert(data.message || 'Delete failed.');
       }
     } catch (err) {
-      console.error('Could not delete document part:', err);
+      console.error('Could not delete document:', err);
       alert('Delete failed. Please try again.');
     } finally {
       deleteBtn.disabled = false;
     }
   });
 
-  // -- Initial load --
+  // -- Initial state: greyed-out form, then the list --
+  _hideEdit();
   await _load();
 }
 

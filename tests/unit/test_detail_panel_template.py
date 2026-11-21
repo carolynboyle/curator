@@ -105,10 +105,34 @@ class TestDocumentsTab:
         html = _render(tab_panes=[NOTES_PANE])
 
         details_start = html.index('class="detail-tab-panel active" data-tab="details"')
-        docs_panel = html.index('class="detail-tab-panel" data-tab="documents"')
+        docs_panel = html.index('class="detail-tab-panel detail-tab-fill" data-tab="documents"')
         assert docs_panel > details_start
         assert 'docs-widget' not in html[details_start:docs_panel]
         assert html.index('class="docs-widget"') > docs_panel
+
+    def test_widget_is_a_searchable_list_beside_a_greyed_out_form(self):
+        html = _render(tab_panes=[NOTES_PANE])
+        widget = html[html.index('class="docs-widget"'):]
+
+        # list column: search box, add button, list; form column after it
+        assert widget.index('class="docs-search"') < widget.index('class="docs-list"')
+        assert widget.index('class="docs-list"') < widget.index('<fieldset class="docs-edit"')
+        # the form starts disabled (greyed out) until a document is picked
+        fieldset = widget[widget.index('<fieldset class="docs-edit"'):]
+        assert fieldset[:fieldset.index(">")].endswith("disabled")
+        for hook in ("docs-edit-label", "docs-edit-url", "docs-edit-md",
+                     "docs-edit-status", "docs-open-url", "docs-open-md",
+                     "docs-save-btn", "docs-cancel-btn", "docs-delete-btn"):
+            assert f'class="{hook}' in fieldset or f" {hook}" in fieldset
+
+    def test_widget_says_document_not_part(self):
+        html = _render(tab_panes=[NOTES_PANE])
+        widget = html[html.index('class="docs-widget"'):]
+        widget = widget[:widget.index("</script>")]
+
+        assert "+ Add document" in widget
+        assert "Save document" in widget
+        assert "part" not in widget.lower()
 
     def test_new_record_has_no_documents_tab_or_panel(self):
         html = _render(record_id="", tab_panes=[NOTES_PANE])

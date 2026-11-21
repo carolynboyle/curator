@@ -220,42 +220,70 @@
 
   <!-- ===== DOCUMENTS TAB (records) ===== -->
   {#
-    Documents widget — the parts of a seanchaí record (one per page of a
-    multi-page deed, say). Each part has an original-image link and a
-    transcription path in the seanchai repo. Lives in its own tab (the Details
-    tab holds only the form).
+    Documents widget — the documents attached to a seanchaí record: the pages
+    of a multi-page deed, or a separate document that belongs with the record.
+    Master-detail: a searchable list on the left, the edit form on the right
+    (greyed out until a document is picked or "+ Add document" is clicked).
+    Each document has an original-image link and a transcription path in the
+    seanchai repo. Lives in its own tab (the Details tab holds only the form).
 
     Only rendered for existing records: a new record has no id to attach
-    parts to until it is saved.
+    documents to until it is saved.
   #}
   {% if entity == "records" and record_id %}
-  <div class="detail-tab-panel" data-tab="documents">
+  <div class="detail-tab-panel detail-tab-fill" data-tab="documents">
   <div class="docs-widget" id="docs-widget-{{ record_id }}"
        data-record-id="{{ record_id }}"
        data-repo-base="{{ repo_base }}">
     <div class="docs-widget-header">Documents <span class="docs-count"></span></div>
-    <div class="docs-toolbar">
-      <button type="button" class="docs-add-btn" title="Add a part (page) to this record">+ Add part</button>
-    </div>
-    <ul class="docs-list" role="listbox" aria-label="Record parts"></ul>
-    <div class="docs-edit" hidden>
-      <input type="text" class="docs-edit-label"
-             placeholder="Label, e.g. Deed Book 12, p. 340" autocomplete="off">
-      <input type="text" class="docs-edit-url"
-             placeholder="Original image URL (FamilySearch)" autocomplete="off">
-      <input type="text" class="docs-edit-md"
-             placeholder="Transcription path in the repo, e.g. docs/records/PR-033/01.md"
-             autocomplete="off">
-      <select class="docs-edit-status" aria-label="Transcription status">
-        {% for status in doc_statuses %}
-        <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
-        {% endfor %}
-      </select>
-      <div class="docs-edit-actions">
-        <button type="button" class="docs-save-btn">Save part</button>
-        <button type="button" class="docs-cancel-btn">Cancel</button>
-        <button type="button" class="docs-delete-btn" hidden>Delete</button>
+    <div class="docs-layout">
+      <div class="docs-side">
+        <input type="search" class="docs-search" placeholder="Search documents"
+               aria-label="Search documents" autocomplete="off">
+        <button type="button" class="docs-add-btn"
+                title="Add a document to this record">+ Add document</button>
+        <ul class="docs-list" role="listbox" aria-label="Record documents"></ul>
       </div>
+      <fieldset class="docs-edit" disabled>
+        <label class="docs-field">
+          <span class="docs-field-label">Label</span>
+          <input type="text" class="docs-edit-label"
+                 placeholder="e.g. Deed Book 12, p. 340" autocomplete="off">
+        </label>
+        <label class="docs-field">
+          <span class="docs-field-label">Original image URL</span>
+          <span class="docs-field-row">
+            <input type="text" class="docs-edit-url"
+                   placeholder="FamilySearch or other source (double-click to open)"
+                   autocomplete="off">
+            <button type="button" class="docs-open-btn docs-open-url" disabled
+                    title="Open the original in a new tab" aria-label="Open the original in a new tab">↗</button>
+          </span>
+        </label>
+        <label class="docs-field">
+          <span class="docs-field-label">Transcription path</span>
+          <span class="docs-field-row">
+            <input type="text" class="docs-edit-md"
+                   placeholder="e.g. docs/records/PR-033/01.md"
+                   autocomplete="off">
+            <button type="button" class="docs-open-btn docs-open-md" disabled
+                    title="Open the transcription in the repo" aria-label="Open the transcription in the repo">📄</button>
+          </span>
+        </label>
+        <label class="docs-field">
+          <span class="docs-field-label">Status</span>
+          <select class="docs-edit-status" aria-label="Transcription status">
+            {% for status in doc_statuses %}
+            <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="docs-edit-actions">
+          <button type="button" class="docs-save-btn">Save document</button>
+          <button type="button" class="docs-cancel-btn">Cancel</button>
+          <button type="button" class="docs-delete-btn" hidden>Delete</button>
+        </div>
+      </fieldset>
     </div>
   </div>
 

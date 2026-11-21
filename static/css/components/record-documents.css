@@ -1,14 +1,21 @@
 /* =========================================================================
-   Documents widget — parts of a seanchaí record (record-documents.js)
+   Documents widget — documents attached to a seanchaí record
+   (record-documents.js)
+
+   Master-detail: a narrow searchable list on the left, the edit form on the
+   right. The form is a <fieldset> that is disabled (and greyed out) until a
+   document is picked or "+ Add document" is clicked.
 
    Same visual language as the project links widget in detail-panel.css,
-   with its own docs-* class names so the two never collide.
+   with its own docs-* class names so the two never collide. The widget sits
+   in a .detail-tab-fill panel (flex column), so it grows to fill the tab.
    ========================================================================= */
 
 .docs-widget {
-  margin-top: 1.25rem;
-  border-top: 1px solid var(--color-border);
-  padding-top: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .docs-widget-header {
@@ -20,19 +27,49 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-light);
-  margin-bottom: 0.5rem;
-  padding: 0 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .docs-count {
   font-weight: 400;
 }
 
-.docs-toolbar {
-  padding: 0 0.75rem 0.5rem;
+.docs-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(12rem, 30%) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+/* ── Left: search, add, list ── */
+
+.docs-side {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.docs-search {
+  width: 100%;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-input-text);
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: 0.25rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.docs-search:focus {
+  border-color: var(--color-primary);
 }
 
 .docs-add-btn {
+  align-self: flex-start;
   padding: 0.2rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -48,19 +85,21 @@
   background: var(--color-border);
 }
 
-/* ── Parts list ── */
-
 .docs-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   list-style: none;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .docs-item {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   font-size: 0.8125rem;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
@@ -69,6 +108,11 @@
 
 .docs-item:hover {
   background: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+.docs-item:focus-visible {
+  outline: 1px solid var(--color-primary);
+  outline-offset: -1px;
 }
 
 .docs-item.active {
@@ -91,33 +135,6 @@
   white-space: nowrap;
 }
 
-.docs-link {
-  flex-shrink: 0;
-  text-decoration: none;
-  color: var(--color-primary);
-}
-
-a.docs-link:hover {
-  filter: brightness(1.25);
-}
-
-/* Slot with nothing in it yet — dimmed, not clickable */
-.docs-link--empty {
-  color: var(--color-text-light);
-  opacity: 0.35;
-  cursor: default;
-}
-
-/* Path shown as text when no repo base URL is configured */
-.docs-path {
-  max-width: 14rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-light);
-  font-size: 0.75rem;
-}
-
 .docs-status {
   flex-shrink: 0;
   padding: 0.05rem 0.4rem;
@@ -138,22 +155,43 @@ a.docs-link:hover {
 }
 
 .docs-empty {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem;
   font-size: 0.8125rem;
   color: var(--color-text-light);
 }
 
-/* ── Edit slot ── */
+/* ── Right: the edit form (a <fieldset>) ── */
 
 .docs-edit {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.6rem 0.75rem 0.25rem;
+  gap: 0.6rem;
 }
 
-.docs-edit[hidden] {
-  display: none;
+/* Greyed out until a document is picked or added */
+.docs-edit:disabled {
+  opacity: 0.45;
+}
+
+.docs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.docs-field-label {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.docs-field-row {
+  display: flex;
+  gap: 0.3rem;
 }
 
 .docs-edit input,
@@ -175,9 +213,40 @@ a.docs-link:hover {
   border-color: var(--color-primary);
 }
 
+.docs-edit input:disabled,
+.docs-edit select:disabled {
+  cursor: not-allowed;
+}
+
+/* ↗ / 📄 buttons beside the URL and transcription boxes */
+.docs-open-btn {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: var(--color-primary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.docs-open-btn:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.docs-open-btn:disabled {
+  color: var(--color-text-light);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .docs-edit-actions {
   display: flex;
   gap: 0.3rem;
+  margin-top: 0.2rem;
 }
 
 .docs-save-btn,
@@ -199,14 +268,15 @@ a.docs-link:hover {
   border-color: var(--color-primary);
 }
 
-.docs-save-btn:hover {
+.docs-save-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .docs-save-btn:disabled,
+.docs-cancel-btn:disabled,
 .docs-delete-btn:disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .docs-delete-btn {
