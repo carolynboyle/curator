@@ -205,6 +205,14 @@ export async function initDocsWidget(widget) {
 
   cancelBtn.addEventListener('click', _hideEdit);
 
+  // -- Open the original URL in a new tab on double-click --
+  // Opens whatever is in the box (saved or not). Only http(s) is launched.
+
+  urlInput.addEventListener('dblclick', () => {
+    const url = urlInput.value.trim();
+    if (_isSafeUrl(url)) window.open(url, '_blank', 'noopener,noreferrer');
+  });
+
   // -- Save --
 
   saveBtn.addEventListener('click', async () => {
