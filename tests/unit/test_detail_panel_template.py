@@ -97,6 +97,19 @@ class TestFieldTabs:
         assert "detail-tab-fill" not in html
 
 
+class TestSearchesNotesTab:
+    def test_search_panel_gets_a_notes_tab_and_no_documents_tab(self):
+        html = _render(entity="searches", tab_panes=[NOTES_PANE])
+
+        assert _tab_buttons(html) == ["details", "notes"]
+        assert 'data-tab="documents"' not in html
+
+    def test_search_notes_panel_fills_the_pane(self):
+        html = _render(entity="searches", tab_panes=[NOTES_PANE])
+
+        assert 'class="detail-tab-panel detail-tab-fill" data-tab="notes"' in html
+
+
 class TestDocumentsTab:
     def test_saved_record_gets_a_documents_tab_after_notes(self):
         html = _render(tab_panes=[NOTES_PANE])

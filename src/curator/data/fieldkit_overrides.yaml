@@ -163,8 +163,53 @@ seanchai.v_search_detail:
     label: Search ID
     readonly: true
     placeholder: Assigned on save
+    row: identity
+    flex: 2
     # Ledger key (e.g. SRCH-001), a varchar, not an FK. Assigned by
     # api.save_search on insert (SRCH-NNN) — display-only here.
+  search_terms:
+    control: textarea
+    label: Search Terms
+    rows: 2
+    row: identity
+    flex: 5
+    # Stays a textarea (two lines) so a multi-line term list survives a
+    # round trip; shares the identity line with Search ID.
+  county_scope:
+    control: text
+    label: County Scope
+    row: scope
+    flex: 3
+    # Was a tall textarea. Holds a one-line path such as "United States
+    # of America → Pennsylvania → Washington County".
+  year_filter:
+    control: text
+    label: Year Filter
+    row: scope
+    flex: 2
+    # One-line value such as "From 1800 AD".
   result_count:
     control: number
     label: Result Count
+    row: outcome
+    flex: 1
+  status:
+    control: text
+    label: Status
+    row: outcome
+    flex: 1
+  notes:
+    control: textarea
+    label: Notes
+    tab: Notes
+    # Long text: its own tab, filling the panel, like records. Sits
+    # between Status and Searched At in the view's column order, but a
+    # tab-hinted field takes no part in the Details lines, so the
+    # outcome line stays unbroken.
+  searched_at:
+    control: text
+    label: Searched At
+    row: outcome
+    flex: 2
+    # timestamp column: fieldkit's default control for it is text, so
+    # this entry only carries the layout hints.
