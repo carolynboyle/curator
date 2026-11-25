@@ -192,7 +192,13 @@ function activateTab(panel, tabName) {
  */
 function focusFirstField() {
   const panel = getPanel();
-  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (panel) {
+    // The navbar is sticky, so a plain block:'start' scroll parks the top
+    // of the panel underneath it. Leave room for the bar's actual height.
+    const navbar = document.querySelector('.navbar');
+    panel.style.scrollMarginTop = `${(navbar?.offsetHeight ?? 0) + 8}px`;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   const form = getForm();
   if (!form) return;
