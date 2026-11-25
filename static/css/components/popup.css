@@ -1,0 +1,154 @@
+/* =============================================================================
+   Dashboard popups (popup-shell.js)
+
+   A floating box opened from a button in the navbar. The box is a child of
+   <body> and fixed to the viewport, so it stays put while the page and the
+   detail panel are used underneath it.
+   ============================================================================= */
+
+/* Navbar button that opens a popup */
+.nav-popup-button {
+  padding: 0.25rem 0.6rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-popup-button:hover,
+.nav-popup-button[aria-expanded="true"] {
+  color: var(--color-accent, var(--color-primary));
+  border-color: var(--color-accent, var(--color-primary));
+}
+
+/* The floating box */
+.popup {
+  position: fixed;
+  top: 4.25rem;      /* just below the navbar */
+  right: 1.5rem;
+  z-index: 200;      /* above the navbar (100) and the detail panel */
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  max-height: min(28rem, calc(100vh - 6rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.popup-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.popup-action-slot {
+  margin-left: auto;
+}
+
+.popup-action {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.popup-action:hover {
+  background: var(--color-border);
+}
+
+.popup-close {
+  padding: 0 0.4rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--color-text-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.popup-close:hover {
+  color: var(--color-text);
+}
+
+.popup-search {
+  margin: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+}
+
+.popup-search:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.popup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.popup-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  border-top: 1px solid var(--color-border);
+}
+
+.popup-item:hover,
+.popup-item.active {
+  background: var(--color-border);
+}
+
+.popup-item-label {
+  font-size: 0.875rem;
+}
+
+.popup-item-detail {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popup-status {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+}
+
+.popup-status:empty {
+  display: none;
+}

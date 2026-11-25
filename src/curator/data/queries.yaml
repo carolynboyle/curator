@@ -26,6 +26,24 @@ project_links:
       WHERE project_id = %s
       ORDER BY sort_order, id
 
+  # Fetch a project's links by project slug (dashboard "links" popup,
+  # popup-links.js). One row per link; a project with no links yields a
+  # single row whose link columns are NULL; an unknown slug yields no rows.
+  for_project_slug:
+    type: select_all
+    sql: >
+      SELECT
+          p.id AS project_id,
+          p.name::text AS project_name,
+          l.id,
+          l.label::text,
+          l.url::text,
+          l.sort_order
+      FROM projects.projects p
+      LEFT JOIN projects.project_links l ON l.project_id = p.id
+      WHERE p.slug = %s
+      ORDER BY l.sort_order, l.id
+
 # =============================================================================
 # TASKS
 # =============================================================================

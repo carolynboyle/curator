@@ -41,6 +41,17 @@ crew:
     - name: "seanchai"
       title: "The Seanchaí"
       description: "Family history research and the memoir"
+      # Floating popups opened from the dashboard's navbar (see
+      # curator/popups.py and static/js/popup-shell.js). "links" shows the
+      # Links list of the project with the given slug. Remember that lists
+      # in ~/.config/curator/curator.yaml replace these wholesale: if your
+      # user file defines crew.roles, copy popups there too.
+      popups:
+        - id: "resources"
+          label: "Resources"
+          type: "links"
+          shortcut: "alt+r"
+          project: "genealogy-resources"
 
 seanchai:
   # Base URL for links to transcription files (md_path on a record's parts

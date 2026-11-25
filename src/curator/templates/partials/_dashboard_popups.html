@@ -1,0 +1,29 @@
+{#
+  _dashboard_popups.html
+
+  One navbar button per popup defined for the current crew role in
+  curator.yaml (see curator/popups.py). static/js/popup-shell.js turns each
+  button into a floating popup; the button carries the popup's whole
+  definition as JSON in data-popup.
+
+  The attribute is single-quoted on purpose: Jinja's tojson escapes the
+  single quote (as ') but not the double quote, so the JSON can never
+  end the attribute early.
+
+  Parameters:
+    - popups (list[dict]) — from popups.popups_for_role(); each has at
+                            least id, label and type, and may have a
+                            "shortcut" such as "alt+r".
+#}
+{% for popup in popups|default([]) %}
+<li class="nav-popup-item">
+  <button type="button"
+          class="nav-popup-button"
+          data-popup='{{ popup|tojson }}'
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          {% if popup.shortcut %}title="{{ popup.label|e }} ({{ popup.shortcut|e }})"{% endif %}>
+    ↗ {{ popup.label|e }}
+  </button>
+</li>
+{% endfor %}

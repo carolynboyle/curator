@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="/static/css/components/identity.css">
     <link rel="stylesheet" href="/static/css/components/detail-panel.css">
     <link rel="stylesheet" href="/static/css/components/record-documents.css">
+    <link rel="stylesheet" href="/static/css/components/popup.css">
 
 
     <!-- Tabulator data grid — simple theme (grid lines) + compact overrides -->
@@ -59,6 +60,7 @@
             </div>
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
+                {% block nav_extra %}{% endblock %}
             </ul>
         </div>
     </nav>
@@ -82,5 +84,8 @@
     <script type="module" src="/static/js/project-links.js"></script>
     <!-- Documents widget — parts of a seanchaí record -->
     <script type="module" src="/static/js/record-documents.js"></script>
+    <!-- Dashboard popups — generic shell, then one provider per popup type -->
+    <script type="module" src="/static/js/popup-shell.js"></script>
+    <script type="module" src="/static/js/popup-links.js"></script>
 </body>
 </html>

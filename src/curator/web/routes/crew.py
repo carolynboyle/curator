@@ -12,6 +12,7 @@ from viewkit.query_loader import QueryLoader
 from dbkit.connection import AsyncDBConnection
 from curator.config import ConfigManager
 from curator.formkit import FormActions
+from curator.popups import popups_for_role
 from curator.web.deps import _fetch_json_scalar, get_config, get_db
 from curator.web.routes.contacts import _fetch_contacts
 from curator.web.routes.organizations import _fetch_organizations
@@ -194,6 +195,7 @@ async def _render_crew_dashboard_html(  # pylint: disable=too-many-arguments,too
         "contacts": contacts,
         "organizations": organizations,
         "tabs": _ROLE_TABS.get(role, _DEFAULT_TABS),
+        "popups": popups_for_role(role_meta),
         "actions": detail_panel_actions["actions"],
         "container_class": detail_panel_actions["container_class"],
     }
