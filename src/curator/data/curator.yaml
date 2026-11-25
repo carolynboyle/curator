@@ -66,6 +66,20 @@ seanchai:
     - raw
     - cleaned
     - verified
+  # The one-line summary at the top of a search's Details tab (see
+  # static/js/search-summary.js). It joins the listed fields, skipping empty
+  # ones, and updates as you type. Double-clicking it opens the search's
+  # saved Search URL. last_segment shows only the part after the last
+  # occurrence of that text (county scope is a path such as
+  # "United States of America → Pennsylvania → Washington County").
+  search_summary:
+    separator: " · "
+    parts:
+      - field: source
+      - field: search_terms
+      - field: county_scope
+        last_segment: "→"
+      - field: year_filter
 
 plugin:
   name: "The Curator"

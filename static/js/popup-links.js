@@ -15,16 +15,7 @@
  */
 
 import { registerPopupProvider } from './popup-shell.js';
-
-/** True for a URL that is safe to open: absolute http or https. */
-function isOpenable(url) {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+import { openInTab } from './open-url.js';
 
 async function fetchRows(slug) {
   const res = await fetch(
@@ -65,8 +56,6 @@ registerPopupProvider('links', {
   },
 
   select(item) {
-    if (isOpenable(item.url)) {
-      window.open(item.url, '_blank', 'noopener,noreferrer');
-    }
+    openInTab(item.url);
   },
 });

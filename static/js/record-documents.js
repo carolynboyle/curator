@@ -32,14 +32,11 @@
  * is filled lets the widget warn before unsaved edits are thrown away.
  */
 
+import { isSafeUrl as _isSafeUrl, openInTab as _openInTab } from './open-url.js';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** True only for http(s) URLs — anything else is never opened. */
-function _isSafeUrl(url) {
-  return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
-}
 
 /** Build the link to a transcription file from the repo base and md_path. */
 function _repoUrl(base, mdPath) {
@@ -47,11 +44,6 @@ function _repoUrl(base, mdPath) {
   const root = base.endsWith('/') ? base : `${base}/`;
   const path = mdPath.split('/').map(encodeURIComponent).join('/');
   return `${root}${path}`;
-}
-
-/** Open a link in a new tab, if it is a safe http(s) URL. */
-function _openInTab(url) {
-  if (_isSafeUrl(url)) window.open(url.trim(), '_blank', 'noopener,noreferrer');
 }
 
 async function _fetchDocs(recordId) {

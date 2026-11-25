@@ -14,6 +14,7 @@ tab:
     the footer (no in-form add/save/cancel buttons)
 """
 
+import json
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -108,6 +109,63 @@ class TestSearchesNotesTab:
         html = _render(entity="searches", tab_panes=[NOTES_PANE])
 
         assert 'class="detail-tab-panel detail-tab-fill" data-tab="notes"' in html
+
+
+SUMMARY_CONFIG = {
+    "separator": " · ",
+    "parts": [
+        {"field": "source"},
+        {"field": "county_scope", "last_segment": "→"},
+    ],
+}
+
+
+class TestSearchSummary:
+    def test_search_panel_has_a_summary_line_before_the_form(self):
+        html = _render(entity="searches", search_summary=SUMMARY_CONFIG)
+
+        assert 'class="search-summary"' in html
+        assert html.index('class="search-summary"') < html.index('<form id="detail-form"')
+
+    def test_summary_sits_inside_the_details_tab(self):
+        html = _render(entity="searches", search_summary=SUMMARY_CONFIG)
+
+        details_at = html.index('data-tab="details">')
+        assert details_at < html.index('class="search-summary"')
+
+    def test_definition_travels_as_json_in_data_summary(self):
+        html = _render(entity="searches", search_summary=SUMMARY_CONFIG)
+
+        raw = re.search(r"data-summary='([^']*)'", html).group(1)
+        assert json.loads(raw) == SUMMARY_CONFIG
+
+    def test_summary_box_is_read_only_and_open_button_starts_disabled(self):
+        html = _render(entity="searches", search_summary=SUMMARY_CONFIG)
+
+        assert re.search(r'class="search-summary-box"\s+readonly', html)
+        assert re.search(r'class="search-summary-open"[^>]*\sdisabled', html)
+
+    def test_script_starts_the_summary(self):
+        html = _render(entity="searches", search_summary=SUMMARY_CONFIG)
+
+        assert "window.initSearchSummary" in html
+
+    def test_other_entities_get_no_summary_line(self):
+        for entity in ("records", "projects"):
+            html = _render(entity=entity, search_summary=SUMMARY_CONFIG)
+            assert "search-summary" not in html
+
+    def test_no_summary_without_config(self):
+        assert "search-summary" not in _render(entity="searches")
+        assert "search-summary" not in _render(entity="searches", search_summary={})
+
+    def test_quote_in_config_cannot_end_the_attribute(self):
+        config = {"separator": " ' \" ", "parts": [{"field": "source"}]}
+
+        html = _render(entity="searches", search_summary=config)
+
+        raw = re.search(r"data-summary='([^']*)'", html).group(1)
+        assert json.loads(raw) == config
 
 
 class TestDocumentsTab:

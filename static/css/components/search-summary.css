@@ -1,0 +1,58 @@
+/* =============================================================================
+   Search summary line (search-summary.js)
+
+   One read-only line at the top of a search's Details tab that says what was
+   searched, with a ↗ button that opens the saved Search URL.
+   ============================================================================= */
+
+.search-summary {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin-bottom: 0.75rem;
+}
+
+.search-summary-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.search-summary-box:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* Only a summary that has a URL behind it looks clickable */
+.search-summary-box.openable {
+  cursor: pointer;
+  border-color: var(--color-primary);
+}
+
+.search-summary-open {
+  flex: 0 0 auto;
+  padding: 0 0.75rem;
+  font: inherit;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.search-summary-open:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.search-summary-open:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

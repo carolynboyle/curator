@@ -25,6 +25,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from dbkit.connection import AsyncDBConnection
+from curator.payloads import sent_fields
 from curator.web.deps import (
     _fetch_json_scalar,
     call_proc_and_refetch,
@@ -35,6 +36,11 @@ from curator.web.deps import (
 )
 
 router = APIRouter()
+
+# Search columns the proc saves as "present = set (blank clears), absent =
+# keep" (steward 10m). Passed on only when the request carries them — see
+# curator.payloads.sent_fields.
+_CLEARABLE_SEARCH_FIELDS = ("source", "search_url")
 
 
 # =============================================================================
@@ -59,8 +65,8 @@ async def _fetch_search_for_display(db: AsyncDBConnection, search_id: int) -> di
     """Fetch a seanchaí search via api.get_search_detail() for the detail panel.
 
     Returns a dict with the v_search_detail whitelist columns:
-    search_id, search_terms, county_scope, year_filter, result_count,
-    status, notes, searched_at — or None if not found.
+    source, search_url, search_id, search_terms, county_scope, year_filter,
+    result_count, status, notes, searched_at — or None if not found.
     """
     return await _fetch_json_scalar(
         db, "SELECT api.get_search_detail(%s)", (search_id,)
@@ -295,7 +301,7 @@ async def save_new_search(
     """Insert a new seanchaí search via api.save_search().
 
     Accepts JSON body: {search_terms, county_scope, year_filter,
-    result_count, status, notes, searched_at}.
+    result_count, status, notes, searched_at, source, search_url}.
     Any search_id in the body is ignored — the proc assigns SRCH-NNN.
 
     Returns the new search as JSON on success (200).
@@ -320,6 +326,7 @@ async def save_new_search(
         "notes":        body.get("notes") or None,
         "searched_at":  body.get("searched_at") or None,
     }
+    payload.update(sent_fields(body, _CLEARABLE_SEARCH_FIELDS))
 
     return await call_proc_and_refetch(
         db,
@@ -361,6 +368,7 @@ async def save_search(
         "notes":        body.get("notes") or None,
         "searched_at":  body.get("searched_at") or None,
     }
+    payload.update(sent_fields(body, _CLEARABLE_SEARCH_FIELDS))
 
     return await call_proc_and_refetch(
         db,

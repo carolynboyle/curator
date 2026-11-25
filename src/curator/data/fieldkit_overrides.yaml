@@ -158,6 +158,22 @@ seanchai.v_record_detail:
     # the Details scroll area.
 
 seanchai.v_search_detail:
+  source:
+    control: text
+    label: Source
+    placeholder: e.g. FamilySearch Full Text
+    row: where
+    flex: 2
+    # Where the search was run, free text (steward 10m). First in the view,
+    # so it opens the form together with Search URL.
+  search_url:
+    control: text
+    label: Search URL
+    placeholder: Paste the results page URL (double-click the summary above to open it)
+    row: where
+    flex: 5
+    # The results page as it was run; opening it re-runs the search. Opened
+    # from the summary box at the top of the Details tab (search-summary.js).
   search_id:
     control: text
     label: Search ID

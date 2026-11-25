@@ -32,6 +32,9 @@
                       transcription links (curator.yaml seanchai:)
     - doc_statuses    (list, optional) — records only: status choices for
                       a document part (curator.yaml seanchai:)
+    - search_summary  (dict, optional) — searches only: how the summary line
+                      at the top of Details is built (curator.yaml
+                      seanchai: search_summary); omitted = no summary line
     - actions         (list, optional) — from formkit.FormActions, for
                       _form_actions.html, defaults []
     - container_class (str, optional) — for _form_actions.html
@@ -42,6 +45,7 @@
 {% set actions = actions|default([]) %}
 {% set repo_base = repo_base|default('') %}
 {% set doc_statuses = doc_statuses|default([]) %}
+{% set search_summary = search_summary|default({}) %}
 {% set tab_panes = tab_panes|default([]) %}
 
 <!-- Tab navigation -->
@@ -93,6 +97,32 @@
 
   <!-- ===== DETAILS TAB (always first) ===== -->
   <div class="detail-tab-panel active" data-tab="details">
+    {#
+      Search summary — one read-only line that joins the search's own
+      fields (source, terms, county, years) so it is clear WHAT was
+      searched, and re-runs the search on double-click by opening the
+      saved Search URL. Searches only. search-summary.js fills it in and
+      keeps it current as the form is edited; the definition (which fields,
+      in what order) comes from curator.yaml as JSON in data-summary. The
+      attribute is single-quoted because tojson escapes ' but not ".
+    #}
+    {% if entity == "searches" and search_summary.get("parts") %}
+    <div class="search-summary" data-summary='{{ search_summary|tojson }}'>
+      <input type="text"
+             class="search-summary-box"
+             readonly
+             aria-label="Search summary — double-click to run this search again"
+             placeholder="Fills in as you type">
+      <button type="button"
+              class="search-summary-open"
+              title="Run this search again"
+              aria-label="Run this search again"
+              disabled>↗</button>
+    </div>
+    <script type="module">
+      window.initSearchSummary?.(document.querySelector('.search-summary'));
+    </script>
+    {% endif %}
     <form id="detail-form" class="detail-form" data-entity="{{ entity }}" data-id="{{ record_id }}">
       <div id="detail-form-fields">
         {% include "partials/_detail_form_fields.html" %}

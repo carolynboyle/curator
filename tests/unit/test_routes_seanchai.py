@@ -321,3 +321,92 @@ class TestSearchProcRejectionPassthrough:
         assert "success" not in body
         assert body["id"] == 9
         assert body["search_id"] == "SRCH-001"
+
+
+# =============================================================================
+# Searches — source and search_url (steward 10m)
+# =============================================================================
+
+def _payload_sent_to_proc(db):
+    """The JSON payload the route handed to api.save_search (first call)."""
+    args = db.fetch_one.await_args_list[0].args
+    return json.loads(args[1][0])
+
+
+def _saving_db():
+    """A db whose save succeeds and whose refetch returns a minimal record."""
+    return SimpleNamespace(fetch_one=AsyncMock(side_effect=[
+        {"save_search": {"success": True, "data": {"id": 3}, "message": "OK"}},
+        {"get_search_detail": {"id": 3, "search_id": "SRCH-003"}},
+    ]))
+
+
+class TestSearchSourceAndUrl:
+    """source and search_url are saved as 'present = set (blank clears),
+    absent = keep', so the routes must forward them only when the request
+    carried them. The grid's inline edit does not know these fields; if the
+    route added them anyway, every grid edit would blank them.
+    """
+
+    @pytest.mark.asyncio
+    async def test_update_forwards_both_when_the_form_sends_them(self):
+        request = make_mock_request({
+            "search_terms": "Connell Boyle",
+            "source": "FamilySearch Full Text",
+            "search_url": "https://example.test/results",
+        })
+        db = _saving_db()
+
+        await seanchai.save_search(search_id=3, request=request, db=db)
+
+        payload = _payload_sent_to_proc(db)
+        assert payload["source"] == "FamilySearch Full Text"
+        assert payload["search_url"] == "https://example.test/results"
+
+    @pytest.mark.asyncio
+    async def test_update_without_the_keys_does_not_add_them(self):
+        request = make_mock_request({"search_terms": "Connell Boyle"})
+        db = _saving_db()
+
+        await seanchai.save_search(search_id=3, request=request, db=db)
+
+        payload = _payload_sent_to_proc(db)
+        assert "source" not in payload
+        assert "search_url" not in payload
+
+    @pytest.mark.asyncio
+    async def test_blank_url_is_sent_as_null_so_it_clears(self):
+        request = make_mock_request({"search_terms": "Connell Boyle", "search_url": ""})
+        db = _saving_db()
+
+        await seanchai.save_search(search_id=3, request=request, db=db)
+
+        payload = _payload_sent_to_proc(db)
+        assert "search_url" in payload
+        assert payload["search_url"] is None
+
+    @pytest.mark.asyncio
+    async def test_insert_forwards_both_when_sent(self):
+        request = make_mock_request({
+            "search_terms": "Newspapers",
+            "source": "Newspapers.com",
+            "search_url": "https://example.test/q",
+        })
+        db = _saving_db()
+
+        await seanchai.save_new_search(request, db)
+
+        payload = _payload_sent_to_proc(db)
+        assert payload["source"] == "Newspapers.com"
+        assert payload["search_url"] == "https://example.test/q"
+
+    @pytest.mark.asyncio
+    async def test_insert_without_the_keys_does_not_add_them(self):
+        request = make_mock_request({"search_terms": "Newspapers"})
+        db = _saving_db()
+
+        await seanchai.save_new_search(request, db)
+
+        payload = _payload_sent_to_proc(db)
+        assert "source" not in payload
+        assert "search_url" not in payload
