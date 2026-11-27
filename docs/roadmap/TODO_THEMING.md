@@ -81,3 +81,25 @@ a drag-and-drop designer that builds new "canned" forms from components.
   relative widths** (drop beside a field = same row, below = new row), not
   store pixel positions, so forms stay tidy at any window size and map onto
   the existing row/flex model.
+
+### Phase III: existing form-design tools to evaluate (searched 2026-11-27)
+
+Prefer pulling in a browser-based designer over writing one. Candidates found,
+none tried yet; check licence, maintenance and how well each outputs rows and
+widths before choosing:
+
+- **Formeo** (pure JavaScript module): drag and drop, column/inline fields,
+  custom fields, preview mode. ~590 GitHub stars, ~100 open issues.
+- **formBuilder** (jQuery plugin, MIT): drag-and-drop form building. Needs jQuery.
+- **GridStack** (dependency-free TypeScript, MIT, ~9k stars): draggable,
+  resizable grid. Its row/column/width model could map straight onto Curator's
+  row/flex hints, so it might serve as the canvas with our own field palette.
+- **SurveyJS Creator**: full-featured and polished, but the designer is
+  source-available/commercial for production use (its form *renderer* is MIT).
+  Check licence terms before considering it for a product sold to customers.
+- **JS FormBuilder** (vanilla, MIT): lightweight but very new (v1.0.x).
+
+Whatever is chosen must produce a plain definition (fields, rows, widths) that
+can be saved to the forms/form_fields tables, not its own private format.
+Carolyn also used a GUI design tool earlier this year; note its name here if
+it turns out to be a candidate.
