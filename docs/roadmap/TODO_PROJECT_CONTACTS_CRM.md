@@ -1,6 +1,7 @@
 # Project Contacts Tab — CRM-Style Outreach Tracking
 
 Logged 2026-11-27. Not started. Needs a design conversation first.
+The tab's "coming soon" placeholder stays until this is built (Carolyn, 2026-11-27).
 
 ---
 
@@ -37,6 +38,11 @@ happens next.
   is the part Carolyn could not reconstruct from memory.
 - **Where they are online**: profile and tree URLs and usernames. Many
   contacts will have no email, only an Ancestry username.
+- **Immediate family as well as outreach contacts** (added 2026-11-27). Family
+  members are contacts too, with a role such as sibling or parent, so the same
+  tab holds the people you are researching with and the people you are
+  contacting. See `TODO_FAMILY_ACCESS.md` for letting them see parts of
+  Curator.
 - **What they connect to**: which tree, and ideally which people or records in
   the research they are relevant to.
 
