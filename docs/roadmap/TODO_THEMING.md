@@ -39,3 +39,25 @@ New CSS uses theme variables only. No hex or rgb() values in new component CSS.
 
 A theme changes appearance only. Rearranging layout (tab order, list/edit
 arrangement) is a separate piece of work.
+
+## Phase III idea: themes and form settings in Postgres
+
+Logged 2026-11-27. Not for now.
+
+Move theme and form definitions (theme values, field layouts, widget
+definitions) from YAML into database tables, and give the Captain role forms
+to design them, in the spirit of the old MS Access form wizards.
+
+Motivation: a sales demo. Ship Curator with one professional business skin,
+then switch to the customer's own theme with a click ("Acme Corporation,
+Wile E. Coyote, CEO"). Customers customise to their corporate colours without
+touching files.
+
+Notes for when it happens:
+- Keep the YAML files as the default/seed; the database holds overrides.
+- Needs change history (who changed what, rollback), since git no longer covers it.
+- Needs validation before save and a fallback to the default files, so a bad
+  theme or layout cannot break every form (or the form that edits forms).
+- Depends on the Captain role and its permissions existing first.
+- Until then, keep new settings in plain data shapes (named fields, simple
+  values, no logic) so they map to tables later.
