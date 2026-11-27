@@ -61,3 +61,23 @@ Notes for when it happens:
 - Depends on the Captain role and its permissions existing first.
 - Until then, keep new settings in plain data shapes (named fields, simple
   values, no logic) so they map to tables later.
+
+### Phase III addition: form designer with canned forms (logged 2026-11-27)
+
+Carolyn's idea, part of the Captain's settings editor: forms stored in the
+database, each with a screenshot and a related table listing its content, and
+a drag-and-drop designer that builds new "canned" forms from components.
+
+- Tables: a `forms` table (one row per form) and a `form_fields` table (name,
+  label, control, row, width, order). These are the same shapes as today's
+  fieldkit overrides and `list_edit_tabs` definitions.
+- Components to choose from: the control types plus larger pieces such as the
+  list-and-edit widget.
+- Canned forms ship as seed data; editing one makes a new form, so the
+  originals can always be restored.
+- Screenshots: render the form in a headless browser when it is saved, rather
+  than taking them by hand.
+- Design decision: the drag-and-drop grid should snap drops to **rows and
+  relative widths** (drop beside a field = same row, below = new row), not
+  store pixel positions, so forms stay tidy at any window size and map onto
+  the existing row/flex model.
