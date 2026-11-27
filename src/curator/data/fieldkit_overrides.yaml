@@ -41,14 +41,20 @@ projects.v_project_detail:
     control: select
     label: Type
     source: project_types
+    row: kind
+    flex: 1
   status_id:
     control: select
     label: Status
     source: project_statuses
+    row: kind
+    flex: 1
   crew_role_id:
     control: select
     label: Crew
     source: crew_roles
+    row: kind
+    flex: 1
     # The crew role that owns the project and whose dashboard shows it
     # (steward 10h_crew_role_seanchai.sql). Pre-filled with the current
     # dashboard's role for new projects (window.newRecordDefaults).

@@ -70,3 +70,21 @@ class TestSearchFieldLayout:
 
         assert "control" in overrides["search_id"]
         assert "control" in overrides["result_count"]
+
+
+class TestProjectFormLayout:
+    def _overrides(self):
+        return _load("fieldkit_overrides.yaml")["projects.v_project_detail"]
+
+    def test_type_status_and_crew_share_one_line(self):
+        overrides = self._overrides()
+
+        rows = {overrides[f]["row"] for f in ("type_id", "status_id", "crew_role_id")}
+        assert len(rows) == 1
+
+    def test_they_keep_their_select_sources(self):
+        overrides = self._overrides()
+
+        assert overrides["type_id"]["source"] == "project_types"
+        assert overrides["status_id"]["source"] == "project_statuses"
+        assert overrides["crew_role_id"]["source"] == "crew_roles"
