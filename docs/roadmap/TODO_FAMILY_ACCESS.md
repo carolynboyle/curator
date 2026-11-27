@@ -29,6 +29,28 @@ passing the signed-in user to them), and a "shared" marker saying which
 records or projects a guest may see (default: not shared). See also
 `TODO_LEAST_PRIVILEGE_DB_USER.md`.
 
+### Clarification (Carolyn, 2026-11-27, later): the role decides, not each record
+
+The guest's world is defined by the **role**, not by marking individual
+records. A Seanchaí guest:
+
+- sees **only the Seanchaí card** on the landing page (nothing else listed);
+- does **not see the Contacts tab** on forms that have one;
+- has **read-only** access throughout Seanchaí;
+- will also see the polished pages once they are ported into Curator: the
+  **Seanchaí Register** (people and places, timeline, relationships) and the
+  **Boyle Family Tree** that exist today as Claude artifacts.
+
+This replaces the per-record "shared" marker described below as the default
+mechanism; a per-record flag stays an option for later if some records ever
+need to be held back.
+
+Implementation notes: the landing card list is already configurable per role
+(`CONFIGURABLE_LANDING_CARDS_DESIGN.md`), and hiding a tab is a role-aware
+template decision. **Hiding is not blocking**: the guest being unable to
+change anything must be enforced on the server (save and delete routes and
+database functions), not only by hiding buttons.
+
 ## Two separate questions
 
 1. **Can their device reach Curator?** That is the mesh: a family member's
@@ -50,9 +72,8 @@ exists, anyone who can reach Curator and sign in could see everything. So:
 ## What would be needed in Curator
 
 - A **family role** (read-only to start), with its own dashboard.
-- A way to choose **what is shared**: per project, per record, or per tab,
-  with the default being *not shared*. A clear "shared with family" marker on
-  anything visible to them.
+- Role-wide visibility as described in the clarification above (landing card,
+  tabs hidden, read-only). A per-record "shared" flag is optional and later.
 - **Read-only views** first (the research ledger, the memoir progress, family
   tree pages); letting family add notes or corrections could come later.
 - Family members as **contacts** (see `TODO_PROJECT_CONTACTS_CRM.md`) linked
@@ -72,7 +93,6 @@ exists, anyone who can reach Curator and sign in could see everything. So:
 
 - Does family see the same Curator with fewer things showing, or a separate,
   simpler front page?
-- Sharing granularity: whole projects, or individual records?
 - Should family be able to leave comments or questions on a record?
 - Who approves a new family account, and how is one removed?
 
