@@ -10,6 +10,25 @@ Immediate family can see the parts of Curator she chooses to show them,
 reaching it over her headscale mesh (the self-hosted Tailscale-compatible
 network Curator is already served on).
 
+## Carolyn's design (2026-11-27)
+
+A user is someone in the contacts table, and what a user may do is controlled
+by the Captain. So a family member such as her sister Maureen is a contact
+(role: sister) who is given a login as a **Seanchaí guest**: a role the Captain
+defines as **read-only, with access to pertinent records** only.
+
+What the database already has: `identity.app_user.contact_id` is required and
+unique (a user *is* a contact); `user_role` (admin / staff / customer) is the
+permission tier and `crew_role` (captain, envoy, mechanic, scribe, seanchai) is
+the persona, extensible from the Captain's UI. A guest could be a new value in
+either. Decision for the design conversation: new crew role, new tier, or both.
+
+What is missing (the real work): a table saying what each role may do,
+enforcement on every save/delete route and database function (including
+passing the signed-in user to them), and a "shared" marker saying which
+records or projects a guest may see (default: not shared). See also
+`TODO_LEAST_PRIVILEGE_DB_USER.md`.
+
 ## Two separate questions
 
 1. **Can their device reach Curator?** That is the mesh: a family member's
