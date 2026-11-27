@@ -51,6 +51,22 @@ template decision. **Hiding is not blocking**: the guest being unable to
 change anything must be enforced on the server (save and delete routes and
 database functions), not only by hiding buttons.
 
+### Multiple roles and per-person limits (Carolyn, 2026-11-27)
+
+- A user can hold **more than one role**: for example a writing partner given
+  the Scribe role, who might also be a Seanchaí guest. This needs the
+  multi-role change already designed in `DESIGN_MULTI_ROLE_IDENTITY.md`
+  (a join table replacing the single `crew_role_id` on `identity.app_user`,
+  with one role marked primary). **Not built yet**: today a user has one crew
+  role.
+- **Limiting which Scribe records a user sees.** Roles already map to project
+  types (`projects.project_type_role_mapping`; the Scribe view shows only
+  projects of types mapped to Scribe), which limits things per role. A
+  per-person limit would be a second layer: a per-user list of allowed project
+  types that narrows what the role would otherwise show. Decide when the
+  Captain permissions work starts whether this belongs in the same table as
+  the role-to-type mapping or in its own.
+
 ## Two separate questions
 
 1. **Can their device reach Curator?** That is the mesh: a family member's
