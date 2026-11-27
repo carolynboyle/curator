@@ -24,6 +24,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from dbkit.connection import AsyncDBConnection
 from curator.formkit import FormActions
+from curator.list_edit import list_edit_tabs_for
 from curator.web.deps import get_config, get_db
 from curator.web.routes.contacts import _fetch_contact_for_display
 from curator.web.routes.organizations import _fetch_organization_for_display
@@ -73,13 +74,18 @@ def _render_panel_content(
     detail_panel_actions = FormActions.from_yaml(_FORMS_PATH, "detail_panel")
     template = env.get_template("partials/_detail_panel_content.html")
 
-    # Documents widget settings (records) and the search summary line
-    # (searches) — from curator.yaml's seanchai: section, so neither the repo
-    # URL, the status list nor the summary's fields are hard-coded in the
-    # template or the JS.
+    # The search summary line (searches) comes from curator.yaml's seanchai:
+    # section, and the list-and-edit tabs (a project's Links, a record's
+    # Documents) from list_edit_tabs:, so neither the summary's fields nor
+    # the tabs' URLs, fields and choices are hard-coded in the template or JS.
+    config = get_config()
     seanchai_cfg = (
-        get_config().get_section("seanchai")
-        if entity in ("records", "searches") else {}
+        config.get_section("seanchai") if entity in ("records", "searches") else {}
+    )
+    list_edit_tabs = list_edit_tabs_for(
+        entity,
+        config.get_section("list_edit_tabs"),
+        lambda dotted: config.get(*dotted.split(".", 1)),
     )
 
     return HTMLResponse(
@@ -92,8 +98,7 @@ def _render_panel_content(
             tab_panes=kit.tab_panes,
             layout=kit.layout,
             options=kit.options,
-            repo_base=seanchai_cfg.get("repo_blob_base", ""),
-            doc_statuses=seanchai_cfg.get("document_statuses", []),
+            list_edit_tabs=list_edit_tabs,
             search_summary=seanchai_cfg.get("search_summary") or {},
             actions=detail_panel_actions["actions"],
             container_class=detail_panel_actions["container_class"],

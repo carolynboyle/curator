@@ -1,0 +1,59 @@
+{#
+  List-and-edit widget — one tab of a detail panel: a searchable list of child
+  items on the left, the edit form on the right (greyed out until an item is
+  picked or the footer's New is used). Drawn from one definition in
+  curator.yaml's list_edit_tabs (see curator/list_edit.py) and driven by
+  static/js/list-edit-widget.js. While the tab is active the footer's Save and
+  New act on its items (registered with detail-panel.js).
+
+  Expects (from the including template):
+    tab        — the resolved definition dict
+    record_id  — the parent's id (project, record, ...)
+
+  The whole definition travels as JSON in data-definition, in a single-quoted
+  attribute: tojson escapes ' < > & so it cannot end the attribute.
+#}
+<div class="le-widget" id="le-{{ tab.id }}-{{ record_id }}"
+     data-parent-id="{{ record_id }}"
+     data-definition='{{ tab|tojson }}'>
+  <div class="le-header">{{ tab.label }} <span class="le-count"></span></div>
+  <div class="le-layout">
+    <div class="le-side">
+      <input type="search" class="le-search" placeholder="Search {{ tab.label|lower }}"
+             aria-label="Search {{ tab.label|lower }}" autocomplete="off">
+      <ul class="le-list" role="listbox" aria-label="{{ tab.label }}"></ul>
+    </div>
+    <fieldset class="le-edit" disabled>
+      {% for field in tab.fields %}
+      <label class="le-field">
+        <span class="le-field-label">{{ field.label }}</span>
+        {% if field.control == "select" %}
+        <select data-field="{{ field.name }}" aria-label="{{ field.label }}">
+          {% for option in field.options %}
+          <option value="{{ option.value }}">{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        {% elif field.open %}
+        <span class="le-field-row">
+          <input type="text" data-field="{{ field.name }}"
+                 placeholder="{{ field.placeholder|default('') }}" autocomplete="off">
+          <button type="button" class="le-open-btn" data-open-for="{{ field.name }}" disabled
+                  title="{{ field.open_title|default('Open in a new tab') }}"
+                  aria-label="{{ field.open_title|default('Open in a new tab') }}">{{ "↗" if field.open == "url" else "📄" }}</button>
+        </span>
+        {% else %}
+        <input type="text" data-field="{{ field.name }}"
+               placeholder="{{ field.placeholder|default('') }}" autocomplete="off">
+        {% endif %}
+      </label>
+      {% endfor %}
+      <div class="le-edit-actions">
+        <button type="button" class="le-delete-btn" hidden>Delete</button>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<script type="module">
+  window.initListEditWidget?.(document.getElementById('le-{{ tab.id }}-{{ record_id }}'));
+</script>

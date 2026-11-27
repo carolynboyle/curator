@@ -28,10 +28,11 @@
                       live in their own tab (fieldkit "tab" hint); each
                       gets a tab button and a panel after Details
     - layout          (dict, optional) — FieldKit.layout hints
-    - repo_base       (str, optional) — records only: base URL for
-                      transcription links (curator.yaml seanchai:)
-    - doc_statuses    (list, optional) — records only: status choices for
-                      a document part (curator.yaml seanchai:)
+    - list_edit_tabs  (list, optional) — resolved list-and-edit tab
+                      definitions for this entity (curator.yaml
+                      list_edit_tabs:, curator/list_edit.py): a project's
+                      Links, a record's Documents. Each gets a tab button
+                      and a panel; shown only for a saved record.
     - search_summary  (dict, optional) — searches only: how the summary line
                       at the top of Details is built (curator.yaml
                       seanchai: search_summary); omitted = no summary line
@@ -43,8 +44,7 @@
 {% set options = options|default({}) %}
 {% set record = record|default({}) %}
 {% set actions = actions|default([]) %}
-{% set repo_base = repo_base|default('') %}
-{% set doc_statuses = doc_statuses|default([]) %}
+{% set list_edit_tabs = list_edit_tabs|default([]) %}
 {% set search_summary = search_summary|default({}) %}
 {% set tab_panes = tab_panes|default([]) %}
 
@@ -57,10 +57,7 @@
     <button class="detail-tab-button" data-tab="{{ pane.slug }}">{{ pane.label }}</button>
   {% endfor %}
 
-  {% if entity == "records" and record_id %}
-    {# A new record has no id to attach document parts to until it is saved #}
-    <button class="detail-tab-button" data-tab="documents">Documents</button>
-  {% elif entity == "projects" %}
+  {% if entity == "projects" %}
     <button class="detail-tab-button" data-tab="tasks">Tasks</button>
     <button class="detail-tab-button" data-tab="contacts">Contacts</button>
   {% elif entity == "contacts" %}
@@ -70,6 +67,14 @@
     <button class="detail-tab-button" data-tab="organizations">Organizations</button>
   {% elif entity == "organizations" %}
     <button class="detail-tab-button" data-tab="contacts">Contacts</button>
+  {% endif %}
+
+  {# List-and-edit tabs (Documents, Links): a new record has no id to attach
+     child items to until it is saved #}
+  {% if record_id %}
+    {% for tab in list_edit_tabs %}
+      <button class="detail-tab-button" data-tab="{{ tab.id }}">{{ tab.label }}</button>
+    {% endfor %}
   {% endif %}
 
   <!-- Right-side action group: optional popup trigger + close button -->
@@ -181,56 +186,6 @@
     </script>
     {% endif %}
 
-    {#
-      Links widget — embedded directly in the Details tab for projects
-      so the full project context (fields, notes, links) is visible in
-      one place without a tab switch.
-
-      Only rendered for existing project records (record_id is set).
-      New-record panels have no links to show and can't add them until
-      the project is saved (needs a project_id FK).
-    #}
-    {% if entity == "projects" and record_id %}
-    <div class="links-widget" id="links-widget-{{ record_id }}">
-      <div class="links-widget-header">Links</div>
-      <div class="links-widget-toolbar">
-        <button type="button" class="links-add-btn" title="Add a new link">+ Add</button>
-        <div class="links-slot">
-          <!-- Search state (default) -->
-          <div class="links-slot-search">
-            <input type="text"
-                   class="links-search-input"
-                   placeholder="Search links…"
-                   autocomplete="off">
-          </div>
-          <!-- Edit state (new or selected) -->
-          <div class="links-slot-edit" hidden>
-            <input type="text"
-                   class="links-edit-label"
-                   placeholder="Label (required)"
-                   autocomplete="off">
-            <input type="text"
-                   class="links-edit-url"
-                   placeholder="URL (optional)"
-                   autocomplete="off">
-            <div class="links-edit-actions">
-              <button type="button" class="links-save-btn">Save</button>
-              <button type="button" class="links-cancel-btn">Cancel</button>
-              <button type="button" class="links-delete-btn" hidden>Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <ul class="links-list" role="listbox" aria-label="Project links"></ul>
-    </div>
-
-    <script type="module">
-      window.initLinksWidget?.(
-        document.getElementById('links-widget-{{ record_id }}'),
-        '{{ record_id }}'
-      );
-    </script>
-    {% endif %}
   </div>
 
   <!-- ===== FIELD TABS (fieldkit "tab" hint, e.g. Notes) ===== -->
@@ -253,77 +208,19 @@
   </div>
   {% endfor %}
 
-  <!-- ===== DOCUMENTS TAB (records) ===== -->
+  <!-- ===== LIST-AND-EDIT TABS (records: Documents, projects: Links) ===== -->
   {#
-    Documents widget — the documents attached to a seanchaí record: the pages
-    of a multi-page deed, or a separate document that belongs with the record.
-    Master-detail: a searchable list on the left, the edit form on the right
-    (greyed out until a document is picked or the footer's New is clicked).
-    While this tab is active the footer's Save and New act on documents
-    (record-documents.js registers them with detail-panel.js).
-    Each document has an original-image link and a transcription path in the
-    seanchai repo. Lives in its own tab (the Details tab holds only the form).
-
-    Only rendered for existing records: a new record has no id to attach
-    documents to until it is saved.
+    One generic widget per definition in curator.yaml's list_edit_tabs. Each
+    lives in its own tab and leaves Save and New to the footer (the widget
+    registers them with detail-panel.js while its tab is active). Only
+    rendered for a saved record: a new one has no id to attach items to.
   #}
-  {% if entity == "records" and record_id %}
-  <div class="detail-tab-panel detail-tab-fill" data-tab="documents">
-  <div class="docs-widget" id="docs-widget-{{ record_id }}"
-       data-record-id="{{ record_id }}"
-       data-repo-base="{{ repo_base }}">
-    <div class="docs-widget-header">Documents <span class="docs-count"></span></div>
-    <div class="docs-layout">
-      <div class="docs-side">
-        <input type="search" class="docs-search" placeholder="Search documents"
-               aria-label="Search documents" autocomplete="off">
-        <ul class="docs-list" role="listbox" aria-label="Record documents"></ul>
-      </div>
-      <fieldset class="docs-edit" disabled>
-        <label class="docs-field">
-          <span class="docs-field-label">Label</span>
-          <input type="text" class="docs-edit-label"
-                 placeholder="e.g. Deed Book 12, p. 340" autocomplete="off">
-        </label>
-        <label class="docs-field">
-          <span class="docs-field-label">Original image URL</span>
-          <span class="docs-field-row">
-            <input type="text" class="docs-edit-url"
-                   placeholder="FamilySearch or other source (double-click to open)"
-                   autocomplete="off">
-            <button type="button" class="docs-open-btn docs-open-url" disabled
-                    title="Open the original in a new tab" aria-label="Open the original in a new tab">↗</button>
-          </span>
-        </label>
-        <label class="docs-field">
-          <span class="docs-field-label">Transcription path</span>
-          <span class="docs-field-row">
-            <input type="text" class="docs-edit-md"
-                   placeholder="e.g. docs/records/PR-033/01.md"
-                   autocomplete="off">
-            <button type="button" class="docs-open-btn docs-open-md" disabled
-                    title="Open the transcription in the repo" aria-label="Open the transcription in the repo">📄</button>
-          </span>
-        </label>
-        <label class="docs-field">
-          <span class="docs-field-label">Status</span>
-          <select class="docs-edit-status" aria-label="Transcription status">
-            {% for status in doc_statuses %}
-            <option value="{{ status }}">{{ status|replace('_', ' ') }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <div class="docs-edit-actions">
-          <button type="button" class="docs-delete-btn" hidden>Delete</button>
-        </div>
-      </fieldset>
-    </div>
+  {% if record_id %}
+    {% for tab in list_edit_tabs %}
+  <div class="detail-tab-panel detail-tab-fill" data-tab="{{ tab.id }}">
+    {% include "partials/_list_edit_widget.html" %}
   </div>
-
-  <script type="module">
-    window.initDocsWidget?.(document.getElementById('docs-widget-{{ record_id }}'));
-  </script>
-  </div>
+    {% endfor %}
   {% endif %}
 
   <!-- ===== CHILD TABS (deferred) ===== -->

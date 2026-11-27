@@ -81,6 +81,116 @@ seanchai:
         last_segment: "→"
       - field: year_filter
 
+# =============================================================================
+# LIST-AND-EDIT TABS
+# =============================================================================
+# Tabs on a detail panel that show a searchable list of child items on the
+# left and an edit form on the right. One generic widget draws them all
+# (static/js/list-edit-widget.js, curator/list_edit.py); each entry below only
+# fills in the blanks. Keyed by the entity whose panel shows the tab.
+#
+#   id, label, noun       tab slug, tab/header text, "document" in messages
+#   parent_key            field the server expects for the parent's id (sent
+#                         when creating an item)
+#   list_url              GET; {parent_id} is replaced
+#   save_new_url          POST for a new item
+#   save_url              POST for an existing item; {id} is replaced
+#   delete_url            DELETE; {id} is replaced
+#   title_field           field shown as the item's name in the list
+#   title_fallback        shown when that field is blank; {field} placeholders
+#                         are filled from the item
+#   prefix_field          optional field shown before the name (e.g. a number)
+#   subtitle_field        optional field shown under the name
+#   badge_field           optional field shown as a small chip
+#   badge_tones           optional chip value -> accent | dim
+#   search_fields         fields the search box looks through
+#   empty_text            message for an empty list
+#   require_one_of        optional: {fields: [...], message: "..."} - at least
+#                         one must be filled before saving
+#   duplicate_of          optional: warn before adding an item whose values
+#                         for these fields match an existing one
+#   repo_base_from        optional dotted name (section.key) of the base URL
+#                         that fields with open: repo are joined onto
+#   fields                the edit form: name, label, control (text | select),
+#                         placeholder, required, open (url | repo: adds an
+#                         "open in a new tab" button), options or options_from
+#                         (dotted section.key) for selects
+#
+# In ~/.config/curator/curator.yaml, entities merge but a tab list replaces
+# the shipped one for that entity, so copy every tab you want to keep.
+list_edit_tabs:
+  records:
+    - id: "documents"
+      label: "Documents"
+      noun: "document"
+      parent_key: "record_id"
+      list_url: "/seanchai/records/{parent_id}/documents"
+      save_new_url: "/seanchai/record_documents/save"
+      save_url: "/seanchai/record_documents/{id}/save"
+      delete_url: "/seanchai/record_documents/{id}"
+      title_field: "label"
+      title_fallback: "Document {seq}"
+      prefix_field: "seq"
+      badge_field: "status"
+      badge_tones:
+        verified: "accent"
+        not_transcribed: "dim"
+      search_fields: ["label", "source_url", "md_path", "status"]
+      empty_text: "No documents yet. Use New to add one."
+      repo_base_from: "seanchai.repo_blob_base"
+      require_one_of:
+        fields: ["source_url", "md_path"]
+        message: "Enter a source URL, a transcription path, or both"
+      fields:
+        - name: "label"
+          label: "Label"
+          control: "text"
+          placeholder: "e.g. Deed Book 12, p. 340"
+        - name: "source_url"
+          label: "Original image URL"
+          control: "text"
+          placeholder: "FamilySearch or other source (double-click to open)"
+          open: "url"
+          open_title: "Open the original in a new tab"
+        - name: "md_path"
+          label: "Transcription path"
+          control: "text"
+          placeholder: "e.g. docs/records/PR-033/01.md"
+          open: "repo"
+          open_title: "Open the transcription in the repo"
+        - name: "status"
+          label: "Status"
+          control: "select"
+          options_from: "seanchai.document_statuses"
+
+  projects:
+    - id: "links"
+      label: "Links"
+      noun: "link"
+      parent_key: "project_id"
+      list_url: "/api/query/project_links/for_project?params={parent_id}"
+      save_new_url: "/crew/project_links/save"
+      save_url: "/crew/project_links/{id}/save"
+      delete_url: "/crew/project_links/{id}"
+      title_field: "label"
+      title_fallback: "(no label)"
+      subtitle_field: "url"
+      search_fields: ["label", "url"]
+      empty_text: "No links yet. Use New to add one."
+      duplicate_of: ["label", "url"]
+      fields:
+        - name: "label"
+          label: "Label"
+          control: "text"
+          placeholder: "Label (required)"
+          required: true
+        - name: "url"
+          label: "URL"
+          control: "text"
+          placeholder: "URL (optional; double-click to open)"
+          open: "url"
+          open_title: "Open the link in a new tab"
+
 plugin:
   name: "The Curator"
   version: "0.2.0"

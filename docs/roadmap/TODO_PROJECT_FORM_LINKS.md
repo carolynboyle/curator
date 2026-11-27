@@ -1,8 +1,14 @@
 # Project Form — Links List and Layout
 
 Logged 2026-11-25 while setting up the "Genealogy Resources" project for the
-Resources popup. Not started; deliberately vague. Needs a short design
-conversation before any code.
+Resources popup.
+
+**Status 2026-11-27: mostly done.** Links now have their own tab built on the
+shared list-and-edit widget (`docs/design/list_edit_widget_design.md`): the list
+is always visible, a save refreshes it and keeps the saved link selected, and a
+link repeating an existing label and URL asks first. Still open: the rest of
+the project Details form tidy-up (Type/Status/Crew already share one line), and
+the label auto-fill idea below.
 
 ---
 
@@ -53,3 +59,13 @@ rows, so the two stay consistent without extra plumbing.
 - Permissions on who may edit links. That waits for the Captain role work.
 - Changes to the popup itself. It already works from whatever links the
   project has.
+
+## Follow-ups (logged 2026-11-27)
+
+- **Label from the page title.** Carolyn currently runs `copy(document.title)`
+  in the browser console and pastes it into the Label box. The browser cannot
+  read another site's title, but the server can fetch it: pasting a URL could
+  fill the Label (editable). Needs a small server route and care about what is
+  fetched.
+- Share the popup's links list code with the widget if it proves worthwhile
+  (`popup-links.js` still has its own).

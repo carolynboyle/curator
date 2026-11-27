@@ -2,13 +2,13 @@
 tests.unit.test_detail_panel_template - Rendering of the detail panel's tabs.
 
 Covers partials/_detail_panel_content.html for fields that fieldkit moves
-into their own tab (the "tab" layout hint), and for the records Documents
-tab:
+into their own tab (the "tab" layout hint), and for the list-and-edit tabs
+(a record's Documents, a project's Links):
   - a tab button and a panel per FieldKit.tab_panes entry, after Details
   - tabbed controls sit outside <form id="detail-form"> and carry
     form="detail-form", so the browser still submits them with the form
   - the Details form no longer holds the tabbed fields
-  - the Documents tab exists only for a saved record
+  - list-and-edit tabs exist only for a saved record
   - an entity with no tab hints keeps its old tab bar
   - field tabs hide the footer's New button; Documents leaves Save/New to
     the footer (no in-form add/save/cancel buttons)
@@ -19,10 +19,27 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
+
+from curator.list_edit import list_edit_tabs_for
 
 TEMPLATES_DIR = Path(__file__).parents[2] / "src" / "curator" / "templates"
 env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+
+_CONFIG = yaml.safe_load(
+    (Path(__file__).parents[2] / "src" / "curator" / "data" / "curator.yaml")
+    .read_text(encoding="utf-8")
+)
+
+
+def _shipped_tabs(entity):
+    """The list-and-edit tabs curator.yaml ships for an entity, resolved."""
+    return list_edit_tabs_for(
+        entity,
+        _CONFIG["list_edit_tabs"],
+        lambda dotted: _CONFIG[dotted.split(".", 1)[0]][dotted.split(".", 1)[1]],
+    )
 
 
 def _field(name, label, field_type="text", **extra):
@@ -40,6 +57,7 @@ NOTES_PANE = {"label": "Notes", "slug": "notes", "fields": [NOTES]}
 
 def _render(entity="records", record_id="7", tab_panes=None, **extra):
     template = env.get_template("partials/_detail_panel_content.html")
+    extra.setdefault("list_edit_tabs", _shipped_tabs(entity))
     return template.render(
         entity=entity,
         record_id=record_id,
@@ -92,9 +110,9 @@ class TestFieldTabs:
         assert 'form="detail-form"' not in form
 
     def test_entity_without_tab_hints_keeps_its_tab_bar(self):
-        html = _render(entity="projects", tab_panes=[])
+        html = _render(entity="contacts", tab_panes=[])
 
-        assert _tab_buttons(html) == ["details", "tasks", "contacts"]
+        assert _tab_buttons(html) == ["details", "emails", "phones", "urls", "organizations"]
         assert "detail-tab-fill" not in html
 
 
@@ -180,32 +198,41 @@ class TestDocumentsTab:
         details_start = html.index('class="detail-tab-panel active" data-tab="details"')
         docs_panel = html.index('class="detail-tab-panel detail-tab-fill" data-tab="documents"')
         assert docs_panel > details_start
-        assert 'docs-widget' not in html[details_start:docs_panel]
-        assert html.index('class="docs-widget"') > docs_panel
+        assert 'le-widget' not in html[details_start:docs_panel]
+        assert html.index('class="le-widget"') > docs_panel
 
     def test_widget_is_a_searchable_list_beside_a_greyed_out_form(self):
         html = _render(tab_panes=[NOTES_PANE])
-        widget = html[html.index('class="docs-widget"'):]
+        widget = html[html.index('class="le-widget"'):]
 
-        # list column: search box, add button, list; form column after it
-        assert widget.index('class="docs-search"') < widget.index('class="docs-list"')
-        assert widget.index('class="docs-list"') < widget.index('<fieldset class="docs-edit"')
-        # the form starts disabled (greyed out) until a document is picked
-        fieldset = widget[widget.index('<fieldset class="docs-edit"'):]
+        # list column: search box, list; form column after it
+        assert widget.index('class="le-search"') < widget.index('class="le-list"')
+        assert widget.index('class="le-list"') < widget.index('<fieldset class="le-edit"')
+        # the form starts disabled (greyed out) until an item is picked
+        fieldset = widget[widget.index('<fieldset class="le-edit"'):]
         assert fieldset[:fieldset.index(">")].endswith("disabled")
-        for hook in ("docs-edit-label", "docs-edit-url", "docs-edit-md",
-                     "docs-edit-status", "docs-open-url", "docs-open-md",
-                     "docs-delete-btn"):
-            assert f'class="{hook}' in fieldset or f" {hook}" in fieldset
+        for name in ("label", "source_url", "md_path", "status"):
+            assert f'data-field="{name}"' in fieldset
+        for name in ("source_url", "md_path"):
+            assert f'data-open-for="{name}"' in fieldset
+        assert "le-delete-btn" in fieldset
+
+    def test_status_choices_come_from_the_config(self):
+        html = _render(tab_panes=[NOTES_PANE])
+        select = html[html.index('data-field="status"'):]
+        select = select[:select.index("</select>")]
+
+        for value in _CONFIG["seanchai"]["document_statuses"]:
+            assert f'<option value="{value}">' in select
 
     def test_save_and_new_are_left_to_the_footer(self):
         html = _render(tab_panes=[NOTES_PANE])
-        widget = html[html.index('class="docs-widget"'):]
+        widget = html[html.index('class="le-widget"'):]
         widget = widget[:widget.index("</script>")]
 
-        for gone in ("docs-add-btn", "docs-save-btn", "docs-cancel-btn"):
+        for gone in ("add-btn", "save-btn", "cancel-btn"):
             assert gone not in widget
-        assert "docs-delete-btn" in widget
+        assert "le-delete-btn" in widget
 
     def test_field_tabs_hide_new_but_documents_does_not(self):
         html = _render(tab_panes=[NOTES_PANE])
@@ -217,20 +244,80 @@ class TestDocumentsTab:
 
     def test_widget_says_document_not_part(self):
         html = _render(tab_panes=[NOTES_PANE])
-        widget = html[html.index('class="docs-widget"'):]
+        widget = html[html.index('class="le-widget"'):]
         widget = widget[:widget.index("</script>")]
 
         assert "Documents" in widget
-        assert "part" not in widget.lower()
+        assert "part" not in widget.lower().replace("partial", "")
+
+    def test_definition_travels_as_json_in_the_widget(self):
+        html = _render(tab_panes=[NOTES_PANE])
+
+        raw = re.search(r"data-definition='([^']*)'", html).group(1)
+        definition = json.loads(raw)
+        assert definition["id"] == "documents"
+        assert definition["parent_key"] == "record_id"
+        assert html.count("window.initListEditWidget") == 1
 
     def test_new_record_has_no_documents_tab_or_panel(self):
         html = _render(record_id="", tab_panes=[NOTES_PANE])
 
         assert _tab_buttons(html) == ["details", "notes"]
         assert 'data-tab="documents"' not in html
-        assert "docs-widget" not in html
+        assert "le-widget" not in html
 
     def test_documents_tab_is_for_records_only(self):
         html = _render(entity="searches", tab_panes=[])
 
         assert "documents" not in _tab_buttons(html)
+        assert "le-widget" not in html
+
+
+class TestLinksTab:
+    def test_saved_project_gets_a_links_tab_after_its_child_tabs(self):
+        html = _render(entity="projects")
+
+        assert _tab_buttons(html) == ["details", "tasks", "contacts", "links"]
+
+    def test_links_live_in_their_own_tab_not_in_details(self):
+        html = _render(entity="projects")
+
+        details_start = html.index('class="detail-tab-panel active" data-tab="details"')
+        links_panel = html.index('class="detail-tab-panel detail-tab-fill" data-tab="links"')
+        assert 'le-widget' not in html[details_start:links_panel]
+        assert "links-widget" not in html
+
+    def test_widget_has_label_and_url_fields_and_a_list(self):
+        html = _render(entity="projects")
+        widget = html[html.index('class="le-widget"'):]
+
+        assert 'data-field="label"' in widget
+        assert 'data-field="url"' in widget
+        assert 'data-open-for="url"' in widget
+        assert 'class="le-list"' in widget
+
+    def test_definition_carries_the_duplicate_rule_and_urls(self):
+        html = _render(entity="projects")
+
+        definition = json.loads(re.search(r"data-definition='([^']*)'", html).group(1))
+        assert definition["duplicate_of"] == ["label", "url"]
+        assert definition["parent_key"] == "project_id"
+        assert definition["save_new_url"] == "/crew/project_links/save"
+
+    def test_new_project_has_no_links_tab(self):
+        html = _render(entity="projects", record_id="")
+
+        assert _tab_buttons(html) == ["details", "tasks", "contacts"]
+        assert "le-widget" not in html
+
+    def test_other_entities_keep_their_tab_bars(self):
+        assert _tab_buttons(_render(entity="contacts")) == [
+            "details", "emails", "phones", "urls", "organizations"]
+        assert _tab_buttons(_render(entity="organizations")) == ["details", "contacts"]
+
+    def test_definition_with_quote_cannot_end_the_attribute(self):
+        tab = dict(_shipped_tabs("projects")[0], empty_text="It's \"empty\" <b>&")
+        html = _render(entity="projects", list_edit_tabs=[tab])
+
+        definition = json.loads(re.search(r"data-definition='([^']*)'", html).group(1))
+        assert definition["empty_text"] == tab["empty_text"]
